@@ -1,290 +1,175 @@
-Welcome to your new TanStack app! 
+# Simply The Best - BTC Trading Strategy Analyzer
 
-# Getting Started
+A Bitcoin trading strategy backtesting and optimization application built with TanStack Start, React, and Prisma. Analyze moving average crossover strategies with configurable leverage, fees, and position management.
 
-To run this application:
+## Features
+
+- **Strategy Backtesting**: Compare SMA and EMA-based trading strategies against HODL
+- **Parameter Configuration**: Adjust MA duration, leverage, fees, and position settings
+- **MA Duration Optimization**: Find optimal moving average periods across a configurable range
+- **Interactive Charts**: Visualize returns, price action, and optimization results
+- **Performance Metrics**: Annualized returns, max drawdown, and trade counts
+
+## Tech Stack
+
+- **Framework**: [TanStack Start](https://tanstack.com/start) with React 19
+- **Database**: PostgreSQL with [Prisma ORM](https://www.prisma.io/)
+- **Styling**: Tailwind CSS 4 with Base UI components
+- **Charts**: Recharts
+- **Runtime**: Bun
+
+## Prerequisites
+
+- [Bun](https://bun.sh/) installed
+- PostgreSQL database
+
+## Getting Started
+
+### 1. Clone and Install Dependencies
 
 ```bash
 bun install
+```
+
+### 2. Configure Environment
+
+Copy the example environment file and configure your database:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` with your PostgreSQL connection string:
+
+```
+DATABASE_URL=postgresql://user:password@localhost:5432/simply_the_best
+```
+
+### 3. Set Up Database
+
+Generate the Prisma client and run migrations:
+
+```bash
+bunx prisma generate
+bunx prisma db push
+```
+
+### 4. Seed the Database
+
+The project includes historical BTC price data. Seed it to the database:
+
+```bash
+bun run prisma/seed.ts
+```
+
+### 5. Run the Development Server
+
+```bash
 bun --bun run dev
 ```
 
-# Building For Production
+The app will be available at [http://localhost:3000](http://localhost:3000).
 
-To build this application for production:
+## Project Structure
 
-```bash
-bun --bun run build
+```
+├── data/                    # Raw data files
+│   ├── btc-price-data.json  # Extracted BTC price history
+│   └── btc 2025-10.xlsm     # Source Excel file
+├── generated/prisma/        # Generated Prisma client
+├── prisma/
+│   ├── schema.prisma        # Database schema
+│   └── seed.ts              # Database seeder
+├── scripts/
+│   └── extract-excel.ts     # Excel to JSON extraction script
+├── src/
+│   ├── components/
+│   │   ├── trading/         # Trading-specific components
+│   │   └── ui/              # Reusable UI components
+│   ├── data/
+│   │   └── trading.server.ts # Server functions for data fetching
+│   ├── lib/
+│   │   ├── calculations/    # Strategy calculation logic
+│   │   │   ├── indicators.ts  # SMA/EMA calculations
+│   │   │   ├── signals.ts     # Signal generation
+│   │   │   ├── returns.ts     # Return calculations
+│   │   │   └── optimizer.ts   # MA period optimization
+│   │   ├── types/
+│   │   │   └── trading.ts   # TypeScript type definitions
+│   │   └── db.ts            # Prisma client singleton
+│   └── routes/
+│       ├── index.tsx        # Redirects to /trading
+│       └── trading/
+│           ├── index.tsx    # Main dashboard
+│           └── optimize.tsx # Optimization page
+└── public/                  # Static assets
 ```
 
-## Testing
+## Strategy Parameters
 
-This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `maDuration` | Moving average period (days) | 44 |
+| `buyOnLongSignal` | Enter long when price > MA | true |
+| `shortOnShort` | Enter short when price < MA | false |
+| `longLeverage` | Leverage multiplier for longs | 2.25x |
+| `shortLeverage` | Leverage multiplier for shorts | 1.0x |
+| `initialCapital` | Starting capital | $1,000 |
+| `gasFeePerTrade` | Fixed fee per trade | $0 |
+| `exchangeFee` | Percentage fee per trade | 0.05% |
+
+## How It Works
+
+### Signal Generation
+- **Long Signal**: Price closes above the moving average
+- **Short Signal**: Price closes below the moving average
+
+### Strategy Execution
+1. When a long signal appears (and `buyOnLongSignal` is enabled), enter a long position
+2. When a short signal appears (and `shortOnShort` is enabled), enter a short position
+3. Apply leverage to amplify returns
+4. Deduct fees on position entry and exit
+
+### Calculations
+- **Annualized Return**: Compounded annual growth rate over the data period
+- **Max Drawdown**: Largest peak-to-trough decline in portfolio value
+- **Trade Count**: Number of completed round-trip trades
+
+## Scripts
+
+### Extract Price Data from Excel
+
+If you need to update the price data from a new Excel file:
+
+```bash
+bun run scripts/extract-excel.ts
+```
+
+### Run Tests
 
 ```bash
 bun --bun run test
 ```
 
-## Styling
-
-This project uses CSS for styling.
-
-
-
-
-## Routing
-This project uses [TanStack Router](https://tanstack.com/router). The initial setup is a file based router. Which means that the routes are managed as files in `src/routes`.
-
-### Adding A Route
-
-To add a new route to your application just add another a new file in the `./src/routes` directory.
-
-TanStack will automatically generate the content of the route file for you.
-
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from "@tanstack/react-router";
-```
-
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you use the `<Outlet />` component.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { Outlet, createRootRoute } from '@tanstack/react-router'
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
-
-import { Link } from "@tanstack/react-router";
-
-export const Route = createRootRoute({
-  component: () => (
-    <>
-      <header>
-        <nav>
-          <Link to="/">Home</Link>
-          <Link to="/about">About</Link>
-        </nav>
-      </header>
-      <Outlet />
-      <TanStackRouterDevtools />
-    </>
-  ),
-})
-```
-
-The `<TanStackRouterDevtools />` component is not required so you can remove it if you don't want it in your layout.
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-const peopleRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/people",
-  loader: async () => {
-    const response = await fetch("https://swapi.dev/api/people");
-    return response.json() as Promise<{
-      results: {
-        name: string;
-      }[];
-    }>;
-  },
-  component: () => {
-    const data = peopleRoute.useLoaderData();
-    return (
-      <ul>
-        {data.results.map((person) => (
-          <li key={person.name}>{person.name}</li>
-        ))}
-      </ul>
-    );
-  },
-});
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-### React-Query
-
-React-Query is an excellent addition or alternative to route loading and integrating it into you application is a breeze.
-
-First add your dependencies:
+### Build for Production
 
 ```bash
-bun install @tanstack/react-query @tanstack/react-query-devtools
+bun --bun run build
 ```
 
-Next we'll need to create a query client and provider. We recommend putting those in `main.tsx`.
+## Database Schema
 
-```tsx
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+### PriceData
+Stores historical BTC daily price data:
+- `unixTimestamp`: Unix timestamp (unique index)
+- `date`: Date of the price
+- `closePrice`: Daily closing price
 
-// ...
+### StrategyConfig
+Stores saved strategy configurations:
+- `name`: Configuration name (unique)
+- Strategy parameters (maDuration, leverage, fees, etc.)
 
-const queryClient = new QueryClient();
+## License
 
-// ...
-
-if (!rootElement.innerHTML) {
-  const root = ReactDOM.createRoot(rootElement);
-
-  root.render(
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>
-  );
-}
-```
-
-You can also add TanStack Query Devtools to the root route (optional).
-
-```tsx
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-
-const rootRoute = createRootRoute({
-  component: () => (
-    <>
-      <Outlet />
-      <ReactQueryDevtools buttonPosition="top-right" />
-      <TanStackRouterDevtools />
-    </>
-  ),
-});
-```
-
-Now you can use `useQuery` to fetch your data.
-
-```tsx
-import { useQuery } from "@tanstack/react-query";
-
-import "./App.css";
-
-function App() {
-  const { data } = useQuery({
-    queryKey: ["people"],
-    queryFn: () =>
-      fetch("https://swapi.dev/api/people")
-        .then((res) => res.json())
-        .then((data) => data.results as { name: string }[]),
-    initialData: [],
-  });
-
-  return (
-    <div>
-      <ul>
-        {data.map((person) => (
-          <li key={person.name}>{person.name}</li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-export default App;
-```
-
-You can find out everything you need to know on how to use React-Query in the [React-Query documentation](https://tanstack.com/query/latest/docs/framework/react/overview).
-
-## State Management
-
-Another common requirement for React applications is state management. There are many options for state management in React. TanStack Store provides a great starting point for your project.
-
-First you need to add TanStack Store as a dependency:
-
-```bash
-bun install @tanstack/store
-```
-
-Now let's create a simple counter in the `src/App.tsx` file as a demonstration.
-
-```tsx
-import { useStore } from "@tanstack/react-store";
-import { Store } from "@tanstack/store";
-import "./App.css";
-
-const countStore = new Store(0);
-
-function App() {
-  const count = useStore(countStore);
-  return (
-    <div>
-      <button onClick={() => countStore.setState((n) => n + 1)}>
-        Increment - {count}
-      </button>
-    </div>
-  );
-}
-
-export default App;
-```
-
-One of the many nice features of TanStack Store is the ability to derive state from other state. That derived state will update when the base state updates.
-
-Let's check this out by doubling the count using derived state.
-
-```tsx
-import { useStore } from "@tanstack/react-store";
-import { Store, Derived } from "@tanstack/store";
-import "./App.css";
-
-const countStore = new Store(0);
-
-const doubledStore = new Derived({
-  fn: () => countStore.state * 2,
-  deps: [countStore],
-});
-doubledStore.mount();
-
-function App() {
-  const count = useStore(countStore);
-  const doubledCount = useStore(doubledStore);
-
-  return (
-    <div>
-      <button onClick={() => countStore.setState((n) => n + 1)}>
-        Increment - {count}
-      </button>
-      <div>Doubled - {doubledCount}</div>
-    </div>
-  );
-}
-
-export default App;
-```
-
-We use the `Derived` class to create a new store that is derived from another store. The `Derived` class has a `mount` method that will start the derived store updating.
-
-Once we've created the derived store we can use it in the `App` component just like we would any other store using the `useStore` hook.
-
-You can find out everything you need to know on how to use TanStack Store in the [TanStack Store documentation](https://tanstack.com/store/latest).
-
-# Demo files
-
-Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
+MIT
