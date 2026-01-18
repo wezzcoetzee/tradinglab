@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { db } from "../lib/db";
-import type { PricePoint, StrategyParams, StrategyResult, OptimizationResult } from "../lib/types/trading";
+import type { PricePoint, StrategyParams, StrategyResult, OptimizationResult, SavedOptimizationResult } from "../lib/types/trading";
 import {
   generateSignals,
   calculateHODLReturns,
@@ -41,6 +41,7 @@ export const getStrategyConfig = createServerFn({
       initialCapital: 1000,
       gasFeePerTrade: 0,
       exchangeFee: 0.0005,
+      simulationStartDate: undefined,
     };
   }
 
@@ -53,6 +54,7 @@ export const getStrategyConfig = createServerFn({
     initialCapital: Number(config.initialCapital),
     gasFeePerTrade: Number(config.gasFeePerTrade),
     exchangeFee: Number(config.exchangeFee),
+    simulationStartDate: config.simulationStartDate ? Number(config.simulationStartDate) : undefined,
   };
 });
 
@@ -62,17 +64,26 @@ export const calculateStrategy = createServerFn({ method: "POST" })
     const priceData = await getPriceData();
     const dataPoints = generateSignals(priceData, params.maDuration);
 
-    const hodlReturns = calculateHODLReturns(dataPoints);
-    const smaResult = calculateStrategyReturns(dataPoints, params, "sma");
-    const emaResult = calculateStrategyReturns(dataPoints, params, "ema");
+    let simulationStartIndex = 0;
+    if (params.simulationStartDate) {
+      simulationStartIndex = dataPoints.findIndex(
+        (p) => p.unixTimestamp >= params.simulationStartDate!
+      );
+      if (simulationStartIndex === -1) simulationStartIndex = 0;
+    }
 
-    const totalDays = priceData.length;
+    const hodlReturns = calculateHODLReturns(dataPoints, simulationStartIndex);
+    const smaResult = calculateStrategyReturns(dataPoints, params, "sma", simulationStartIndex);
+    const emaResult = calculateStrategyReturns(dataPoints, params, "ema", simulationStartIndex);
+
+    const simulationDataPoints = dataPoints.slice(simulationStartIndex);
+    const totalDays = simulationDataPoints.length;
     const hodlFinal = hodlReturns[hodlReturns.length - 1] ?? 1;
     const smaFinal = smaResult.returns[smaResult.returns.length - 1] ?? 1;
     const emaFinal = emaResult.returns[emaResult.returns.length - 1] ?? 1;
 
     return {
-      dataPoints,
+      dataPoints: simulationDataPoints,
       hodlReturns,
       smaReturns: smaResult.returns,
       emaReturns: emaResult.returns,
@@ -120,6 +131,7 @@ export const saveStrategyConfig = createServerFn({ method: "POST" })
         initialCapital: config.initialCapital,
         gasFeePerTrade: config.gasFeePerTrade,
         exchangeFee: config.exchangeFee,
+        simulationStartDate: config.simulationStartDate ?? null,
       },
       create: {
         name: "default",
@@ -131,8 +143,102 @@ export const saveStrategyConfig = createServerFn({ method: "POST" })
         initialCapital: config.initialCapital,
         gasFeePerTrade: config.gasFeePerTrade,
         exchangeFee: config.exchangeFee,
+        simulationStartDate: config.simulationStartDate ?? null,
       },
     });
 
     return config;
   });
+
+export const getPriceDataRange = createServerFn({
+  method: "GET",
+}).handler(async (): Promise<{ minTimestamp: number; maxTimestamp: number }> => {
+  const [minResult, maxResult] = await Promise.all([
+    db.priceData.findFirst({
+      orderBy: { unixTimestamp: "asc" },
+      select: { unixTimestamp: true },
+    }),
+    db.priceData.findFirst({
+      orderBy: { unixTimestamp: "desc" },
+      select: { unixTimestamp: true },
+    }),
+  ]);
+
+  return {
+    minTimestamp: minResult ? Number(minResult.unixTimestamp) : 0,
+    maxTimestamp: maxResult ? Number(maxResult.unixTimestamp) : Date.now(),
+  };
+});
+
+interface SaveOptimizationInput {
+  name: string;
+  bestSmaPeriod: number;
+  bestEmaPeriod: number;
+  smaAnnualized: number;
+  emaAnnualized: number;
+  smaMaxDrawdown: number;
+  emaMaxDrawdown: number;
+  params: Omit<StrategyParams, "maDuration">;
+}
+
+export const saveOptimizationResult = createServerFn({ method: "POST" })
+  .inputValidator((input: SaveOptimizationInput) => input)
+  .handler(async ({ data }): Promise<SavedOptimizationResult> => {
+    const result = await db.savedOptimizationResult.upsert({
+      where: { name: data.name },
+      update: {
+        bestSmaPeriod: data.bestSmaPeriod,
+        bestEmaPeriod: data.bestEmaPeriod,
+        smaAnnualized: data.smaAnnualized,
+        emaAnnualized: data.emaAnnualized,
+        smaMaxDrawdown: data.smaMaxDrawdown,
+        emaMaxDrawdown: data.emaMaxDrawdown,
+        params: data.params,
+        calculatedAt: new Date(),
+      },
+      create: {
+        name: data.name,
+        bestSmaPeriod: data.bestSmaPeriod,
+        bestEmaPeriod: data.bestEmaPeriod,
+        smaAnnualized: data.smaAnnualized,
+        emaAnnualized: data.emaAnnualized,
+        smaMaxDrawdown: data.smaMaxDrawdown,
+        emaMaxDrawdown: data.emaMaxDrawdown,
+        params: data.params,
+      },
+    });
+
+    return {
+      id: result.id,
+      name: result.name,
+      bestSmaPeriod: result.bestSmaPeriod,
+      bestEmaPeriod: result.bestEmaPeriod,
+      smaAnnualized: Number(result.smaAnnualized),
+      emaAnnualized: Number(result.emaAnnualized),
+      smaMaxDrawdown: Number(result.smaMaxDrawdown),
+      emaMaxDrawdown: Number(result.emaMaxDrawdown),
+      calculatedAt: result.calculatedAt,
+      params: result.params as Omit<StrategyParams, "maDuration">,
+    };
+  });
+
+export const getSavedOptimizationResults = createServerFn({
+  method: "GET",
+}).handler(async (): Promise<SavedOptimizationResult[]> => {
+  const results = await db.savedOptimizationResult.findMany({
+    orderBy: { calculatedAt: "desc" },
+  });
+
+  return results.map((r) => ({
+    id: r.id,
+    name: r.name,
+    bestSmaPeriod: r.bestSmaPeriod,
+    bestEmaPeriod: r.bestEmaPeriod,
+    smaAnnualized: Number(r.smaAnnualized),
+    emaAnnualized: Number(r.emaAnnualized),
+    smaMaxDrawdown: Number(r.smaMaxDrawdown),
+    emaMaxDrawdown: Number(r.emaMaxDrawdown),
+    calculatedAt: r.calculatedAt,
+    params: r.params as Omit<StrategyParams, "maDuration">,
+  }));
+});

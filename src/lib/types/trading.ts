@@ -13,6 +13,7 @@ export interface StrategyParams {
   initialCapital: number;
   gasFeePerTrade: number;
   exchangeFee: number;
+  simulationStartDate?: number;
 }
 
 export type Signal = "long" | "short" | "neutral";
@@ -58,4 +59,17 @@ export interface OptimizationResult {
   emaMaxDrawdown: number;
   smaTrades: number;
   emaTrades: number;
+}
+
+export interface SavedOptimizationResult {
+  id: number;
+  name: string;
+  bestSmaPeriod: number;
+  bestEmaPeriod: number;
+  smaAnnualized: number;
+  emaAnnualized: number;
+  smaMaxDrawdown: number;
+  emaMaxDrawdown: number;
+  calculatedAt: Date;
+  params: Omit<StrategyParams, "maDuration">;
 }

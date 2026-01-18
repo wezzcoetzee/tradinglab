@@ -5,11 +5,18 @@ import type {
   Signal,
 } from "../types/trading";
 
-export function calculateHODLReturns(dataPoints: DataPointWithIndicators[]): number[] {
+export function calculateHODLReturns(
+  dataPoints: DataPointWithIndicators[],
+  simulationStartIndex = 0
+): number[] {
   if (dataPoints.length === 0) return [];
 
-  const initialPrice = dataPoints[0].closePrice;
-  return dataPoints.map((point) => point.closePrice / initialPrice);
+  const startIdx = Math.max(0, Math.min(simulationStartIndex, dataPoints.length - 1));
+  const simulationPoints = dataPoints.slice(startIdx);
+  if (simulationPoints.length === 0) return [];
+
+  const initialPrice = simulationPoints[0].closePrice;
+  return simulationPoints.map((point) => point.closePrice / initialPrice);
 }
 
 interface StrategyState {
@@ -32,11 +39,14 @@ function applyTradeFees(
 export function calculateStrategyReturns(
   dataPoints: DataPointWithIndicators[],
   params: StrategyParams,
-  signalType: "sma" | "ema"
+  signalType: "sma" | "ema",
+  simulationStartIndex = 0
 ): { returns: number[]; trades: TradeRecord[] } {
   if (dataPoints.length === 0) return { returns: [], trades: [] };
 
+  const startIdx = Math.max(0, Math.min(simulationStartIndex, dataPoints.length - 1));
   const returns: number[] = [];
+  const recordedTrades: TradeRecord[] = [];
   const state: StrategyState = {
     capital: params.initialCapital,
     position: "neutral",
@@ -49,6 +59,17 @@ export function calculateStrategyReturns(
     const point = dataPoints[i];
     const signal: Signal = signalType === "sma" ? point.smaSignal : point.emaSignal;
     const price = point.closePrice;
+    const inSimulation = i >= startIdx;
+
+    if (i === startIdx && state.position !== "neutral") {
+      state.capital = params.initialCapital;
+      state.position = "neutral";
+      state.trades = [];
+    }
+
+    if (!inSimulation) {
+      continue;
+    }
 
     if (state.position === "neutral") {
       if (signal === "long" && params.buyOnLongSignal) {
@@ -75,7 +96,7 @@ export function calculateStrategyReturns(
           params.exchangeFee
         );
 
-        state.trades.push({
+        recordedTrades.push({
           entryTimestamp: state.entryTimestamp,
           exitTimestamp: point.unixTimestamp,
           entryPrice: state.entryPrice,
@@ -108,7 +129,7 @@ export function calculateStrategyReturns(
           params.exchangeFee
         );
 
-        state.trades.push({
+        recordedTrades.push({
           entryTimestamp: state.entryTimestamp,
           exitTimestamp: point.unixTimestamp,
           entryPrice: state.entryPrice,
@@ -142,7 +163,7 @@ export function calculateStrategyReturns(
     returns.push(currentCapital / params.initialCapital);
   }
 
-  return { returns, trades: state.trades };
+  return { returns, trades: recordedTrades };
 }
 
 export function calculateAnnualizedReturn(

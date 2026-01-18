@@ -10,4 +10,5 @@
  */
 export type * from './models/PriceData.ts'
 export type * from './models/StrategyConfig.ts'
+export type * from './models/SavedOptimizationResult.ts'
 export type * from './commonInputTypes.ts'

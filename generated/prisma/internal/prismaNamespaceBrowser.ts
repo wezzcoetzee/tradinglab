@@ -52,7 +52,8 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   PriceData: 'PriceData',
-  StrategyConfig: 'StrategyConfig'
+  StrategyConfig: 'StrategyConfig',
+  SavedOptimizationResult: 'SavedOptimizationResult'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -91,10 +92,27 @@ export const StrategyConfigScalarFieldEnum = {
   shortLeverage: 'shortLeverage',
   initialCapital: 'initialCapital',
   gasFeePerTrade: 'gasFeePerTrade',
-  exchangeFee: 'exchangeFee'
+  exchangeFee: 'exchangeFee',
+  simulationStartDate: 'simulationStartDate'
 } as const
 
 export type StrategyConfigScalarFieldEnum = (typeof StrategyConfigScalarFieldEnum)[keyof typeof StrategyConfigScalarFieldEnum]
+
+
+export const SavedOptimizationResultScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  bestSmaPeriod: 'bestSmaPeriod',
+  bestEmaPeriod: 'bestEmaPeriod',
+  smaAnnualized: 'smaAnnualized',
+  emaAnnualized: 'emaAnnualized',
+  smaMaxDrawdown: 'smaMaxDrawdown',
+  emaMaxDrawdown: 'emaMaxDrawdown',
+  calculatedAt: 'calculatedAt',
+  params: 'params'
+} as const
+
+export type SavedOptimizationResultScalarFieldEnum = (typeof SavedOptimizationResultScalarFieldEnum)[keyof typeof SavedOptimizationResultScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -105,10 +123,34 @@ export const SortOrder = {
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+export const JsonNullValueInput = {
+  JsonNull: 'JsonNull'
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
 export const QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
 } as const
 
 export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
+
+
+export const NullsOrder = {
+  first: 'first',
+  last: 'last'
+} as const
+
+export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: 'DbNull',
+  JsonNull: 'JsonNull',
+  AnyNull: 'AnyNull'
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 

@@ -49,3 +49,8 @@ export type PriceData = Prisma.PriceDataModel
  * 
  */
 export type StrategyConfig = Prisma.StrategyConfigModel
+/**
+ * Model SavedOptimizationResult
+ * 
+ */
+export type SavedOptimizationResult = Prisma.SavedOptimizationResultModel

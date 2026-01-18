@@ -385,7 +385,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 export const ModelName = {
   PriceData: 'PriceData',
-  StrategyConfig: 'StrategyConfig'
+  StrategyConfig: 'StrategyConfig',
+  SavedOptimizationResult: 'SavedOptimizationResult'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -401,7 +402,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "priceData" | "strategyConfig"
+    modelProps: "priceData" | "strategyConfig" | "savedOptimizationResult"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -553,6 +554,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    SavedOptimizationResult: {
+      payload: Prisma.$SavedOptimizationResultPayload<ExtArgs>
+      fields: Prisma.SavedOptimizationResultFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.SavedOptimizationResultFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SavedOptimizationResultPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.SavedOptimizationResultFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SavedOptimizationResultPayload>
+        }
+        findFirst: {
+          args: Prisma.SavedOptimizationResultFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SavedOptimizationResultPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.SavedOptimizationResultFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SavedOptimizationResultPayload>
+        }
+        findMany: {
+          args: Prisma.SavedOptimizationResultFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SavedOptimizationResultPayload>[]
+        }
+        create: {
+          args: Prisma.SavedOptimizationResultCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SavedOptimizationResultPayload>
+        }
+        createMany: {
+          args: Prisma.SavedOptimizationResultCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.SavedOptimizationResultCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SavedOptimizationResultPayload>[]
+        }
+        delete: {
+          args: Prisma.SavedOptimizationResultDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SavedOptimizationResultPayload>
+        }
+        update: {
+          args: Prisma.SavedOptimizationResultUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SavedOptimizationResultPayload>
+        }
+        deleteMany: {
+          args: Prisma.SavedOptimizationResultDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.SavedOptimizationResultUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.SavedOptimizationResultUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SavedOptimizationResultPayload>[]
+        }
+        upsert: {
+          args: Prisma.SavedOptimizationResultUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SavedOptimizationResultPayload>
+        }
+        aggregate: {
+          args: Prisma.SavedOptimizationResultAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateSavedOptimizationResult>
+        }
+        groupBy: {
+          args: Prisma.SavedOptimizationResultGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SavedOptimizationResultGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.SavedOptimizationResultCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SavedOptimizationResultCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -612,10 +687,27 @@ export const StrategyConfigScalarFieldEnum = {
   shortLeverage: 'shortLeverage',
   initialCapital: 'initialCapital',
   gasFeePerTrade: 'gasFeePerTrade',
-  exchangeFee: 'exchangeFee'
+  exchangeFee: 'exchangeFee',
+  simulationStartDate: 'simulationStartDate'
 } as const
 
 export type StrategyConfigScalarFieldEnum = (typeof StrategyConfigScalarFieldEnum)[keyof typeof StrategyConfigScalarFieldEnum]
+
+
+export const SavedOptimizationResultScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  bestSmaPeriod: 'bestSmaPeriod',
+  bestEmaPeriod: 'bestEmaPeriod',
+  smaAnnualized: 'smaAnnualized',
+  emaAnnualized: 'emaAnnualized',
+  smaMaxDrawdown: 'smaMaxDrawdown',
+  emaMaxDrawdown: 'emaMaxDrawdown',
+  calculatedAt: 'calculatedAt',
+  params: 'params'
+} as const
+
+export type SavedOptimizationResultScalarFieldEnum = (typeof SavedOptimizationResultScalarFieldEnum)[keyof typeof SavedOptimizationResultScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -626,12 +718,36 @@ export const SortOrder = {
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
 export const QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
 } as const
 
 export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
+
+
+export const NullsOrder = {
+  first: 'first',
+  last: 'last'
+} as const
+
+export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 
 
 
@@ -714,6 +830,20 @@ export type ListStringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaMod
  * Reference to a field of type 'Boolean'
  */
 export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+/**
+ * Reference to a field of type 'Json'
+ */
+export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+/**
+ * Reference to a field of type 'QueryMode'
+ */
+export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
     
 
 
@@ -827,6 +957,7 @@ export type PrismaClientOptions = ({
 export type GlobalOmitConfig = {
   priceData?: Prisma.PriceDataOmit
   strategyConfig?: Prisma.StrategyConfigOmit
+  savedOptimizationResult?: Prisma.SavedOptimizationResultOmit
 }
 
 /* Types for Logging */

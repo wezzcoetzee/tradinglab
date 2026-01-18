@@ -17,14 +17,28 @@ model PriceData {
 }
 
 model StrategyConfig {
-    id             Int     @id @default(autoincrement())
-    name           String  @unique
-    maDuration     Int     @default(44)
-    buyOnLongSignal Boolean @default(true)
-    shortOnShort   Boolean @default(false)
-    longLeverage   Decimal @default(2.25)
-    shortLeverage  Decimal @default(1.0)
-    initialCapital Decimal @default(1000)
-    gasFeePerTrade Decimal @default(0)
-    exchangeFee    Decimal @default(0.0005)
+    id                  Int     @id @default(autoincrement())
+    name                String  @unique
+    maDuration          Int     @default(44)
+    buyOnLongSignal     Boolean @default(true)
+    shortOnShort        Boolean @default(false)
+    longLeverage        Decimal @default(2.25)
+    shortLeverage       Decimal @default(1.0)
+    initialCapital      Decimal @default(1000)
+    gasFeePerTrade      Decimal @default(0)
+    exchangeFee         Decimal @default(0.0005)
+    simulationStartDate BigInt?
+}
+
+model SavedOptimizationResult {
+    id             Int      @id @default(autoincrement())
+    name           String   @unique
+    bestSmaPeriod  Int
+    bestEmaPeriod  Int
+    smaAnnualized  Decimal  @db.Decimal(18, 8)
+    emaAnnualized  Decimal  @db.Decimal(18, 8)
+    smaMaxDrawdown Decimal  @db.Decimal(18, 8)
+    emaMaxDrawdown Decimal  @db.Decimal(18, 8)
+    calculatedAt   DateTime @default(now())
+    params         Json
 }

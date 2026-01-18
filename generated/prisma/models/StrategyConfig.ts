@@ -34,6 +34,7 @@ export type StrategyConfigAvgAggregateOutputType = {
   initialCapital: runtime.Decimal | null
   gasFeePerTrade: runtime.Decimal | null
   exchangeFee: runtime.Decimal | null
+  simulationStartDate: number | null
 }
 
 export type StrategyConfigSumAggregateOutputType = {
@@ -44,6 +45,7 @@ export type StrategyConfigSumAggregateOutputType = {
   initialCapital: runtime.Decimal | null
   gasFeePerTrade: runtime.Decimal | null
   exchangeFee: runtime.Decimal | null
+  simulationStartDate: bigint | null
 }
 
 export type StrategyConfigMinAggregateOutputType = {
@@ -57,6 +59,7 @@ export type StrategyConfigMinAggregateOutputType = {
   initialCapital: runtime.Decimal | null
   gasFeePerTrade: runtime.Decimal | null
   exchangeFee: runtime.Decimal | null
+  simulationStartDate: bigint | null
 }
 
 export type StrategyConfigMaxAggregateOutputType = {
@@ -70,6 +73,7 @@ export type StrategyConfigMaxAggregateOutputType = {
   initialCapital: runtime.Decimal | null
   gasFeePerTrade: runtime.Decimal | null
   exchangeFee: runtime.Decimal | null
+  simulationStartDate: bigint | null
 }
 
 export type StrategyConfigCountAggregateOutputType = {
@@ -83,6 +87,7 @@ export type StrategyConfigCountAggregateOutputType = {
   initialCapital: number
   gasFeePerTrade: number
   exchangeFee: number
+  simulationStartDate: number
   _all: number
 }
 
@@ -95,6 +100,7 @@ export type StrategyConfigAvgAggregateInputType = {
   initialCapital?: true
   gasFeePerTrade?: true
   exchangeFee?: true
+  simulationStartDate?: true
 }
 
 export type StrategyConfigSumAggregateInputType = {
@@ -105,6 +111,7 @@ export type StrategyConfigSumAggregateInputType = {
   initialCapital?: true
   gasFeePerTrade?: true
   exchangeFee?: true
+  simulationStartDate?: true
 }
 
 export type StrategyConfigMinAggregateInputType = {
@@ -118,6 +125,7 @@ export type StrategyConfigMinAggregateInputType = {
   initialCapital?: true
   gasFeePerTrade?: true
   exchangeFee?: true
+  simulationStartDate?: true
 }
 
 export type StrategyConfigMaxAggregateInputType = {
@@ -131,6 +139,7 @@ export type StrategyConfigMaxAggregateInputType = {
   initialCapital?: true
   gasFeePerTrade?: true
   exchangeFee?: true
+  simulationStartDate?: true
 }
 
 export type StrategyConfigCountAggregateInputType = {
@@ -144,6 +153,7 @@ export type StrategyConfigCountAggregateInputType = {
   initialCapital?: true
   gasFeePerTrade?: true
   exchangeFee?: true
+  simulationStartDate?: true
   _all?: true
 }
 
@@ -244,6 +254,7 @@ export type StrategyConfigGroupByOutputType = {
   initialCapital: runtime.Decimal
   gasFeePerTrade: runtime.Decimal
   exchangeFee: runtime.Decimal
+  simulationStartDate: bigint | null
   _count: StrategyConfigCountAggregateOutputType | null
   _avg: StrategyConfigAvgAggregateOutputType | null
   _sum: StrategyConfigSumAggregateOutputType | null
@@ -280,6 +291,7 @@ export type StrategyConfigWhereInput = {
   initialCapital?: Prisma.DecimalFilter<"StrategyConfig"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   gasFeePerTrade?: Prisma.DecimalFilter<"StrategyConfig"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   exchangeFee?: Prisma.DecimalFilter<"StrategyConfig"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  simulationStartDate?: Prisma.BigIntNullableFilter<"StrategyConfig"> | bigint | number | null
 }
 
 export type StrategyConfigOrderByWithRelationInput = {
@@ -293,6 +305,7 @@ export type StrategyConfigOrderByWithRelationInput = {
   initialCapital?: Prisma.SortOrder
   gasFeePerTrade?: Prisma.SortOrder
   exchangeFee?: Prisma.SortOrder
+  simulationStartDate?: Prisma.SortOrderInput | Prisma.SortOrder
 }
 
 export type StrategyConfigWhereUniqueInput = Prisma.AtLeast<{
@@ -309,6 +322,7 @@ export type StrategyConfigWhereUniqueInput = Prisma.AtLeast<{
   initialCapital?: Prisma.DecimalFilter<"StrategyConfig"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   gasFeePerTrade?: Prisma.DecimalFilter<"StrategyConfig"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   exchangeFee?: Prisma.DecimalFilter<"StrategyConfig"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  simulationStartDate?: Prisma.BigIntNullableFilter<"StrategyConfig"> | bigint | number | null
 }, "id" | "name">
 
 export type StrategyConfigOrderByWithAggregationInput = {
@@ -322,6 +336,7 @@ export type StrategyConfigOrderByWithAggregationInput = {
   initialCapital?: Prisma.SortOrder
   gasFeePerTrade?: Prisma.SortOrder
   exchangeFee?: Prisma.SortOrder
+  simulationStartDate?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.StrategyConfigCountOrderByAggregateInput
   _avg?: Prisma.StrategyConfigAvgOrderByAggregateInput
   _max?: Prisma.StrategyConfigMaxOrderByAggregateInput
@@ -343,6 +358,7 @@ export type StrategyConfigScalarWhereWithAggregatesInput = {
   initialCapital?: Prisma.DecimalWithAggregatesFilter<"StrategyConfig"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   gasFeePerTrade?: Prisma.DecimalWithAggregatesFilter<"StrategyConfig"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   exchangeFee?: Prisma.DecimalWithAggregatesFilter<"StrategyConfig"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  simulationStartDate?: Prisma.BigIntNullableWithAggregatesFilter<"StrategyConfig"> | bigint | number | null
 }
 
 export type StrategyConfigCreateInput = {
@@ -355,6 +371,7 @@ export type StrategyConfigCreateInput = {
   initialCapital?: runtime.Decimal | runtime.DecimalJsLike | number | string
   gasFeePerTrade?: runtime.Decimal | runtime.DecimalJsLike | number | string
   exchangeFee?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  simulationStartDate?: bigint | number | null
 }
 
 export type StrategyConfigUncheckedCreateInput = {
@@ -368,6 +385,7 @@ export type StrategyConfigUncheckedCreateInput = {
   initialCapital?: runtime.Decimal | runtime.DecimalJsLike | number | string
   gasFeePerTrade?: runtime.Decimal | runtime.DecimalJsLike | number | string
   exchangeFee?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  simulationStartDate?: bigint | number | null
 }
 
 export type StrategyConfigUpdateInput = {
@@ -380,6 +398,7 @@ export type StrategyConfigUpdateInput = {
   initialCapital?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   gasFeePerTrade?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   exchangeFee?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  simulationStartDate?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
 }
 
 export type StrategyConfigUncheckedUpdateInput = {
@@ -393,6 +412,7 @@ export type StrategyConfigUncheckedUpdateInput = {
   initialCapital?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   gasFeePerTrade?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   exchangeFee?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  simulationStartDate?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
 }
 
 export type StrategyConfigCreateManyInput = {
@@ -406,6 +426,7 @@ export type StrategyConfigCreateManyInput = {
   initialCapital?: runtime.Decimal | runtime.DecimalJsLike | number | string
   gasFeePerTrade?: runtime.Decimal | runtime.DecimalJsLike | number | string
   exchangeFee?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  simulationStartDate?: bigint | number | null
 }
 
 export type StrategyConfigUpdateManyMutationInput = {
@@ -418,6 +439,7 @@ export type StrategyConfigUpdateManyMutationInput = {
   initialCapital?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   gasFeePerTrade?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   exchangeFee?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  simulationStartDate?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
 }
 
 export type StrategyConfigUncheckedUpdateManyInput = {
@@ -431,6 +453,7 @@ export type StrategyConfigUncheckedUpdateManyInput = {
   initialCapital?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   gasFeePerTrade?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   exchangeFee?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  simulationStartDate?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
 }
 
 export type StrategyConfigCountOrderByAggregateInput = {
@@ -444,6 +467,7 @@ export type StrategyConfigCountOrderByAggregateInput = {
   initialCapital?: Prisma.SortOrder
   gasFeePerTrade?: Prisma.SortOrder
   exchangeFee?: Prisma.SortOrder
+  simulationStartDate?: Prisma.SortOrder
 }
 
 export type StrategyConfigAvgOrderByAggregateInput = {
@@ -454,6 +478,7 @@ export type StrategyConfigAvgOrderByAggregateInput = {
   initialCapital?: Prisma.SortOrder
   gasFeePerTrade?: Prisma.SortOrder
   exchangeFee?: Prisma.SortOrder
+  simulationStartDate?: Prisma.SortOrder
 }
 
 export type StrategyConfigMaxOrderByAggregateInput = {
@@ -467,6 +492,7 @@ export type StrategyConfigMaxOrderByAggregateInput = {
   initialCapital?: Prisma.SortOrder
   gasFeePerTrade?: Prisma.SortOrder
   exchangeFee?: Prisma.SortOrder
+  simulationStartDate?: Prisma.SortOrder
 }
 
 export type StrategyConfigMinOrderByAggregateInput = {
@@ -480,6 +506,7 @@ export type StrategyConfigMinOrderByAggregateInput = {
   initialCapital?: Prisma.SortOrder
   gasFeePerTrade?: Prisma.SortOrder
   exchangeFee?: Prisma.SortOrder
+  simulationStartDate?: Prisma.SortOrder
 }
 
 export type StrategyConfigSumOrderByAggregateInput = {
@@ -490,6 +517,7 @@ export type StrategyConfigSumOrderByAggregateInput = {
   initialCapital?: Prisma.SortOrder
   gasFeePerTrade?: Prisma.SortOrder
   exchangeFee?: Prisma.SortOrder
+  simulationStartDate?: Prisma.SortOrder
 }
 
 export type StringFieldUpdateOperationsInput = {
@@ -498,6 +526,14 @@ export type StringFieldUpdateOperationsInput = {
 
 export type BoolFieldUpdateOperationsInput = {
   set?: boolean
+}
+
+export type NullableBigIntFieldUpdateOperationsInput = {
+  set?: bigint | number | null
+  increment?: bigint | number
+  decrement?: bigint | number
+  multiply?: bigint | number
+  divide?: bigint | number
 }
 
 
@@ -513,6 +549,7 @@ export type StrategyConfigSelect<ExtArgs extends runtime.Types.Extensions.Intern
   initialCapital?: boolean
   gasFeePerTrade?: boolean
   exchangeFee?: boolean
+  simulationStartDate?: boolean
 }, ExtArgs["result"]["strategyConfig"]>
 
 export type StrategyConfigSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -526,6 +563,7 @@ export type StrategyConfigSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   initialCapital?: boolean
   gasFeePerTrade?: boolean
   exchangeFee?: boolean
+  simulationStartDate?: boolean
 }, ExtArgs["result"]["strategyConfig"]>
 
 export type StrategyConfigSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -539,6 +577,7 @@ export type StrategyConfigSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   initialCapital?: boolean
   gasFeePerTrade?: boolean
   exchangeFee?: boolean
+  simulationStartDate?: boolean
 }, ExtArgs["result"]["strategyConfig"]>
 
 export type StrategyConfigSelectScalar = {
@@ -552,9 +591,10 @@ export type StrategyConfigSelectScalar = {
   initialCapital?: boolean
   gasFeePerTrade?: boolean
   exchangeFee?: boolean
+  simulationStartDate?: boolean
 }
 
-export type StrategyConfigOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "maDuration" | "buyOnLongSignal" | "shortOnShort" | "longLeverage" | "shortLeverage" | "initialCapital" | "gasFeePerTrade" | "exchangeFee", ExtArgs["result"]["strategyConfig"]>
+export type StrategyConfigOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "maDuration" | "buyOnLongSignal" | "shortOnShort" | "longLeverage" | "shortLeverage" | "initialCapital" | "gasFeePerTrade" | "exchangeFee" | "simulationStartDate", ExtArgs["result"]["strategyConfig"]>
 
 export type $StrategyConfigPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "StrategyConfig"
@@ -570,6 +610,7 @@ export type $StrategyConfigPayload<ExtArgs extends runtime.Types.Extensions.Inte
     initialCapital: runtime.Decimal
     gasFeePerTrade: runtime.Decimal
     exchangeFee: runtime.Decimal
+    simulationStartDate: bigint | null
   }, ExtArgs["result"]["strategyConfig"]>
   composites: {}
 }
@@ -1003,6 +1044,7 @@ export interface StrategyConfigFieldRefs {
   readonly initialCapital: Prisma.FieldRef<"StrategyConfig", 'Decimal'>
   readonly gasFeePerTrade: Prisma.FieldRef<"StrategyConfig", 'Decimal'>
   readonly exchangeFee: Prisma.FieldRef<"StrategyConfig", 'Decimal'>
+  readonly simulationStartDate: Prisma.FieldRef<"StrategyConfig", 'BigInt'>
 }
     
 

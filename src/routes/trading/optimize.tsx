@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { getStrategyConfig, getOptimizationData } from "@/data/trading.server";
+import { getStrategyConfig, getOptimizationData, saveOptimizationResult } from "@/data/trading.server";
 import type { StrategyParams, OptimizationResult } from "@/lib/types/trading";
 import { ParameterPanel, OptimizationChart } from "@/components/trading";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,8 @@ function OptimizationPage() {
   const [minPeriod, setMinPeriod] = useState(5);
   const [maxPeriod, setMaxPeriod] = useState(200);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveName, setSaveName] = useState("");
 
   const handleParamsChange = useCallback((newParams: StrategyParams) => {
     setParams(newParams);
@@ -56,6 +58,29 @@ function OptimizationPage() {
   const bestEma = results.reduce((best, curr) =>
     curr.emaAnnualized > best.emaAnnualized ? curr : best
   );
+
+  const handleSaveBest = useCallback(async () => {
+    if (!saveName.trim()) return;
+    setIsSaving(true);
+    try {
+      const { maDuration: _, ...baseParams } = params;
+      await saveOptimizationResult({
+        data: {
+          name: saveName.trim(),
+          bestSmaPeriod: bestSma.maDuration,
+          bestEmaPeriod: bestEma.maDuration,
+          smaAnnualized: bestSma.smaAnnualized,
+          emaAnnualized: bestEma.emaAnnualized,
+          smaMaxDrawdown: bestSma.smaMaxDrawdown,
+          emaMaxDrawdown: bestEma.emaMaxDrawdown,
+          params: baseParams,
+        },
+      });
+      setSaveName("");
+    } finally {
+      setIsSaving(false);
+    }
+  }, [saveName, params, bestSma, bestEma]);
 
   return (
     <div className="container mx-auto py-6 px-4">
@@ -107,6 +132,32 @@ function OptimizationPage() {
           >
             {isCalculating ? "Optimizing..." : "Run Optimization"}
           </Button>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Save Results</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="saveName">Name</Label>
+                <Input
+                  id="saveName"
+                  type="text"
+                  value={saveName}
+                  onChange={(e) => setSaveName(e.target.value)}
+                  placeholder="e.g., Bull Market Config"
+                />
+              </div>
+              <Button
+                onClick={handleSaveBest}
+                disabled={isSaving || !saveName.trim()}
+                className="w-full"
+                variant="secondary"
+              >
+                {isSaving ? "Saving..." : "Save Best Results"}
+              </Button>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="lg:col-span-3 space-y-6">
