@@ -1,0 +1,30 @@
+generator client {
+    provider = "prisma-client"
+    output   = "../generated/prisma"
+}
+
+datasource db {
+    provider = "postgresql"
+}
+
+model PriceData {
+    id            Int      @id @default(autoincrement())
+    unixTimestamp BigInt   @unique
+    date          DateTime
+    closePrice    Decimal  @db.Decimal(18, 8)
+
+    @@index([unixTimestamp])
+}
+
+model StrategyConfig {
+    id             Int     @id @default(autoincrement())
+    name           String  @unique
+    maDuration     Int     @default(44)
+    buyOnLongSignal Boolean @default(true)
+    shortOnShort   Boolean @default(false)
+    longLeverage   Decimal @default(2.25)
+    shortLeverage  Decimal @default(1.0)
+    initialCapital Decimal @default(1000)
+    gasFeePerTrade Decimal @default(0)
+    exchangeFee    Decimal @default(0.0005)
+}
