@@ -71,7 +71,7 @@ function TradingDashboard() {
 
         <div className="lg:col-span-3 space-y-6">
           <StatsCards result={result} />
-          <ReturnsComparison result={result} />
+          <ReturnsComparison result={result} initialCapital={params.initialCapital} />
           <PriceChart dataPoints={result.dataPoints} />
         </div>
       </div>
