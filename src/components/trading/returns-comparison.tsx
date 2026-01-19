@@ -29,8 +29,8 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export function ReturnsComparison({ result, initialCapital }: ReturnsComparisonProps) {
-  const [valueFormat, setValueFormat] = useState<"percent" | "dollar">("percent");
-  const [useLogScale, setUseLogScale] = useState(false);
+  const [valueFormat, setValueFormat] = useState<"percent" | "dollar">("dollar");
+  const [useLogScale, setUseLogScale] = useState(true);
   const [visibleLines, setVisibleLines] = useState<Record<string, boolean>>({
     hodl: true,
     sma: true,
