@@ -16,7 +16,7 @@ interface PriceChartProps {
 const chartConfig = {
   price: {
     label: "BTC Price",
-    color: "var(--chart-4)",
+    color: "#F7931A",
   },
   sma: {
     label: "SMA",
