@@ -4,6 +4,7 @@ import { getStrategyConfig, getOptimizationData, saveOptimizationResult, calcula
 import type { StrategyParams, OptimizationResult, StrategyResult } from "@/lib/types/trading";
 import { ParameterPanel, OptimizationChart, DataTable } from "@/components/trading";
 import { computeRunningDrawdowns } from "@/lib/calculations";
+import { parseIntOrDefault } from "@/lib/utils/parse";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -115,7 +116,7 @@ function OptimizationPage() {
                   id="minPeriod"
                   type="number"
                   value={minPeriod}
-                  onChange={(e) => setMinPeriod(Number(e.target.value))}
+                  onChange={(e) => setMinPeriod(parseIntOrDefault(e.target.value, 1))}
                   min={1}
                   max={maxPeriod - 1}
                 />
@@ -126,7 +127,7 @@ function OptimizationPage() {
                   id="maxPeriod"
                   type="number"
                   value={maxPeriod}
-                  onChange={(e) => setMaxPeriod(Number(e.target.value))}
+                  onChange={(e) => setMaxPeriod(parseIntOrDefault(e.target.value, 200))}
                   min={minPeriod + 1}
                   max={200}
                 />

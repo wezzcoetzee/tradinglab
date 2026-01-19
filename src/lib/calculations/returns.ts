@@ -1,8 +1,21 @@
 import type {
   DataPointWithIndicators,
+  Position,
+  Signal,
   StrategyParams,
   TradeRecord,
 } from "../types/trading";
+
+export type { Position };
+
+function getTargetPosition(
+  signal: Signal,
+  params: Pick<StrategyParams, "buyOnLongSignal" | "shortOnShort">
+): Position {
+  if (signal === "long" && params.buyOnLongSignal) return "long";
+  if (signal === "short" && params.shortOnShort) return "short";
+  return "neutral";
+}
 
 export function calculateHODLReturns(
   dataPoints: DataPointWithIndicators[],
@@ -20,7 +33,7 @@ export function calculateHODLReturns(
 
 interface StrategyState {
   capital: number;
-  position: "long" | "short" | "neutral";
+  position: Position;
   entryPrice: number;
   entryTimestamp: number;
   previousPrice: number;
@@ -33,6 +46,48 @@ function applyTradeFees(
 ): number {
   const feeAmount = capital * exchangeFee;
   return capital - gasFee - feeAmount;
+}
+
+function applyDailyReturn(state: StrategyState, price: number, params: StrategyParams): void {
+  if (state.position === "long") {
+    const dailyReturn = (price - state.previousPrice) / state.previousPrice;
+    state.capital = state.capital * (1 + dailyReturn * params.longLeverage);
+  }
+}
+
+function createTradeRecord(
+  state: StrategyState,
+  point: DataPointWithIndicators,
+  params: StrategyParams
+): TradeRecord {
+  return {
+    entryTimestamp: state.entryTimestamp,
+    exitTimestamp: point.unixTimestamp,
+    entryPrice: state.entryPrice,
+    exitPrice: point.closePrice,
+    position: state.position as Exclude<Position, "neutral">,
+    returnPct: (state.capital - params.initialCapital) / params.initialCapital,
+    capitalAfter: state.capital,
+  };
+}
+
+function handlePositionTransition(
+  state: StrategyState,
+  targetPosition: Position,
+  point: DataPointWithIndicators,
+  params: StrategyParams,
+  trades: TradeRecord[]
+): void {
+  if (state.position === targetPosition) return;
+
+  if (state.position !== "neutral") {
+    trades.push(createTradeRecord(state, point, params));
+  }
+
+  state.capital = applyTradeFees(state.capital, params.gasFeePerTrade, params.exchangeFee);
+  state.position = targetPosition;
+  state.entryPrice = point.closePrice;
+  state.entryTimestamp = point.unixTimestamp;
 }
 
 export function calculateStrategyReturns(
@@ -53,23 +108,15 @@ export function calculateStrategyReturns(
     previousPrice: 0,
   };
 
-  for (let i = 0; i < dataPoints.length; i++) {
+  for (let i = startIdx; i < dataPoints.length; i++) {
     const point = dataPoints[i];
     const signal = point.smaSignal;
     const price = point.closePrice;
-    const inSimulation = i >= startIdx;
-
-    if (!inSimulation) {
-      continue;
-    }
+    const targetPosition = getTargetPosition(signal, params);
 
     if (i === startIdx) {
       state.capital = params.initialCapital;
       state.previousPrice = price;
-
-      const targetPosition =
-        signal === "long" && params.buyOnLongSignal ? "long" :
-        signal === "short" && params.shortOnShort ? "short" : "neutral";
 
       if (targetPosition !== "neutral") {
         state.capital = applyTradeFees(state.capital, params.gasFeePerTrade, params.exchangeFee);
@@ -82,34 +129,8 @@ export function calculateStrategyReturns(
       continue;
     }
 
-    if (state.position === "long") {
-      const dailyReturn = (price - state.previousPrice) / state.previousPrice;
-      state.capital = state.capital * (1 + dailyReturn * params.longLeverage);
-    }
-    // "short" position = cash/neutral (0 return, matching Excel behavior)
-
-    const targetPosition =
-      signal === "long" && params.buyOnLongSignal ? "long" :
-      signal === "short" && params.shortOnShort ? "short" : "neutral";
-
-    if (state.position !== targetPosition) {
-      if (state.position !== "neutral") {
-        recordedTrades.push({
-          entryTimestamp: state.entryTimestamp,
-          exitTimestamp: point.unixTimestamp,
-          entryPrice: state.entryPrice,
-          exitPrice: price,
-          position: state.position,
-          returnPct: (state.capital - params.initialCapital) / params.initialCapital,
-          capitalAfter: state.capital,
-        });
-      }
-
-      state.capital = applyTradeFees(state.capital, params.gasFeePerTrade, params.exchangeFee);
-      state.position = targetPosition;
-      state.entryPrice = price;
-      state.entryTimestamp = point.unixTimestamp;
-    }
+    applyDailyReturn(state, price, params);
+    handlePositionTransition(state, targetPosition, point, params, recordedTrades);
 
     state.previousPrice = price;
     returns.push(state.capital / params.initialCapital);
@@ -130,22 +151,8 @@ export function calculateAnnualizedReturn(
 }
 
 export function calculateMaxDrawdown(returns: number[]): number {
-  if (returns.length === 0) return 0;
-
-  let peak = returns[0];
-  let maxDrawdown = 0;
-
-  for (const value of returns) {
-    if (value > peak) {
-      peak = value;
-    }
-    const drawdown = (peak - value) / peak;
-    if (drawdown > maxDrawdown) {
-      maxDrawdown = drawdown;
-    }
-  }
-
-  return maxDrawdown;
+  const runningDrawdowns = computeRunningDrawdowns(returns);
+  return runningDrawdowns[runningDrawdowns.length - 1] ?? 0;
 }
 
 export function computeRunningDrawdowns(returns: number[]): number[] {

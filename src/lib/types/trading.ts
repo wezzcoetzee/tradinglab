@@ -18,6 +18,7 @@ export interface StrategyParams {
 }
 
 export type Signal = "long" | "short" | "neutral";
+export type Position = "long" | "short" | "neutral";
 
 export interface DataPointWithIndicators extends PricePoint {
   sma?: number;
@@ -29,7 +30,7 @@ export interface TradeRecord {
   exitTimestamp: number;
   entryPrice: number;
   exitPrice: number;
-  position: "long" | "short";
+  position: Exclude<Position, "neutral">;
   returnPct: number;
   capitalAfter: number;
 }

@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { db } from "../lib/db";
 import type { PricePoint, StrategyParams, StrategyResult, OptimizationResult, SavedOptimizationResult } from "../lib/types/trading";
+import { FAIR_COMPARISON_START_DAY } from "../lib/constants/trading";
 import {
   generateSignals,
   calculateHODLReturns,
@@ -60,8 +61,6 @@ export const getStrategyConfig = createServerFn({
   };
 });
 
-const FAIR_COMPARISON_START_DAY = 200;
-
 export const calculateStrategy = createServerFn({ method: "POST" })
   .inputValidator((params: StrategyParams) => params)
   .handler(async ({ data: params }): Promise<StrategyResult> => {
@@ -117,36 +116,29 @@ export const getOptimizationData = createServerFn({ method: "POST" })
     );
   });
 
+function toStrategyConfigFields(config: StrategyParams) {
+  return {
+    maDuration: config.maDuration,
+    buyOnLongSignal: config.buyOnLongSignal,
+    shortOnShort: config.shortOnShort,
+    longLeverage: config.longLeverage,
+    shortLeverage: config.shortLeverage,
+    initialCapital: config.initialCapital,
+    gasFeePerTrade: config.gasFeePerTrade,
+    exchangeFee: config.exchangeFee,
+    signalThreshold: config.signalThreshold,
+    simulationStartDate: config.simulationStartDate ?? null,
+  };
+}
+
 export const saveStrategyConfig = createServerFn({ method: "POST" })
   .inputValidator((config: StrategyParams) => config)
   .handler(async ({ data: config }): Promise<StrategyParams> => {
+    const fields = toStrategyConfigFields(config);
     await db.strategyConfig.upsert({
       where: { name: "default" },
-      update: {
-        maDuration: config.maDuration,
-        buyOnLongSignal: config.buyOnLongSignal,
-        shortOnShort: config.shortOnShort,
-        longLeverage: config.longLeverage,
-        shortLeverage: config.shortLeverage,
-        initialCapital: config.initialCapital,
-        gasFeePerTrade: config.gasFeePerTrade,
-        exchangeFee: config.exchangeFee,
-        signalThreshold: config.signalThreshold,
-        simulationStartDate: config.simulationStartDate ?? null,
-      },
-      create: {
-        name: "default",
-        maDuration: config.maDuration,
-        buyOnLongSignal: config.buyOnLongSignal,
-        shortOnShort: config.shortOnShort,
-        longLeverage: config.longLeverage,
-        shortLeverage: config.shortLeverage,
-        initialCapital: config.initialCapital,
-        gasFeePerTrade: config.gasFeePerTrade,
-        exchangeFee: config.exchangeFee,
-        signalThreshold: config.signalThreshold,
-        simulationStartDate: config.simulationStartDate ?? null,
-      },
+      update: fields,
+      create: { name: "default", ...fields },
     });
 
     return config;

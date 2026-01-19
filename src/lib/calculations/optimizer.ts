@@ -1,12 +1,11 @@
 import type { PricePoint, StrategyParams, OptimizationResult } from "../types/trading";
+import { FAIR_COMPARISON_START_DAY } from "../constants/trading";
 import { generateSignals } from "./signals";
 import {
   calculateStrategyReturns,
   calculateAnnualizedReturn,
   calculateMaxDrawdown,
 } from "./returns";
-
-const FAIR_COMPARISON_START_DAY = 200;
 
 export function runOptimization(
   priceData: PricePoint[],
