@@ -41,6 +41,7 @@ export const getStrategyConfig = createServerFn({
       initialCapital: 1000,
       gasFeePerTrade: 0,
       exchangeFee: 0.0005,
+      signalThreshold: 0,
       simulationStartDate: undefined,
     };
   }
@@ -54,6 +55,7 @@ export const getStrategyConfig = createServerFn({
     initialCapital: Number(config.initialCapital),
     gasFeePerTrade: Number(config.gasFeePerTrade),
     exchangeFee: Number(config.exchangeFee),
+    signalThreshold: Number(config.signalThreshold),
     simulationStartDate: config.simulationStartDate ? Number(config.simulationStartDate) : undefined,
   };
 });
@@ -62,7 +64,7 @@ export const calculateStrategy = createServerFn({ method: "POST" })
   .inputValidator((params: StrategyParams) => params)
   .handler(async ({ data: params }): Promise<StrategyResult> => {
     const priceData = await getPriceData();
-    const dataPoints = generateSignals(priceData, params.maDuration);
+    const dataPoints = generateSignals(priceData, params.maDuration, params.signalThreshold);
 
     let simulationStartIndex = 0;
     if (params.simulationStartDate) {
@@ -131,6 +133,7 @@ export const saveStrategyConfig = createServerFn({ method: "POST" })
         initialCapital: config.initialCapital,
         gasFeePerTrade: config.gasFeePerTrade,
         exchangeFee: config.exchangeFee,
+        signalThreshold: config.signalThreshold,
         simulationStartDate: config.simulationStartDate ?? null,
       },
       create: {
@@ -143,6 +146,7 @@ export const saveStrategyConfig = createServerFn({ method: "POST" })
         initialCapital: config.initialCapital,
         gasFeePerTrade: config.gasFeePerTrade,
         exchangeFee: config.exchangeFee,
+        signalThreshold: config.signalThreshold,
         simulationStartDate: config.simulationStartDate ?? null,
       },
     });

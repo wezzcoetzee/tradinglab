@@ -13,6 +13,7 @@ export interface StrategyParams {
   initialCapital: number;
   gasFeePerTrade: number;
   exchangeFee: number;
+  signalThreshold: number;
   simulationStartDate?: number;
 }
 

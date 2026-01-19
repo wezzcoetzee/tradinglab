@@ -17,7 +17,7 @@ export function runOptimization(
 
   for (let period = minPeriod; period <= maxPeriod; period++) {
     const params: StrategyParams = { ...baseParams, maDuration: period };
-    const dataPoints = generateSignals(priceData, period);
+    const dataPoints = generateSignals(priceData, period, baseParams.signalThreshold);
 
     const smaResult = calculateStrategyReturns(dataPoints, params, "sma");
     const emaResult = calculateStrategyReturns(dataPoints, params, "ema");

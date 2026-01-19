@@ -27,6 +27,7 @@ model StrategyConfig {
     initialCapital      Decimal @default(1000)
     gasFeePerTrade      Decimal @default(0)
     exchangeFee         Decimal @default(0.0005)
+    signalThreshold     Decimal @default(0)
     simulationStartDate BigInt?
 }
 

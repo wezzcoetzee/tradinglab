@@ -93,6 +93,7 @@ export const StrategyConfigScalarFieldEnum = {
   initialCapital: 'initialCapital',
   gasFeePerTrade: 'gasFeePerTrade',
   exchangeFee: 'exchangeFee',
+  signalThreshold: 'signalThreshold',
   simulationStartDate: 'simulationStartDate'
 } as const
 

@@ -55,6 +55,7 @@ async function main(): Promise<void> {
         initialCapital: 1000,
         gasFeePerTrade: 0,
         exchangeFee: 0.0005,
+        signalThreshold: 0,
       },
     });
     console.log("Created default strategy configuration");
