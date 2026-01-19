@@ -72,7 +72,7 @@ export function DataTable({
                 <th className="px-2 py-2 text-left font-medium">Date</th>
                 <th className="px-2 py-2 text-right font-medium">Close Price</th>
                 <th className="px-2 py-2 text-right font-medium">SMA</th>
-                <th className="px-2 py-2 text-center font-medium">Long SMA?</th>
+                <th className="px-2 py-2 text-center font-medium">Trade Direction</th>
                 <th className="px-2 py-2 text-right font-medium">HODL ($)</th>
                 <th className="px-2 py-2 text-right font-medium">SMA Trading ($)</th>
                 <th className="px-2 py-2 text-right font-medium">Max DD SMA (%)</th>
@@ -89,7 +89,7 @@ export function DataTable({
                   <td className="px-2 py-1.5 text-right font-mono">
                     {row.sma !== undefined ? formatPrice(row.sma) : "-"}
                   </td>
-                  <td className="px-2 py-1.5 text-center">{row.longSma}</td>
+                  <td className="px-2 py-1.5 text-center">{row.longSma ? "LONG" : "SHORT"}</td>
                   <td className="px-2 py-1.5 text-right font-mono">
                     {formatPrice(row.hodlDollars)}
                   </td>
