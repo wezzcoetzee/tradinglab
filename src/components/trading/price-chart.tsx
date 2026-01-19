@@ -6,11 +6,23 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Legend,
+  ReferenceArea,
+} from "recharts";
+import type { CategoricalChartState } from "recharts/types/chart/types";
 import type { DataPointWithIndicators } from "@/lib/types/trading";
+import type { ChartSelection } from "@/hooks/useChartSelection";
 
 interface PriceChartProps {
   dataPoints: DataPointWithIndicators[];
+  zoomRange?: ChartSelection;
+  onZoomChange?: (zoom: ChartSelection) => void;
 }
 
 const chartConfig = {
@@ -24,25 +36,72 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function PriceChart({ dataPoints }: PriceChartProps) {
+export function PriceChart({
+  dataPoints,
+  zoomRange,
+  onZoomChange,
+}: PriceChartProps) {
   const [visibleLines, setVisibleLines] = useState<Record<string, boolean>>({
     price: true,
     sma: true,
   });
+  const [dragSelection, setDragSelection] = useState<ChartSelection>({
+    startDate: null,
+    endDate: null,
+  });
+  const [dragStart, setDragStart] = useState<string | null>(null);
 
   const toggleLineVisibility = (dataKey: string) => {
     setVisibleLines((prev) => ({ ...prev, [dataKey]: !prev[dataKey] }));
   };
 
+  const handleMouseDown = (state: CategoricalChartState) => {
+    if (state.activeLabel && onZoomChange) {
+      const label = state.activeLabel as string;
+      setDragStart(label);
+      setDragSelection({ startDate: label, endDate: label });
+    }
+  };
+
+  const handleMouseMove = (state: CategoricalChartState) => {
+    if (dragStart && state.activeLabel && onZoomChange) {
+      const currentLabel = state.activeLabel as string;
+      const [startDate, endDate] =
+        dragStart <= currentLabel
+          ? [dragStart, currentLabel]
+          : [currentLabel, dragStart];
+      setDragSelection({ startDate, endDate });
+    }
+  };
+
+  const handleMouseUp = () => {
+    if (dragStart && dragSelection.startDate && dragSelection.endDate && onZoomChange) {
+      if (dragSelection.startDate !== dragSelection.endDate) {
+        onZoomChange(dragSelection);
+      }
+    }
+    setDragStart(null);
+    setDragSelection({ startDate: null, endDate: null });
+  };
+
   const sampleRate = Math.max(1, Math.floor(dataPoints.length / 500));
 
-  const chartData = dataPoints
+  const allChartData = dataPoints
     .filter((_, i) => i % sampleRate === 0)
     .map((point) => ({
       date: point.date.toISOString().split("T")[0],
       price: point.closePrice,
       sma: point.sma,
     }));
+
+  const chartData =
+    zoomRange?.startDate && zoomRange?.endDate
+      ? allChartData.filter(
+          (d) => d.date >= zoomRange.startDate! && d.date <= zoomRange.endDate!
+        )
+      : allChartData;
+
+  const isDragging = dragStart !== null;
 
   const renderLegend = () => {
     const legendItems = [
@@ -77,8 +136,18 @@ export function PriceChart({ dataPoints }: PriceChartProps) {
         <CardTitle>BTC Price with SMA</CardTitle>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[400px] w-full">
-          <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+        <ChartContainer
+            config={chartConfig}
+            className={`h-[400px] w-full ${onZoomChange ? "cursor-crosshair" : ""}`}
+          >
+          <LineChart
+            data={chartData}
+            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            onMouseDown={onZoomChange ? handleMouseDown : undefined}
+            onMouseMove={onZoomChange ? handleMouseMove : undefined}
+            onMouseUp={onZoomChange ? handleMouseUp : undefined}
+            onMouseLeave={onZoomChange ? handleMouseUp : undefined}
+          >
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis
               dataKey="date"
@@ -126,6 +195,15 @@ export function PriceChart({ dataPoints }: PriceChartProps) {
               strokeDasharray="5 5"
               hide={!visibleLines.sma}
             />
+            {isDragging && dragSelection.startDate && dragSelection.endDate && (
+              <ReferenceArea
+                x1={dragSelection.startDate}
+                x2={dragSelection.endDate}
+                fill="rgba(59, 130, 246, 0.2)"
+                stroke="rgba(59, 130, 246, 0.5)"
+                strokeWidth={1}
+              />
+            )}
           </LineChart>
         </ChartContainer>
       </CardContent>
