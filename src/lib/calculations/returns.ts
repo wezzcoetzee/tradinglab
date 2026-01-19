@@ -2,7 +2,6 @@ import type {
   DataPointWithIndicators,
   StrategyParams,
   TradeRecord,
-  Signal,
 } from "../types/trading";
 
 export function calculateHODLReturns(
@@ -39,7 +38,6 @@ function applyTradeFees(
 export function calculateStrategyReturns(
   dataPoints: DataPointWithIndicators[],
   params: StrategyParams,
-  signalType: "sma" | "ema",
   simulationStartIndex = 0
 ): { returns: number[]; trades: TradeRecord[] } {
   if (dataPoints.length === 0) return { returns: [], trades: [] };
@@ -57,7 +55,7 @@ export function calculateStrategyReturns(
 
   for (let i = 0; i < dataPoints.length; i++) {
     const point = dataPoints[i];
-    const signal: Signal = signalType === "sma" ? point.smaSignal : point.emaSignal;
+    const signal = point.smaSignal;
     const price = point.closePrice;
     const inSimulation = i >= startIdx;
 

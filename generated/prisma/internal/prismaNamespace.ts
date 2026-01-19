@@ -699,11 +699,8 @@ export const SavedOptimizationResultScalarFieldEnum = {
   id: 'id',
   name: 'name',
   bestSmaPeriod: 'bestSmaPeriod',
-  bestEmaPeriod: 'bestEmaPeriod',
   smaAnnualized: 'smaAnnualized',
-  emaAnnualized: 'emaAnnualized',
   smaMaxDrawdown: 'smaMaxDrawdown',
-  emaMaxDrawdown: 'emaMaxDrawdown',
   calculatedAt: 'calculatedAt',
   params: 'params'
 } as const

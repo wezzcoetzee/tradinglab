@@ -1,5 +1,5 @@
 import type { Signal, PricePoint, DataPointWithIndicators } from "../types/trading";
-import { calculateSMA, calculateEMA } from "./indicators";
+import { calculateSMA } from "./indicators";
 
 export function generateSignal(
   price: number,
@@ -26,24 +26,17 @@ export function generateSignals(
 ): DataPointWithIndicators[] {
   const prices = priceData.map((p) => p.closePrice);
   const smaValues = calculateSMA(prices, maDuration);
-  const emaValues = calculateEMA(prices, maDuration);
 
   let previousSmaSignal: Signal = "neutral";
-  let previousEmaSignal: Signal = "neutral";
 
   return priceData.map((point, i) => {
     const smaSignal = generateSignal(point.closePrice, smaValues[i], previousSmaSignal, threshold);
-    const emaSignal = generateSignal(point.closePrice, emaValues[i], previousEmaSignal, threshold);
-
     previousSmaSignal = smaSignal;
-    previousEmaSignal = emaSignal;
 
     return {
       ...point,
       sma: smaValues[i],
-      ema: emaValues[i],
       smaSignal,
-      emaSignal,
     };
   });
 }

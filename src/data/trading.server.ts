@@ -75,28 +75,22 @@ export const calculateStrategy = createServerFn({ method: "POST" })
     }
 
     const hodlReturns = calculateHODLReturns(dataPoints, simulationStartIndex);
-    const smaResult = calculateStrategyReturns(dataPoints, params, "sma", simulationStartIndex);
-    const emaResult = calculateStrategyReturns(dataPoints, params, "ema", simulationStartIndex);
+    const smaResult = calculateStrategyReturns(dataPoints, params, simulationStartIndex);
 
     const simulationDataPoints = dataPoints.slice(simulationStartIndex);
     const totalDays = simulationDataPoints.length;
     const hodlFinal = hodlReturns[hodlReturns.length - 1] ?? 1;
     const smaFinal = smaResult.returns[smaResult.returns.length - 1] ?? 1;
-    const emaFinal = emaResult.returns[emaResult.returns.length - 1] ?? 1;
 
     return {
       dataPoints: simulationDataPoints,
       hodlReturns,
       smaReturns: smaResult.returns,
-      emaReturns: emaResult.returns,
       hodlAnnualized: calculateAnnualizedReturn(hodlFinal, 1, totalDays),
       smaAnnualized: calculateAnnualizedReturn(smaFinal, 1, totalDays),
-      emaAnnualized: calculateAnnualizedReturn(emaFinal, 1, totalDays),
       hodlMaxDrawdown: calculateMaxDrawdown(hodlReturns),
       smaMaxDrawdown: calculateMaxDrawdown(smaResult.returns),
-      emaMaxDrawdown: calculateMaxDrawdown(emaResult.returns),
       smaTrades: smaResult.trades,
-      emaTrades: emaResult.trades,
       totalDays,
     };
   });
@@ -177,11 +171,8 @@ export const getPriceDataRange = createServerFn({
 interface SaveOptimizationInput {
   name: string;
   bestSmaPeriod: number;
-  bestEmaPeriod: number;
   smaAnnualized: number;
-  emaAnnualized: number;
   smaMaxDrawdown: number;
-  emaMaxDrawdown: number;
   params: Omit<StrategyParams, "maDuration">;
 }
 
@@ -192,22 +183,16 @@ export const saveOptimizationResult = createServerFn({ method: "POST" })
       where: { name: data.name },
       update: {
         bestSmaPeriod: data.bestSmaPeriod,
-        bestEmaPeriod: data.bestEmaPeriod,
         smaAnnualized: data.smaAnnualized,
-        emaAnnualized: data.emaAnnualized,
         smaMaxDrawdown: data.smaMaxDrawdown,
-        emaMaxDrawdown: data.emaMaxDrawdown,
         params: data.params,
         calculatedAt: new Date(),
       },
       create: {
         name: data.name,
         bestSmaPeriod: data.bestSmaPeriod,
-        bestEmaPeriod: data.bestEmaPeriod,
         smaAnnualized: data.smaAnnualized,
-        emaAnnualized: data.emaAnnualized,
         smaMaxDrawdown: data.smaMaxDrawdown,
-        emaMaxDrawdown: data.emaMaxDrawdown,
         params: data.params,
       },
     });
@@ -216,11 +201,8 @@ export const saveOptimizationResult = createServerFn({ method: "POST" })
       id: result.id,
       name: result.name,
       bestSmaPeriod: result.bestSmaPeriod,
-      bestEmaPeriod: result.bestEmaPeriod,
       smaAnnualized: Number(result.smaAnnualized),
-      emaAnnualized: Number(result.emaAnnualized),
       smaMaxDrawdown: Number(result.smaMaxDrawdown),
-      emaMaxDrawdown: Number(result.emaMaxDrawdown),
       calculatedAt: result.calculatedAt,
       params: result.params as Omit<StrategyParams, "maDuration">,
     };
@@ -237,11 +219,8 @@ export const getSavedOptimizationResults = createServerFn({
     id: r.id,
     name: r.name,
     bestSmaPeriod: r.bestSmaPeriod,
-    bestEmaPeriod: r.bestEmaPeriod,
     smaAnnualized: Number(r.smaAnnualized),
-    emaAnnualized: Number(r.emaAnnualized),
     smaMaxDrawdown: Number(r.smaMaxDrawdown),
-    emaMaxDrawdown: Number(r.emaMaxDrawdown),
     calculatedAt: r.calculatedAt,
     params: r.params as Omit<StrategyParams, "maDuration">,
   }));

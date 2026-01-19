@@ -26,19 +26,14 @@ const chartConfig = {
     label: "SMA Strategy",
     color: "var(--chart-2)",
   },
-  ema: {
-    label: "EMA Strategy",
-    color: "var(--chart-3)",
-  },
 } satisfies ChartConfig;
 
 export function ReturnsComparison({ result, initialCapital }: ReturnsComparisonProps) {
-  const [showLegend, setShowLegend] = useState(true);
   const [valueFormat, setValueFormat] = useState<"percent" | "dollar">("percent");
+  const [useLogScale, setUseLogScale] = useState(false);
   const [visibleLines, setVisibleLines] = useState<Record<string, boolean>>({
     hodl: true,
     sma: true,
-    ema: true,
   });
 
   const toggleLineVisibility = (dataKey: string) => {
@@ -55,7 +50,6 @@ export function ReturnsComparison({ result, initialCapital }: ReturnsComparisonP
         date: point.date.toISOString().split("T")[0],
         hodl: result.hodlReturns[actualIndex],
         sma: result.smaReturns[actualIndex],
-        ema: result.emaReturns[actualIndex],
       };
     });
 
@@ -89,12 +83,9 @@ export function ReturnsComparison({ result, initialCapital }: ReturnsComparisonP
   };
 
   const renderLegend = () => {
-    if (!showLegend) return null;
-
     const legendItems = [
       { key: "hodl", label: chartConfig.hodl.label, color: chartConfig.hodl.color },
       { key: "sma", label: chartConfig.sma.label, color: chartConfig.sma.color },
-      { key: "ema", label: chartConfig.ema.label, color: chartConfig.ema.color },
     ];
 
     return (
@@ -125,11 +116,11 @@ export function ReturnsComparison({ result, initialCapital }: ReturnsComparisonP
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
             <Switch
-              id="show-legend"
-              checked={showLegend}
-              onCheckedChange={setShowLegend}
+              id="log-scale"
+              checked={useLogScale}
+              onCheckedChange={setUseLogScale}
             />
-            <Label htmlFor="show-legend" className="cursor-pointer text-sm">Legend</Label>
+            <Label htmlFor="log-scale" className="cursor-pointer text-sm">Log</Label>
           </div>
           <RadioGroup
             value={valueFormat}
@@ -163,6 +154,8 @@ export function ReturnsComparison({ result, initialCapital }: ReturnsComparisonP
               axisLine={false}
               tickMargin={8}
               tickFormatter={formatValue}
+              scale={useLogScale ? "log" : "auto"}
+              domain={useLogScale ? ["auto", "auto"] : undefined}
             />
             <ChartTooltip
               content={
@@ -190,14 +183,6 @@ export function ReturnsComparison({ result, initialCapital }: ReturnsComparisonP
               strokeWidth={2}
               dot={false}
               hide={!visibleLines.sma}
-            />
-            <Line
-              type="monotone"
-              dataKey="ema"
-              stroke="var(--color-ema)"
-              strokeWidth={2}
-              dot={false}
-              hide={!visibleLines.ema}
             />
           </LineChart>
         </ChartContainer>

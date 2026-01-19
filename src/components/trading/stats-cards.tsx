@@ -13,20 +13,18 @@ function StatCard({
   title,
   hodl,
   sma,
-  ema,
   isDrawdown = false,
 }: {
   title: string;
   hodl: number;
   sma: number;
-  ema: number;
   isDrawdown?: boolean;
 }) {
-  const getBestClass = (value: number, others: number[]) => {
+  const getBestClass = (value: number, other: number) => {
     if (isDrawdown) {
-      return value === Math.min(value, ...others) ? "text-green-600" : "";
+      return value <= other ? "text-green-600" : "";
     }
-    return value === Math.max(value, ...others) ? "text-green-600" : "";
+    return value >= other ? "text-green-600" : "";
   };
 
   return (
@@ -35,23 +33,17 @@ function StatCard({
         <CardTitle className="text-sm">{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-3 gap-2 text-center">
+        <div className="grid grid-cols-2 gap-2 text-center">
           <div>
             <div className="text-xs text-muted-foreground">HODL</div>
-            <div className={`text-lg font-bold ${getBestClass(hodl, [sma, ema])}`}>
+            <div className={`text-lg font-bold ${getBestClass(hodl, sma)}`}>
               {formatPercent(hodl)}
             </div>
           </div>
           <div>
             <div className="text-xs text-muted-foreground">SMA</div>
-            <div className={`text-lg font-bold ${getBestClass(sma, [hodl, ema])}`}>
+            <div className={`text-lg font-bold ${getBestClass(sma, hodl)}`}>
               {formatPercent(sma)}
-            </div>
-          </div>
-          <div>
-            <div className="text-xs text-muted-foreground">EMA</div>
-            <div className={`text-lg font-bold ${getBestClass(ema, [hodl, sma])}`}>
-              {formatPercent(ema)}
             </div>
           </div>
         </div>
@@ -67,13 +59,11 @@ export function StatsCards({ result }: StatsCardsProps) {
         title="Annualized Return"
         hodl={result.hodlAnnualized}
         sma={result.smaAnnualized}
-        ema={result.emaAnnualized}
       />
       <StatCard
         title="Max Drawdown"
         hodl={result.hodlMaxDrawdown}
         sma={result.smaMaxDrawdown}
-        ema={result.emaMaxDrawdown}
         isDrawdown
       />
       <Card size="sm">
@@ -81,7 +71,7 @@ export function StatsCards({ result }: StatsCardsProps) {
           <CardTitle className="text-sm">Trade Count</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-3 gap-2 text-center">
+          <div className="grid grid-cols-2 gap-2 text-center">
             <div>
               <div className="text-xs text-muted-foreground">HODL</div>
               <div className="text-lg font-bold">1</div>
@@ -89,10 +79,6 @@ export function StatsCards({ result }: StatsCardsProps) {
             <div>
               <div className="text-xs text-muted-foreground">SMA</div>
               <div className="text-lg font-bold">{result.smaTrades.length}</div>
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground">EMA</div>
-              <div className="text-lg font-bold">{result.emaTrades.length}</div>
             </div>
           </div>
         </CardContent>

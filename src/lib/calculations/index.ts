@@ -1,4 +1,4 @@
-export { calculateSMA, calculateEMA } from "./indicators";
+export { calculateSMA } from "./indicators";
 export { generateSignals, generateSignal } from "./signals";
 export {
   calculateHODLReturns,

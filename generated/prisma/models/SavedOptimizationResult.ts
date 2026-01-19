@@ -29,32 +29,23 @@ export type AggregateSavedOptimizationResult = {
 export type SavedOptimizationResultAvgAggregateOutputType = {
   id: number | null
   bestSmaPeriod: number | null
-  bestEmaPeriod: number | null
   smaAnnualized: runtime.Decimal | null
-  emaAnnualized: runtime.Decimal | null
   smaMaxDrawdown: runtime.Decimal | null
-  emaMaxDrawdown: runtime.Decimal | null
 }
 
 export type SavedOptimizationResultSumAggregateOutputType = {
   id: number | null
   bestSmaPeriod: number | null
-  bestEmaPeriod: number | null
   smaAnnualized: runtime.Decimal | null
-  emaAnnualized: runtime.Decimal | null
   smaMaxDrawdown: runtime.Decimal | null
-  emaMaxDrawdown: runtime.Decimal | null
 }
 
 export type SavedOptimizationResultMinAggregateOutputType = {
   id: number | null
   name: string | null
   bestSmaPeriod: number | null
-  bestEmaPeriod: number | null
   smaAnnualized: runtime.Decimal | null
-  emaAnnualized: runtime.Decimal | null
   smaMaxDrawdown: runtime.Decimal | null
-  emaMaxDrawdown: runtime.Decimal | null
   calculatedAt: Date | null
 }
 
@@ -62,11 +53,8 @@ export type SavedOptimizationResultMaxAggregateOutputType = {
   id: number | null
   name: string | null
   bestSmaPeriod: number | null
-  bestEmaPeriod: number | null
   smaAnnualized: runtime.Decimal | null
-  emaAnnualized: runtime.Decimal | null
   smaMaxDrawdown: runtime.Decimal | null
-  emaMaxDrawdown: runtime.Decimal | null
   calculatedAt: Date | null
 }
 
@@ -74,11 +62,8 @@ export type SavedOptimizationResultCountAggregateOutputType = {
   id: number
   name: number
   bestSmaPeriod: number
-  bestEmaPeriod: number
   smaAnnualized: number
-  emaAnnualized: number
   smaMaxDrawdown: number
-  emaMaxDrawdown: number
   calculatedAt: number
   params: number
   _all: number
@@ -88,32 +73,23 @@ export type SavedOptimizationResultCountAggregateOutputType = {
 export type SavedOptimizationResultAvgAggregateInputType = {
   id?: true
   bestSmaPeriod?: true
-  bestEmaPeriod?: true
   smaAnnualized?: true
-  emaAnnualized?: true
   smaMaxDrawdown?: true
-  emaMaxDrawdown?: true
 }
 
 export type SavedOptimizationResultSumAggregateInputType = {
   id?: true
   bestSmaPeriod?: true
-  bestEmaPeriod?: true
   smaAnnualized?: true
-  emaAnnualized?: true
   smaMaxDrawdown?: true
-  emaMaxDrawdown?: true
 }
 
 export type SavedOptimizationResultMinAggregateInputType = {
   id?: true
   name?: true
   bestSmaPeriod?: true
-  bestEmaPeriod?: true
   smaAnnualized?: true
-  emaAnnualized?: true
   smaMaxDrawdown?: true
-  emaMaxDrawdown?: true
   calculatedAt?: true
 }
 
@@ -121,11 +97,8 @@ export type SavedOptimizationResultMaxAggregateInputType = {
   id?: true
   name?: true
   bestSmaPeriod?: true
-  bestEmaPeriod?: true
   smaAnnualized?: true
-  emaAnnualized?: true
   smaMaxDrawdown?: true
-  emaMaxDrawdown?: true
   calculatedAt?: true
 }
 
@@ -133,11 +106,8 @@ export type SavedOptimizationResultCountAggregateInputType = {
   id?: true
   name?: true
   bestSmaPeriod?: true
-  bestEmaPeriod?: true
   smaAnnualized?: true
-  emaAnnualized?: true
   smaMaxDrawdown?: true
-  emaMaxDrawdown?: true
   calculatedAt?: true
   params?: true
   _all?: true
@@ -233,11 +203,8 @@ export type SavedOptimizationResultGroupByOutputType = {
   id: number
   name: string
   bestSmaPeriod: number
-  bestEmaPeriod: number
   smaAnnualized: runtime.Decimal
-  emaAnnualized: runtime.Decimal
   smaMaxDrawdown: runtime.Decimal
-  emaMaxDrawdown: runtime.Decimal
   calculatedAt: Date
   params: runtime.JsonValue
   _count: SavedOptimizationResultCountAggregateOutputType | null
@@ -269,11 +236,8 @@ export type SavedOptimizationResultWhereInput = {
   id?: Prisma.IntFilter<"SavedOptimizationResult"> | number
   name?: Prisma.StringFilter<"SavedOptimizationResult"> | string
   bestSmaPeriod?: Prisma.IntFilter<"SavedOptimizationResult"> | number
-  bestEmaPeriod?: Prisma.IntFilter<"SavedOptimizationResult"> | number
   smaAnnualized?: Prisma.DecimalFilter<"SavedOptimizationResult"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  emaAnnualized?: Prisma.DecimalFilter<"SavedOptimizationResult"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   smaMaxDrawdown?: Prisma.DecimalFilter<"SavedOptimizationResult"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  emaMaxDrawdown?: Prisma.DecimalFilter<"SavedOptimizationResult"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   calculatedAt?: Prisma.DateTimeFilter<"SavedOptimizationResult"> | Date | string
   params?: Prisma.JsonFilter<"SavedOptimizationResult">
 }
@@ -282,11 +246,8 @@ export type SavedOptimizationResultOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   bestSmaPeriod?: Prisma.SortOrder
-  bestEmaPeriod?: Prisma.SortOrder
   smaAnnualized?: Prisma.SortOrder
-  emaAnnualized?: Prisma.SortOrder
   smaMaxDrawdown?: Prisma.SortOrder
-  emaMaxDrawdown?: Prisma.SortOrder
   calculatedAt?: Prisma.SortOrder
   params?: Prisma.SortOrder
 }
@@ -298,11 +259,8 @@ export type SavedOptimizationResultWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.SavedOptimizationResultWhereInput[]
   NOT?: Prisma.SavedOptimizationResultWhereInput | Prisma.SavedOptimizationResultWhereInput[]
   bestSmaPeriod?: Prisma.IntFilter<"SavedOptimizationResult"> | number
-  bestEmaPeriod?: Prisma.IntFilter<"SavedOptimizationResult"> | number
   smaAnnualized?: Prisma.DecimalFilter<"SavedOptimizationResult"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  emaAnnualized?: Prisma.DecimalFilter<"SavedOptimizationResult"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   smaMaxDrawdown?: Prisma.DecimalFilter<"SavedOptimizationResult"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  emaMaxDrawdown?: Prisma.DecimalFilter<"SavedOptimizationResult"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   calculatedAt?: Prisma.DateTimeFilter<"SavedOptimizationResult"> | Date | string
   params?: Prisma.JsonFilter<"SavedOptimizationResult">
 }, "id" | "name">
@@ -311,11 +269,8 @@ export type SavedOptimizationResultOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   bestSmaPeriod?: Prisma.SortOrder
-  bestEmaPeriod?: Prisma.SortOrder
   smaAnnualized?: Prisma.SortOrder
-  emaAnnualized?: Prisma.SortOrder
   smaMaxDrawdown?: Prisma.SortOrder
-  emaMaxDrawdown?: Prisma.SortOrder
   calculatedAt?: Prisma.SortOrder
   params?: Prisma.SortOrder
   _count?: Prisma.SavedOptimizationResultCountOrderByAggregateInput
@@ -332,11 +287,8 @@ export type SavedOptimizationResultScalarWhereWithAggregatesInput = {
   id?: Prisma.IntWithAggregatesFilter<"SavedOptimizationResult"> | number
   name?: Prisma.StringWithAggregatesFilter<"SavedOptimizationResult"> | string
   bestSmaPeriod?: Prisma.IntWithAggregatesFilter<"SavedOptimizationResult"> | number
-  bestEmaPeriod?: Prisma.IntWithAggregatesFilter<"SavedOptimizationResult"> | number
   smaAnnualized?: Prisma.DecimalWithAggregatesFilter<"SavedOptimizationResult"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  emaAnnualized?: Prisma.DecimalWithAggregatesFilter<"SavedOptimizationResult"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   smaMaxDrawdown?: Prisma.DecimalWithAggregatesFilter<"SavedOptimizationResult"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  emaMaxDrawdown?: Prisma.DecimalWithAggregatesFilter<"SavedOptimizationResult"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   calculatedAt?: Prisma.DateTimeWithAggregatesFilter<"SavedOptimizationResult"> | Date | string
   params?: Prisma.JsonWithAggregatesFilter<"SavedOptimizationResult">
 }
@@ -344,11 +296,8 @@ export type SavedOptimizationResultScalarWhereWithAggregatesInput = {
 export type SavedOptimizationResultCreateInput = {
   name: string
   bestSmaPeriod: number
-  bestEmaPeriod: number
   smaAnnualized: runtime.Decimal | runtime.DecimalJsLike | number | string
-  emaAnnualized: runtime.Decimal | runtime.DecimalJsLike | number | string
   smaMaxDrawdown: runtime.Decimal | runtime.DecimalJsLike | number | string
-  emaMaxDrawdown: runtime.Decimal | runtime.DecimalJsLike | number | string
   calculatedAt?: Date | string
   params: Prisma.JsonNullValueInput | runtime.InputJsonValue
 }
@@ -357,11 +306,8 @@ export type SavedOptimizationResultUncheckedCreateInput = {
   id?: number
   name: string
   bestSmaPeriod: number
-  bestEmaPeriod: number
   smaAnnualized: runtime.Decimal | runtime.DecimalJsLike | number | string
-  emaAnnualized: runtime.Decimal | runtime.DecimalJsLike | number | string
   smaMaxDrawdown: runtime.Decimal | runtime.DecimalJsLike | number | string
-  emaMaxDrawdown: runtime.Decimal | runtime.DecimalJsLike | number | string
   calculatedAt?: Date | string
   params: Prisma.JsonNullValueInput | runtime.InputJsonValue
 }
@@ -369,11 +315,8 @@ export type SavedOptimizationResultUncheckedCreateInput = {
 export type SavedOptimizationResultUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   bestSmaPeriod?: Prisma.IntFieldUpdateOperationsInput | number
-  bestEmaPeriod?: Prisma.IntFieldUpdateOperationsInput | number
   smaAnnualized?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  emaAnnualized?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   smaMaxDrawdown?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  emaMaxDrawdown?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   calculatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   params?: Prisma.JsonNullValueInput | runtime.InputJsonValue
 }
@@ -382,11 +325,8 @@ export type SavedOptimizationResultUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
   bestSmaPeriod?: Prisma.IntFieldUpdateOperationsInput | number
-  bestEmaPeriod?: Prisma.IntFieldUpdateOperationsInput | number
   smaAnnualized?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  emaAnnualized?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   smaMaxDrawdown?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  emaMaxDrawdown?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   calculatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   params?: Prisma.JsonNullValueInput | runtime.InputJsonValue
 }
@@ -395,11 +335,8 @@ export type SavedOptimizationResultCreateManyInput = {
   id?: number
   name: string
   bestSmaPeriod: number
-  bestEmaPeriod: number
   smaAnnualized: runtime.Decimal | runtime.DecimalJsLike | number | string
-  emaAnnualized: runtime.Decimal | runtime.DecimalJsLike | number | string
   smaMaxDrawdown: runtime.Decimal | runtime.DecimalJsLike | number | string
-  emaMaxDrawdown: runtime.Decimal | runtime.DecimalJsLike | number | string
   calculatedAt?: Date | string
   params: Prisma.JsonNullValueInput | runtime.InputJsonValue
 }
@@ -407,11 +344,8 @@ export type SavedOptimizationResultCreateManyInput = {
 export type SavedOptimizationResultUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   bestSmaPeriod?: Prisma.IntFieldUpdateOperationsInput | number
-  bestEmaPeriod?: Prisma.IntFieldUpdateOperationsInput | number
   smaAnnualized?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  emaAnnualized?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   smaMaxDrawdown?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  emaMaxDrawdown?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   calculatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   params?: Prisma.JsonNullValueInput | runtime.InputJsonValue
 }
@@ -420,11 +354,8 @@ export type SavedOptimizationResultUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
   bestSmaPeriod?: Prisma.IntFieldUpdateOperationsInput | number
-  bestEmaPeriod?: Prisma.IntFieldUpdateOperationsInput | number
   smaAnnualized?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  emaAnnualized?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   smaMaxDrawdown?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  emaMaxDrawdown?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   calculatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   params?: Prisma.JsonNullValueInput | runtime.InputJsonValue
 }
@@ -433,11 +364,8 @@ export type SavedOptimizationResultCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   bestSmaPeriod?: Prisma.SortOrder
-  bestEmaPeriod?: Prisma.SortOrder
   smaAnnualized?: Prisma.SortOrder
-  emaAnnualized?: Prisma.SortOrder
   smaMaxDrawdown?: Prisma.SortOrder
-  emaMaxDrawdown?: Prisma.SortOrder
   calculatedAt?: Prisma.SortOrder
   params?: Prisma.SortOrder
 }
@@ -445,22 +373,16 @@ export type SavedOptimizationResultCountOrderByAggregateInput = {
 export type SavedOptimizationResultAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   bestSmaPeriod?: Prisma.SortOrder
-  bestEmaPeriod?: Prisma.SortOrder
   smaAnnualized?: Prisma.SortOrder
-  emaAnnualized?: Prisma.SortOrder
   smaMaxDrawdown?: Prisma.SortOrder
-  emaMaxDrawdown?: Prisma.SortOrder
 }
 
 export type SavedOptimizationResultMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   bestSmaPeriod?: Prisma.SortOrder
-  bestEmaPeriod?: Prisma.SortOrder
   smaAnnualized?: Prisma.SortOrder
-  emaAnnualized?: Prisma.SortOrder
   smaMaxDrawdown?: Prisma.SortOrder
-  emaMaxDrawdown?: Prisma.SortOrder
   calculatedAt?: Prisma.SortOrder
 }
 
@@ -468,22 +390,16 @@ export type SavedOptimizationResultMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   bestSmaPeriod?: Prisma.SortOrder
-  bestEmaPeriod?: Prisma.SortOrder
   smaAnnualized?: Prisma.SortOrder
-  emaAnnualized?: Prisma.SortOrder
   smaMaxDrawdown?: Prisma.SortOrder
-  emaMaxDrawdown?: Prisma.SortOrder
   calculatedAt?: Prisma.SortOrder
 }
 
 export type SavedOptimizationResultSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   bestSmaPeriod?: Prisma.SortOrder
-  bestEmaPeriod?: Prisma.SortOrder
   smaAnnualized?: Prisma.SortOrder
-  emaAnnualized?: Prisma.SortOrder
   smaMaxDrawdown?: Prisma.SortOrder
-  emaMaxDrawdown?: Prisma.SortOrder
 }
 
 
@@ -492,11 +408,8 @@ export type SavedOptimizationResultSelect<ExtArgs extends runtime.Types.Extensio
   id?: boolean
   name?: boolean
   bestSmaPeriod?: boolean
-  bestEmaPeriod?: boolean
   smaAnnualized?: boolean
-  emaAnnualized?: boolean
   smaMaxDrawdown?: boolean
-  emaMaxDrawdown?: boolean
   calculatedAt?: boolean
   params?: boolean
 }, ExtArgs["result"]["savedOptimizationResult"]>
@@ -505,11 +418,8 @@ export type SavedOptimizationResultSelectCreateManyAndReturn<ExtArgs extends run
   id?: boolean
   name?: boolean
   bestSmaPeriod?: boolean
-  bestEmaPeriod?: boolean
   smaAnnualized?: boolean
-  emaAnnualized?: boolean
   smaMaxDrawdown?: boolean
-  emaMaxDrawdown?: boolean
   calculatedAt?: boolean
   params?: boolean
 }, ExtArgs["result"]["savedOptimizationResult"]>
@@ -518,11 +428,8 @@ export type SavedOptimizationResultSelectUpdateManyAndReturn<ExtArgs extends run
   id?: boolean
   name?: boolean
   bestSmaPeriod?: boolean
-  bestEmaPeriod?: boolean
   smaAnnualized?: boolean
-  emaAnnualized?: boolean
   smaMaxDrawdown?: boolean
-  emaMaxDrawdown?: boolean
   calculatedAt?: boolean
   params?: boolean
 }, ExtArgs["result"]["savedOptimizationResult"]>
@@ -531,16 +438,13 @@ export type SavedOptimizationResultSelectScalar = {
   id?: boolean
   name?: boolean
   bestSmaPeriod?: boolean
-  bestEmaPeriod?: boolean
   smaAnnualized?: boolean
-  emaAnnualized?: boolean
   smaMaxDrawdown?: boolean
-  emaMaxDrawdown?: boolean
   calculatedAt?: boolean
   params?: boolean
 }
 
-export type SavedOptimizationResultOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "bestSmaPeriod" | "bestEmaPeriod" | "smaAnnualized" | "emaAnnualized" | "smaMaxDrawdown" | "emaMaxDrawdown" | "calculatedAt" | "params", ExtArgs["result"]["savedOptimizationResult"]>
+export type SavedOptimizationResultOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "bestSmaPeriod" | "smaAnnualized" | "smaMaxDrawdown" | "calculatedAt" | "params", ExtArgs["result"]["savedOptimizationResult"]>
 
 export type $SavedOptimizationResultPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "SavedOptimizationResult"
@@ -549,11 +453,8 @@ export type $SavedOptimizationResultPayload<ExtArgs extends runtime.Types.Extens
     id: number
     name: string
     bestSmaPeriod: number
-    bestEmaPeriod: number
     smaAnnualized: runtime.Decimal
-    emaAnnualized: runtime.Decimal
     smaMaxDrawdown: runtime.Decimal
-    emaMaxDrawdown: runtime.Decimal
     calculatedAt: Date
     params: runtime.JsonValue
   }, ExtArgs["result"]["savedOptimizationResult"]>
@@ -982,11 +883,8 @@ export interface SavedOptimizationResultFieldRefs {
   readonly id: Prisma.FieldRef<"SavedOptimizationResult", 'Int'>
   readonly name: Prisma.FieldRef<"SavedOptimizationResult", 'String'>
   readonly bestSmaPeriod: Prisma.FieldRef<"SavedOptimizationResult", 'Int'>
-  readonly bestEmaPeriod: Prisma.FieldRef<"SavedOptimizationResult", 'Int'>
   readonly smaAnnualized: Prisma.FieldRef<"SavedOptimizationResult", 'Decimal'>
-  readonly emaAnnualized: Prisma.FieldRef<"SavedOptimizationResult", 'Decimal'>
   readonly smaMaxDrawdown: Prisma.FieldRef<"SavedOptimizationResult", 'Decimal'>
-  readonly emaMaxDrawdown: Prisma.FieldRef<"SavedOptimizationResult", 'Decimal'>
   readonly calculatedAt: Prisma.FieldRef<"SavedOptimizationResult", 'DateTime'>
   readonly params: Prisma.FieldRef<"SavedOptimizationResult", 'Json'>
 }

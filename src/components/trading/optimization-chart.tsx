@@ -20,9 +20,9 @@ const chartConfig = {
     label: "SMA Annualized",
     color: "var(--chart-2)",
   },
-  emaAnnualized: {
-    label: "EMA Annualized",
-    color: "var(--chart-3)",
+  hodlAnnualized: {
+    label: "HODL Baseline",
+    color: "var(--chart-1)",
   },
 } satisfies ChartConfig;
 
@@ -30,15 +30,14 @@ export function OptimizationChart({ results, currentMaDuration }: OptimizationCh
   const chartData = results.map((r) => ({
     maDuration: r.maDuration,
     smaAnnualized: r.smaAnnualized * 100,
-    emaAnnualized: r.emaAnnualized * 100,
+    hodlAnnualized: r.hodlAnnualized * 100,
   }));
 
   const bestSma = results.reduce((best, curr) =>
     curr.smaAnnualized > best.smaAnnualized ? curr : best
   );
-  const bestEma = results.reduce((best, curr) =>
-    curr.emaAnnualized > best.emaAnnualized ? curr : best
-  );
+
+  const hodlAnnualizedPct = results.length > 0 ? results[0].hodlAnnualized * 100 : 0;
 
   return (
     <Card>
@@ -46,17 +45,11 @@ export function OptimizationChart({ results, currentMaDuration }: OptimizationCh
         <CardTitle>MA Duration Optimization</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="mb-4 grid grid-cols-2 gap-4 text-sm">
+        <div className="mb-4">
           <div className="rounded-lg bg-muted p-3">
             <div className="text-muted-foreground">Best SMA Period</div>
             <div className="text-xl font-bold">
               {bestSma.maDuration} days ({(bestSma.smaAnnualized * 100).toFixed(1)}%)
-            </div>
-          </div>
-          <div className="rounded-lg bg-muted p-3">
-            <div className="text-muted-foreground">Best EMA Period</div>
-            <div className="text-xl font-bold">
-              {bestEma.maDuration} days ({(bestEma.emaAnnualized * 100).toFixed(1)}%)
             </div>
           </div>
         </div>
@@ -96,17 +89,16 @@ export function OptimizationChart({ results, currentMaDuration }: OptimizationCh
                 label={{ value: "Current", position: "top" }}
               />
             )}
+            <ReferenceLine
+              y={hodlAnnualizedPct}
+              stroke="var(--color-hodlAnnualized)"
+              strokeDasharray="5 5"
+              label={{ value: `HODL ${hodlAnnualizedPct.toFixed(0)}%`, position: "right" }}
+            />
             <Line
               type="monotone"
               dataKey="smaAnnualized"
               stroke="var(--color-smaAnnualized)"
-              strokeWidth={2}
-              dot={false}
-            />
-            <Line
-              type="monotone"
-              dataKey="emaAnnualized"
-              stroke="var(--color-emaAnnualized)"
               strokeWidth={2}
               dot={false}
             />

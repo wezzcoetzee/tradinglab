@@ -59,3 +59,8 @@ bun run scripts/extract-excel.ts  # Extract BTC data from Excel
 ### Path Alias
 
 `@/*` maps to `src/*`
+
+
+Use agent-browser to test the login flow. Run agent-browser --help to see available commands.
+
+[TECHNICALS.md](./TECHNICALS.md) contains all the calculations 

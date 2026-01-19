@@ -35,11 +35,8 @@ model SavedOptimizationResult {
     id             Int      @id @default(autoincrement())
     name           String   @unique
     bestSmaPeriod  Int
-    bestEmaPeriod  Int
     smaAnnualized  Decimal  @db.Decimal(18, 8)
-    emaAnnualized  Decimal  @db.Decimal(18, 8)
     smaMaxDrawdown Decimal  @db.Decimal(18, 8)
-    emaMaxDrawdown Decimal  @db.Decimal(18, 8)
     calculatedAt   DateTime @default(now())
     params         Json
 }

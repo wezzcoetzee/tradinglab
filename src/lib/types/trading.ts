@@ -21,9 +21,7 @@ export type Signal = "long" | "short" | "neutral";
 
 export interface DataPointWithIndicators extends PricePoint {
   sma?: number;
-  ema?: number;
   smaSignal: Signal;
-  emaSignal: Signal;
 }
 
 export interface TradeRecord {
@@ -40,37 +38,28 @@ export interface StrategyResult {
   dataPoints: DataPointWithIndicators[];
   hodlReturns: number[];
   smaReturns: number[];
-  emaReturns: number[];
   hodlAnnualized: number;
   smaAnnualized: number;
-  emaAnnualized: number;
   hodlMaxDrawdown: number;
   smaMaxDrawdown: number;
-  emaMaxDrawdown: number;
   smaTrades: TradeRecord[];
-  emaTrades: TradeRecord[];
   totalDays: number;
 }
 
 export interface OptimizationResult {
   maDuration: number;
   smaAnnualized: number;
-  emaAnnualized: number;
   smaMaxDrawdown: number;
-  emaMaxDrawdown: number;
   smaTrades: number;
-  emaTrades: number;
+  hodlAnnualized: number;
 }
 
 export interface SavedOptimizationResult {
   id: number;
   name: string;
   bestSmaPeriod: number;
-  bestEmaPeriod: number;
   smaAnnualized: number;
-  emaAnnualized: number;
   smaMaxDrawdown: number;
-  emaMaxDrawdown: number;
   calculatedAt: Date;
   params: Omit<StrategyParams, "maDuration">;
 }
