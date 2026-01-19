@@ -55,9 +55,6 @@ function OptimizationPage() {
   const bestSma = results.reduce((best, curr) =>
     curr.smaAnnualized > best.smaAnnualized ? curr : best
   );
-  const bestEma = results.reduce((best, curr) =>
-    curr.emaAnnualized > best.emaAnnualized ? curr : best
-  );
 
   const handleSaveBest = useCallback(async () => {
     if (!saveName.trim()) return;
@@ -68,11 +65,8 @@ function OptimizationPage() {
         data: {
           name: saveName.trim(),
           bestSmaPeriod: bestSma.maDuration,
-          bestEmaPeriod: bestEma.maDuration,
           smaAnnualized: bestSma.smaAnnualized,
-          emaAnnualized: bestEma.emaAnnualized,
           smaMaxDrawdown: bestSma.smaMaxDrawdown,
-          emaMaxDrawdown: bestEma.emaMaxDrawdown,
           params: baseParams,
         },
       });
@@ -80,7 +74,7 @@ function OptimizationPage() {
     } finally {
       setIsSaving(false);
     }
-  }, [saveName, params, bestSma, bestEma]);
+  }, [saveName, params, bestSma]);
 
   return (
     <div className="container mx-auto py-6 px-4">
@@ -107,7 +101,7 @@ function OptimizationPage() {
                   type="number"
                   value={minPeriod}
                   onChange={(e) => setMinPeriod(Number(e.target.value))}
-                  min={2}
+                  min={1}
                   max={maxPeriod - 1}
                 />
               </div>
@@ -119,7 +113,7 @@ function OptimizationPage() {
                   value={maxPeriod}
                   onChange={(e) => setMaxPeriod(Number(e.target.value))}
                   min={minPeriod + 1}
-                  max={500}
+                  max={200}
                 />
               </div>
             </CardContent>
@@ -187,36 +181,6 @@ function OptimizationPage() {
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Trade Count:</span>
                     <span className="font-bold">{bestSma.smaTrades}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Best EMA Configuration</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Period:</span>
-                    <span className="font-bold">{bestEma.maDuration} days</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Annualized Return:</span>
-                    <span className="font-bold text-green-600">
-                      {(bestEma.emaAnnualized * 100).toFixed(2)}%
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Max Drawdown:</span>
-                    <span className="font-bold text-red-600">
-                      {(bestEma.emaMaxDrawdown * 100).toFixed(2)}%
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Trade Count:</span>
-                    <span className="font-bold">{bestEma.emaTrades}</span>
                   </div>
                 </div>
               </CardContent>
