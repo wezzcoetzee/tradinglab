@@ -147,3 +147,20 @@ export function calculateMaxDrawdown(returns: number[]): number {
 
   return maxDrawdown;
 }
+
+export function computeRunningDrawdowns(returns: number[]): number[] {
+  if (returns.length === 0) return [];
+
+  const drawdowns: number[] = [];
+  let peak = returns[0];
+  let maxDrawdown = 0;
+
+  for (const value of returns) {
+    peak = Math.max(peak, value);
+    const drawdown = (peak - value) / peak;
+    maxDrawdown = Math.max(maxDrawdown, drawdown);
+    drawdowns.push(maxDrawdown);
+  }
+
+  return drawdowns;
+}

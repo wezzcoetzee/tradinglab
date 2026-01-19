@@ -8,20 +8,9 @@ import type { StrategyParams } from "@/lib/types/trading";
 interface ParameterPanelProps {
   params: StrategyParams;
   onParamsChange: (params: StrategyParams) => void;
-  dateRange?: { minTimestamp: number; maxTimestamp: number };
 }
 
-function timestampToDateString(timestamp: number | undefined): string {
-  if (!timestamp) return "";
-  return new Date(timestamp * 1000).toISOString().split("T")[0];
-}
-
-function dateStringToTimestamp(dateStr: string): number | undefined {
-  if (!dateStr) return undefined;
-  return Math.floor(new Date(dateStr).getTime() / 1000);
-}
-
-export function ParameterPanel({ params, onParamsChange, dateRange }: ParameterPanelProps) {
+export function ParameterPanel({ params, onParamsChange }: ParameterPanelProps) {
   const updateParam = <K extends keyof StrategyParams>(
     key: K,
     value: StrategyParams[K]
@@ -35,23 +24,6 @@ export function ParameterPanel({ params, onParamsChange, dateRange }: ParameterP
         <CardTitle>Strategy Parameters</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {dateRange && (
-          <div className="space-y-2">
-            <Label htmlFor="simulationStartDate">Simulation Start Date</Label>
-            <Input
-              id="simulationStartDate"
-              type="date"
-              value={timestampToDateString(params.simulationStartDate)}
-              onChange={(e) => updateParam("simulationStartDate", dateStringToTimestamp(e.target.value))}
-              min={timestampToDateString(dateRange.minTimestamp)}
-              max={timestampToDateString(dateRange.maxTimestamp)}
-            />
-            <p className="text-xs text-muted-foreground">
-              Leave empty to use all data
-            </p>
-          </div>
-        )}
-
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="maDuration">MA Duration</Label>

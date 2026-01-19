@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { getPriceData, getStrategyConfig, calculateStrategy, getPriceDataRange } from "@/data/trading.server";
+import { getPriceData, getStrategyConfig, calculateStrategy } from "@/data/trading.server";
 import type { StrategyParams, StrategyResult, PricePoint } from "@/lib/types/trading";
 import {
   ParameterPanel,
@@ -14,24 +14,22 @@ interface LoaderData {
   priceData: PricePoint[];
   config: StrategyParams;
   initialResult: StrategyResult;
-  dateRange: { minTimestamp: number; maxTimestamp: number };
 }
 
 export const Route = createFileRoute("/trading/")({
   component: TradingDashboard,
   loader: async (): Promise<LoaderData> => {
-    const [priceData, config, dateRange] = await Promise.all([
+    const [priceData, config] = await Promise.all([
       getPriceData(),
       getStrategyConfig(),
-      getPriceDataRange(),
     ]);
     const initialResult = await calculateStrategy({ data: config });
-    return { priceData, config, initialResult, dateRange };
+    return { priceData, config, initialResult };
   },
 });
 
 function TradingDashboard() {
-  const { config, initialResult, dateRange } = Route.useLoaderData();
+  const { config, initialResult } = Route.useLoaderData();
   const [params, setParams] = useState<StrategyParams>(config);
   const [result, setResult] = useState<StrategyResult>(initialResult);
   const [isCalculating, setIsCalculating] = useState(false);
@@ -61,7 +59,7 @@ function TradingDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-1 space-y-4">
-          <ParameterPanel params={params} onParamsChange={handleParamsChange} dateRange={dateRange} />
+          <ParameterPanel params={params} onParamsChange={handleParamsChange} />
           <Button
             onClick={handleCalculate}
             disabled={isCalculating}

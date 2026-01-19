@@ -5,5 +5,6 @@ export {
   calculateStrategyReturns,
   calculateAnnualizedReturn,
   calculateMaxDrawdown,
+  computeRunningDrawdowns,
 } from "./returns";
 export { runOptimization } from "./optimizer";

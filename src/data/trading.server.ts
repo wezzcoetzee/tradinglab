@@ -150,26 +150,6 @@ export const saveStrategyConfig = createServerFn({ method: "POST" })
     return config;
   });
 
-export const getPriceDataRange = createServerFn({
-  method: "GET",
-}).handler(async (): Promise<{ minTimestamp: number; maxTimestamp: number }> => {
-  const [minResult, maxResult] = await Promise.all([
-    db.priceData.findFirst({
-      orderBy: { unixTimestamp: "asc" },
-      select: { unixTimestamp: true },
-    }),
-    db.priceData.findFirst({
-      orderBy: { unixTimestamp: "desc" },
-      select: { unixTimestamp: true },
-    }),
-  ]);
-
-  return {
-    minTimestamp: minResult ? Number(minResult.unixTimestamp) : 0,
-    maxTimestamp: maxResult ? Number(maxResult.unixTimestamp) : Date.now(),
-  };
-});
-
 interface SaveOptimizationInput {
   name: string;
   bestSmaPeriod: number;

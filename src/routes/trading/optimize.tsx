@@ -1,8 +1,9 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { getStrategyConfig, getOptimizationData, saveOptimizationResult } from "@/data/trading.server";
-import type { StrategyParams, OptimizationResult } from "@/lib/types/trading";
-import { ParameterPanel, OptimizationChart } from "@/components/trading";
+import { getStrategyConfig, getOptimizationData, saveOptimizationResult, calculateStrategy } from "@/data/trading.server";
+import type { StrategyParams, OptimizationResult, StrategyResult } from "@/lib/types/trading";
+import { ParameterPanel, OptimizationChart, DataTable } from "@/components/trading";
+import { computeRunningDrawdowns } from "@/lib/calculations";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,7 @@ import { Label } from "@/components/ui/label";
 interface LoaderData {
   config: StrategyParams;
   initialResults: OptimizationResult[];
+  initialStrategyResult: StrategyResult;
 }
 
 export const Route = createFileRoute("/trading/optimize")({
@@ -18,22 +20,35 @@ export const Route = createFileRoute("/trading/optimize")({
   loader: async (): Promise<LoaderData> => {
     const config = await getStrategyConfig();
     const { maDuration: _, ...baseParams } = config;
-    const initialResults = await getOptimizationData({
-      data: { baseParams, minPeriod: 5, maxPeriod: 200 },
-    });
-    return { config, initialResults };
+    const [initialResults, initialStrategyResult] = await Promise.all([
+      getOptimizationData({
+        data: { baseParams, minPeriod: 5, maxPeriod: 200 },
+      }),
+      calculateStrategy({ data: config }),
+    ]);
+    return { config, initialResults, initialStrategyResult };
   },
 });
 
 function OptimizationPage() {
-  const { config, initialResults } = Route.useLoaderData();
+  const { config, initialResults, initialStrategyResult } = Route.useLoaderData();
   const [params, setParams] = useState<StrategyParams>(config);
   const [results, setResults] = useState<OptimizationResult[]>(initialResults);
+  const [strategyResult, setStrategyResult] = useState<StrategyResult>(initialStrategyResult);
   const [minPeriod, setMinPeriod] = useState(1);
   const [maxPeriod, setMaxPeriod] = useState(200);
   const [isCalculating, setIsCalculating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveName, setSaveName] = useState("");
+
+  useEffect(() => {
+    calculateStrategy({ data: params }).then(setStrategyResult);
+  }, [params]);
+
+  const { hodlDrawdowns, smaDrawdowns } = useMemo(() => ({
+    hodlDrawdowns: computeRunningDrawdowns(strategyResult.hodlReturns),
+    smaDrawdowns: computeRunningDrawdowns(strategyResult.smaReturns),
+  }), [strategyResult]);
 
   const handleParamsChange = useCallback((newParams: StrategyParams) => {
     setParams(newParams);
@@ -188,6 +203,15 @@ function OptimizationPage() {
           </div>
 
           <OptimizationChart results={results} currentMaDuration={params.maDuration} />
+
+          <DataTable
+            dataPoints={strategyResult.dataPoints}
+            hodlReturns={strategyResult.hodlReturns}
+            smaReturns={strategyResult.smaReturns}
+            hodlDrawdowns={hodlDrawdowns}
+            smaDrawdowns={smaDrawdowns}
+            initialCapital={params.initialCapital}
+          />
         </div>
       </div>
     </div>
