@@ -66,12 +66,14 @@ export const calculateStrategy = createServerFn({ method: "POST" })
     const priceData = await getPriceData();
     const dataPoints = generateSignals(priceData, params.maDuration, params.signalThreshold);
 
-    let simulationStartIndex = 0;
+    let simulationStartIndex = params.maDuration - 1;
     if (params.simulationStartDate) {
-      simulationStartIndex = dataPoints.findIndex(
+      const dateIndex = dataPoints.findIndex(
         (p) => p.unixTimestamp >= params.simulationStartDate!
       );
-      if (simulationStartIndex === -1) simulationStartIndex = 0;
+      if (dateIndex !== -1) {
+        simulationStartIndex = Math.max(simulationStartIndex, dateIndex);
+      }
     }
 
     const hodlReturns = calculateHODLReturns(dataPoints, simulationStartIndex);

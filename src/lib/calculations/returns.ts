@@ -23,7 +23,7 @@ interface StrategyState {
   position: "long" | "short" | "neutral";
   entryPrice: number;
   entryTimestamp: number;
-  trades: TradeRecord[];
+  previousPrice: number;
 }
 
 function applyTradeFees(
@@ -50,7 +50,7 @@ export function calculateStrategyReturns(
     position: "neutral",
     entryPrice: 0,
     entryTimestamp: 0,
-    trades: [],
+    previousPrice: 0,
   };
 
   for (let i = 0; i < dataPoints.length; i++) {
@@ -59,106 +59,60 @@ export function calculateStrategyReturns(
     const price = point.closePrice;
     const inSimulation = i >= startIdx;
 
-    if (i === startIdx && state.position !== "neutral") {
-      state.capital = params.initialCapital;
-      state.position = "neutral";
-      state.trades = [];
-    }
-
     if (!inSimulation) {
       continue;
     }
 
-    if (state.position === "neutral") {
-      if (signal === "long" && params.buyOnLongSignal) {
-        state.position = "long";
+    if (i === startIdx) {
+      state.capital = params.initialCapital;
+      state.previousPrice = price;
+
+      const targetPosition =
+        signal === "long" && params.buyOnLongSignal ? "long" :
+        signal === "short" && params.shortOnShort ? "short" : "neutral";
+
+      if (targetPosition !== "neutral") {
+        state.capital = applyTradeFees(state.capital, params.gasFeePerTrade, params.exchangeFee);
+        state.position = targetPosition;
         state.entryPrice = price;
         state.entryTimestamp = point.unixTimestamp;
-        state.capital = applyTradeFees(state.capital, params.gasFeePerTrade, params.exchangeFee);
-      } else if (signal === "short" && params.shortOnShort) {
-        state.position = "short";
-        state.entryPrice = price;
-        state.entryTimestamp = point.unixTimestamp;
-        state.capital = applyTradeFees(state.capital, params.gasFeePerTrade, params.exchangeFee);
       }
-    } else if (state.position === "long") {
-      const priceChange = (price - state.entryPrice) / state.entryPrice;
-      const leveragedReturn = priceChange * params.longLeverage;
 
-      if (signal !== "long") {
-        const returnPct = leveragedReturn;
-        const capitalAfterTrade = state.capital * (1 + returnPct);
-        const capitalAfterFees = applyTradeFees(
-          capitalAfterTrade,
-          params.gasFeePerTrade,
-          params.exchangeFee
-        );
-
-        recordedTrades.push({
-          entryTimestamp: state.entryTimestamp,
-          exitTimestamp: point.unixTimestamp,
-          entryPrice: state.entryPrice,
-          exitPrice: price,
-          position: "long",
-          returnPct,
-          capitalAfter: capitalAfterFees,
-        });
-
-        state.capital = capitalAfterFees;
-        state.position = "neutral";
-
-        if (signal === "short" && params.shortOnShort) {
-          state.position = "short";
-          state.entryPrice = price;
-          state.entryTimestamp = point.unixTimestamp;
-          state.capital = applyTradeFees(state.capital, params.gasFeePerTrade, params.exchangeFee);
-        }
-      }
-    } else if (state.position === "short") {
-      const priceChange = (state.entryPrice - price) / state.entryPrice;
-      const leveragedReturn = priceChange * params.shortLeverage;
-
-      if (signal !== "short") {
-        const returnPct = leveragedReturn;
-        const capitalAfterTrade = state.capital * (1 + returnPct);
-        const capitalAfterFees = applyTradeFees(
-          capitalAfterTrade,
-          params.gasFeePerTrade,
-          params.exchangeFee
-        );
-
-        recordedTrades.push({
-          entryTimestamp: state.entryTimestamp,
-          exitTimestamp: point.unixTimestamp,
-          entryPrice: state.entryPrice,
-          exitPrice: price,
-          position: "short",
-          returnPct,
-          capitalAfter: capitalAfterFees,
-        });
-
-        state.capital = capitalAfterFees;
-        state.position = "neutral";
-
-        if (signal === "long" && params.buyOnLongSignal) {
-          state.position = "long";
-          state.entryPrice = price;
-          state.entryTimestamp = point.unixTimestamp;
-          state.capital = applyTradeFees(state.capital, params.gasFeePerTrade, params.exchangeFee);
-        }
-      }
+      returns.push(state.capital / params.initialCapital);
+      continue;
     }
 
-    let currentCapital = state.capital;
     if (state.position === "long") {
-      const priceChange = (price - state.entryPrice) / state.entryPrice;
-      currentCapital = state.capital * (1 + priceChange * params.longLeverage);
-    } else if (state.position === "short") {
-      const priceChange = (state.entryPrice - price) / state.entryPrice;
-      currentCapital = state.capital * (1 + priceChange * params.shortLeverage);
+      const dailyReturn = (price - state.previousPrice) / state.previousPrice;
+      state.capital = state.capital * (1 + dailyReturn * params.longLeverage);
+    }
+    // "short" position = cash/neutral (0 return, matching Excel behavior)
+
+    const targetPosition =
+      signal === "long" && params.buyOnLongSignal ? "long" :
+      signal === "short" && params.shortOnShort ? "short" : "neutral";
+
+    if (state.position !== targetPosition) {
+      if (state.position !== "neutral") {
+        recordedTrades.push({
+          entryTimestamp: state.entryTimestamp,
+          exitTimestamp: point.unixTimestamp,
+          entryPrice: state.entryPrice,
+          exitPrice: price,
+          position: state.position,
+          returnPct: (state.capital - params.initialCapital) / params.initialCapital,
+          capitalAfter: state.capital,
+        });
+      }
+
+      state.capital = applyTradeFees(state.capital, params.gasFeePerTrade, params.exchangeFee);
+      state.position = targetPosition;
+      state.entryPrice = price;
+      state.entryTimestamp = point.unixTimestamp;
     }
 
-    returns.push(currentCapital / params.initialCapital);
+    state.previousPrice = price;
+    returns.push(state.capital / params.initialCapital);
   }
 
   return { returns, trades: recordedTrades };

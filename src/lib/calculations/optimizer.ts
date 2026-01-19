@@ -13,23 +13,25 @@ export function runOptimization(
   maxPeriod: number = 200
 ): OptimizationResult[] {
   const results: OptimizationResult[] = [];
-  const totalDays = priceData.length;
-
-  const hodlFinal = priceData.length > 0
-    ? priceData[priceData.length - 1].closePrice / priceData[0].closePrice
-    : 1;
-  const hodlAnnualized = calculateAnnualizedReturn(hodlFinal, 1, totalDays);
 
   for (let period = minPeriod; period <= maxPeriod; period++) {
+    const simulationStartIdx = period - 1;
+    const tradingDays = priceData.length - simulationStartIdx;
+
+    const hodlFinal = priceData.length > period
+      ? priceData[priceData.length - 1].closePrice / priceData[simulationStartIdx].closePrice
+      : 1;
+    const hodlAnnualized = calculateAnnualizedReturn(hodlFinal, 1, tradingDays);
+
     const params: StrategyParams = { ...baseParams, maDuration: period };
     const dataPoints = generateSignals(priceData, period, baseParams.signalThreshold);
 
-    const smaResult = calculateStrategyReturns(dataPoints, params);
+    const smaResult = calculateStrategyReturns(dataPoints, params, simulationStartIdx);
     const smaFinal = smaResult.returns[smaResult.returns.length - 1] ?? 1;
 
     results.push({
       maDuration: period,
-      smaAnnualized: calculateAnnualizedReturn(smaFinal, 1, totalDays),
+      smaAnnualized: calculateAnnualizedReturn(smaFinal, 1, tradingDays),
       smaMaxDrawdown: calculateMaxDrawdown(smaResult.returns),
       smaTrades: smaResult.trades.length,
       hodlAnnualized,
