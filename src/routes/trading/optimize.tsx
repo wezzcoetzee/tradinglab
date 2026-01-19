@@ -29,7 +29,7 @@ function OptimizationPage() {
   const { config, initialResults } = Route.useLoaderData();
   const [params, setParams] = useState<StrategyParams>(config);
   const [results, setResults] = useState<OptimizationResult[]>(initialResults);
-  const [minPeriod, setMinPeriod] = useState(5);
+  const [minPeriod, setMinPeriod] = useState(1);
   const [maxPeriod, setMaxPeriod] = useState(200);
   const [isCalculating, setIsCalculating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
