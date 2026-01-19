@@ -60,13 +60,15 @@ export const getStrategyConfig = createServerFn({
   };
 });
 
+const FAIR_COMPARISON_START_DAY = 200;
+
 export const calculateStrategy = createServerFn({ method: "POST" })
   .inputValidator((params: StrategyParams) => params)
   .handler(async ({ data: params }): Promise<StrategyResult> => {
     const priceData = await getPriceData();
     const dataPoints = generateSignals(priceData, params.maDuration, params.signalThreshold);
 
-    let simulationStartIndex = params.maDuration - 1;
+    let simulationStartIndex = Math.max(params.maDuration - 1, FAIR_COMPARISON_START_DAY - 1);
     if (params.simulationStartDate) {
       const dateIndex = dataPoints.findIndex(
         (p) => p.unixTimestamp >= params.simulationStartDate!
