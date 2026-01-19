@@ -13,16 +13,15 @@ export function runOptimization(
   maxPeriod: number = 200
 ): OptimizationResult[] {
   const results: OptimizationResult[] = [];
+  const simulationStartIdx = maxPeriod - 1;
+  const tradingDays = priceData.length - simulationStartIdx;
+
+  const hodlFinal = priceData.length > maxPeriod
+    ? priceData[priceData.length - 1].closePrice / priceData[simulationStartIdx].closePrice
+    : 1;
+  const hodlAnnualized = calculateAnnualizedReturn(hodlFinal, 1, tradingDays);
 
   for (let period = minPeriod; period <= maxPeriod; period++) {
-    const simulationStartIdx = period - 1;
-    const tradingDays = priceData.length - simulationStartIdx;
-
-    const hodlFinal = priceData.length > period
-      ? priceData[priceData.length - 1].closePrice / priceData[simulationStartIdx].closePrice
-      : 1;
-    const hodlAnnualized = calculateAnnualizedReturn(hodlFinal, 1, tradingDays);
-
     const params: StrategyParams = { ...baseParams, maDuration: period };
     const dataPoints = generateSignals(priceData, period, baseParams.signalThreshold);
 
