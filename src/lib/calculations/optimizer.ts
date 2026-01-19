@@ -6,6 +6,8 @@ import {
   calculateMaxDrawdown,
 } from "./returns";
 
+const FAIR_COMPARISON_START_DAY = 200;
+
 export function runOptimization(
   priceData: PricePoint[],
   baseParams: Omit<StrategyParams, "maDuration">,
@@ -13,10 +15,10 @@ export function runOptimization(
   maxPeriod: number = 200
 ): OptimizationResult[] {
   const results: OptimizationResult[] = [];
-  const simulationStartIdx = maxPeriod - 1;
+  const simulationStartIdx = FAIR_COMPARISON_START_DAY - 1;
   const tradingDays = priceData.length - simulationStartIdx;
 
-  const hodlFinal = priceData.length > maxPeriod
+  const hodlFinal = priceData.length > FAIR_COMPARISON_START_DAY
     ? priceData[priceData.length - 1].closePrice / priceData[simulationStartIdx].closePrice
     : 1;
   const hodlAnnualized = calculateAnnualizedReturn(hodlFinal, 1, tradingDays);
