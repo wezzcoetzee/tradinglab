@@ -6,7 +6,6 @@ import type {
   DetailedDailyState,
 } from "./types";
 import { calculateAllSmas } from "./sma";
-import { calculateAtr } from "./atr";
 import { simulateStrategy, calculateHodl } from "./simulator";
 
 export interface DetailedBacktestResult extends BacktestResult {
@@ -30,17 +29,12 @@ export function runBacktest(
     shortOnShort,
     longLeverage,
     shortLeverage,
-    atrMultiplier,
-    atrPeriod,
   } = params;
 
   const smaMap = calculateAllSmas(pricePoints, smaMin, smaMax);
-  const closePrices = pricePoints.map((p) => p.closePrice);
-  const atrValues = calculateAtr(closePrices, atrPeriod);
 
   const startIndex = WARMUP_DAYS - 1;
   const tradingPricePoints = pricePoints.slice(startIndex);
-  const tradingAtrValues = atrValues.slice(startIndex);
 
   const hodl = calculateHodl(tradingPricePoints, initialCapital);
 
@@ -53,22 +47,15 @@ export function runBacktest(
 
     const tradingSmaValues = smaValues.slice(startIndex);
 
-    const { result, timeSeries } = simulateStrategy(
-      tradingPricePoints,
-      tradingSmaValues,
-      tradingAtrValues,
-      {
-        initialCapital,
-        exchangeFeePercent,
-        gasFeePerTrade,
-        buyOnLong,
-        shortOnShort,
-        longLeverage,
-        shortLeverage,
-        atrMultiplier,
-        atrPeriod,
-      }
-    );
+    const { result, timeSeries } = simulateStrategy(tradingPricePoints, tradingSmaValues, {
+      initialCapital,
+      exchangeFeePercent,
+      gasFeePerTrade,
+      buyOnLong,
+      shortOnShort,
+      longLeverage,
+      shortLeverage,
+    });
 
     result.period = period;
     smaResults.push(result);
@@ -108,30 +95,19 @@ export function runSingleSmaBacktest(
   const smaMap = calculateAllSmas(pricePoints, smaPeriod, smaPeriod);
   const smaValues = smaMap.get(smaPeriod)!;
 
-  const closePrices = pricePoints.map((p) => p.closePrice);
-  const atrValues = calculateAtr(closePrices, params.atrPeriod);
-
   const startIndex = WARMUP_DAYS - 1;
   const tradingPricePoints = pricePoints.slice(startIndex);
   const tradingSmaValues = smaValues.slice(startIndex);
-  const tradingAtrValues = atrValues.slice(startIndex);
 
-  const { result, timeSeries } = simulateStrategy(
-    tradingPricePoints,
-    tradingSmaValues,
-    tradingAtrValues,
-    {
-      initialCapital: params.initialCapital,
-      exchangeFeePercent: params.exchangeFeePercent,
-      gasFeePerTrade: params.gasFeePerTrade,
-      buyOnLong: params.buyOnLong,
-      shortOnShort: params.shortOnShort,
-      longLeverage: params.longLeverage,
-      shortLeverage: params.shortLeverage,
-      atrMultiplier: params.atrMultiplier,
-      atrPeriod: params.atrPeriod,
-    }
-  );
+  const { result, timeSeries } = simulateStrategy(tradingPricePoints, tradingSmaValues, {
+    initialCapital: params.initialCapital,
+    exchangeFeePercent: params.exchangeFeePercent,
+    gasFeePerTrade: params.gasFeePerTrade,
+    buyOnLong: params.buyOnLong,
+    shortOnShort: params.shortOnShort,
+    longLeverage: params.longLeverage,
+    shortLeverage: params.shortLeverage,
+  });
 
   result.period = smaPeriod;
 
