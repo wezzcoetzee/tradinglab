@@ -11,46 +11,27 @@ export interface BacktestParams {
   smaMax: number;
   buyOnLong: boolean;
   shortOnShort: boolean;
-  longLeverage: number;
-  shortLeverage: number;
-  trailingStop?: TrailingStopConfig;
 }
 
-export type Position = "LONG" | "SHORT" | "NONE";
+export type Signal = 1 | 0;
 
-export interface DailyState {
-  date: Date;
-  closePrice: number;
-  sma: number | null;
-  signal: Position;
-  portfolioValue: number;
-  hodlValue: number;
-  drawdown: number;
-  hodlDrawdown: number;
-}
-
-export interface SmaResult {
+export interface MaResult {
   period: number;
   totalReturn: number;
-  annualizedReturn: number;
-  maxDrawdown: number;
   finalValue: number;
   trades: number;
-  liquidated: boolean;
-  trailingStopTriggers?: number;
-  tradeAuditTrail?: TradeAuditEntry[];
 }
 
 export interface BacktestResult {
   params: BacktestParams;
   hodl: {
     totalReturn: number;
-    annualizedReturn: number;
-    maxDrawdown: number;
     finalValue: number;
   };
-  smaResults: SmaResult[];
-  bestSma: SmaResult;
+  smaResults: MaResult[];
+  emaResults: MaResult[];
+  bestSma: MaResult;
+  bestEma: MaResult;
   dateRange: {
     start: Date;
     end: Date;
@@ -58,54 +39,19 @@ export interface BacktestResult {
   };
 }
 
-export interface PortfolioTimeSeries {
-  date: Date;
-  smaValue: number;
-  hodlValue: number;
-}
-
-export type TradeAction =
-  | "ENTER_LONG"
-  | "EXIT_LONG"
-  | "ENTER_SHORT"
-  | "EXIT_SHORT"
-  | "PARTIAL_CLOSE_LONG"
-  | "PARTIAL_CLOSE_SHORT"
-  | "STOP_EXIT_LONG"
-  | "STOP_EXIT_SHORT";
-
-export interface TrailingStopConfig {
-  enabled: boolean;
-  atrPeriod: number;
-  atrMultiplier: number;
-  partialClosePercent: number;
-}
-
-export interface TradeAuditEntry {
-  date: Date;
-  action: TradeAction;
-  price: number;
-  quantity: number;
-  value: number;
-  fee: number;
-  pnl: number;
-  pnlPercent: number;
-  stopPrice: number | null;
-  atr: number | null;
-  positionSizeRemaining: number;
-}
-
-export interface DetailedDailyState {
+export interface DailyData {
+  day: number;
   date: Date;
   closePrice: number;
   sma: number | null;
-  signal: Position;
-  portfolioValue: number;
+  ema: number | null;
+  smaSignal: Signal;
+  emaSignal: Signal;
   hodlValue: number;
-  drawdown: number;
-  hodlDrawdown: number;
-  tradeAction?: TradeAction;
-  atr?: number | null;
-  trailingStopPrice?: number | null;
-  tradeAudit?: TradeAuditEntry;
+  smaBalance: number;
+  emaBalance: number;
+}
+
+export interface DetailedBacktestResult extends BacktestResult {
+  dailyData?: DailyData[];
 }

@@ -2,49 +2,53 @@
 
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
-import type { SmaResult, BacktestParams } from "@/lib/backtest";
+import type { MaResult, BacktestParams } from "@/lib/backtest";
 
 interface CsvExportProps {
-  results: SmaResult[];
+  smaResults: MaResult[];
+  emaResults: MaResult[];
   params: BacktestParams;
   hodlReturn: number;
 }
 
-export function CsvExport({ results, params, hodlReturn }: CsvExportProps) {
+export function CsvExport({ smaResults, emaResults, params, hodlReturn }: CsvExportProps) {
   const handleExport = () => {
     const headers = [
-      "SMA Period",
-      "Total Return %",
-      "Annualized Return %",
-      "Max Drawdown %",
-      "Final Value",
-      "Trades",
-      "Liquidated",
-      "vs HODL %",
+      "Period",
+      "SMA Return %",
+      "EMA Return %",
+      "HODL Return %",
+      "SMA Final Value",
+      "EMA Final Value",
+      "SMA Trades",
+      "EMA Trades",
     ];
 
-    const rows = results.map((r) => [
-      r.period,
-      (r.totalReturn * 100).toFixed(2),
-      r.liquidated ? "N/A" : (r.annualizedReturn * 100).toFixed(2),
-      (r.maxDrawdown * 100).toFixed(2),
-      r.finalValue.toFixed(2),
-      r.trades,
-      r.liquidated ? "Yes" : "No",
-      r.liquidated ? "N/A" : ((r.annualizedReturn - hodlReturn) * 100).toFixed(2),
-    ]);
+    const emaMap = new Map(emaResults.map(r => [r.period, r]));
+
+    const rows = smaResults.map((sma) => {
+      const ema = emaMap.get(sma.period);
+      return [
+        sma.period,
+        (sma.totalReturn * 100).toFixed(2),
+        ema ? (ema.totalReturn * 100).toFixed(2) : "N/A",
+        (hodlReturn * 100).toFixed(2),
+        sma.finalValue.toFixed(2),
+        ema ? ema.finalValue.toFixed(2) : "N/A",
+        sma.trades,
+        ema ? ema.trades : "N/A",
+      ];
+    });
 
     const paramLines = [
       `# Backtest Parameters`,
       `# Initial Capital: $${params.initialCapital}`,
       `# Exchange Fee: ${params.exchangeFeePercent}%`,
       `# Gas Fee: $${params.gasFeePerTrade}`,
-      `# SMA Range: ${params.smaMin}-${params.smaMax}`,
+      `# MA Range: ${params.smaMin}-${params.smaMax}`,
       `# Buy on Long: ${params.buyOnLong}`,
       `# Short on Short: ${params.shortOnShort}`,
-      `# Long Leverage: ${params.longLeverage}x`,
-      `# Short Leverage: ${params.shortLeverage}x`,
-      `# HODL Annualized Return: ${(hodlReturn * 100).toFixed(2)}%`,
+      `# HODL Return: ${(hodlReturn * 100).toFixed(2)}%`,
       ``,
     ];
 
@@ -58,7 +62,7 @@ export function CsvExport({ results, params, hodlReturn }: CsvExportProps) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `sma-backtest-${new Date().toISOString().split("T")[0]}.csv`;
+    link.download = `ma-backtest-${new Date().toISOString().split("T")[0]}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

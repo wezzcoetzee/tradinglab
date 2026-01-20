@@ -4,18 +4,15 @@ import { useState } from "react";
 import {
   BacktestForm,
   type BacktestFormData,
-  ResultsTable,
-  PortfolioChart,
-  SmaReturnChart,
-  ReturnsHeatmap,
-  CsvExport,
+  MaSummaryTable,
+  DataTableVirtualized,
   SummaryStats,
-  DailyDataTable,
+  CsvExport,
 } from "@/components/backtest";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useUrlParams } from "@/hooks/use-url-params";
-import type { DetailedBacktestResult } from "@/lib/backtest";
+import type { DetailedBacktestResult, DailyData } from "@/lib/backtest";
 
 export function Dashboard() {
   const { formData: urlFormData, updateUrl } = useUrlParams();
@@ -23,7 +20,7 @@ export function Dashboard() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState<number | null>(null);
-  const [timeSeries, setTimeSeries] = useState<DetailedBacktestResult["selectedPeriodTimeSeries"]>(undefined);
+  const [dailyData, setDailyData] = useState<DailyData[] | undefined>(undefined);
 
   const handleSubmit = async (formData: BacktestFormData) => {
     setIsLoading(true);
@@ -42,10 +39,6 @@ export function Dashboard() {
           smaMax: formData.smaMax,
           buyOnLong: formData.buyOnLong,
           shortOnShort: formData.shortOnShort,
-          longLeverage: formData.longLeverage,
-          shortLeverage: formData.sameLeverage
-            ? formData.longLeverage
-            : formData.shortLeverage,
         }),
       });
 
@@ -58,7 +51,7 @@ export function Dashboard() {
       setResult(data);
       setSelectedPeriod(data.bestSma.period);
 
-      await fetchTimeSeries(data.bestSma.period, formData);
+      await fetchDailyData(data.bestSma.period, formData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -66,7 +59,7 @@ export function Dashboard() {
     }
   };
 
-  const fetchTimeSeries = async (period: number, formData?: BacktestFormData) => {
+  const fetchDailyData = async (period: number, formData?: BacktestFormData) => {
     if (!result && !formData) return;
 
     const params = formData || {
@@ -77,9 +70,6 @@ export function Dashboard() {
       smaMax: result!.params.smaMax,
       buyOnLong: result!.params.buyOnLong,
       shortOnShort: result!.params.shortOnShort,
-      longLeverage: result!.params.longLeverage,
-      shortLeverage: result!.params.shortLeverage,
-      sameLeverage: result!.params.longLeverage === result!.params.shortLeverage,
     };
 
     try {
@@ -88,49 +78,47 @@ export function Dashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...params,
-          smaMin: period,
-          smaMax: period,
           selectedPeriod: period,
         }),
       });
 
       if (response.ok) {
         const data = (await response.json()) as DetailedBacktestResult;
-        setTimeSeries(
-          data.selectedPeriodTimeSeries?.map((item) => ({
+        setDailyData(
+          data.dailyData?.map((item) => ({
             ...item,
             date: new Date(item.date),
           }))
         );
       }
     } catch (err) {
-      console.error("Failed to fetch time series:", err);
+      console.error("Failed to fetch daily data:", err);
     }
   };
 
   const handleSelectPeriod = (period: number) => {
     setSelectedPeriod(period);
-    fetchTimeSeries(period);
+    fetchDailyData(period);
   };
 
   return (
     <div className="min-h-screen bg-zinc-950">
-      {/* Fixed Header */}
       <header className="sticky top-0 z-50 bg-zinc-950/95 backdrop-blur-sm border-b border-zinc-800">
         <div className="flex items-center justify-between px-6 py-3 border-b border-zinc-800/50">
           <div className="flex items-center gap-3">
             <div className="w-2 h-2 rounded-full bg-amber-500" />
             <h1 className="text-lg font-semibold text-zinc-100 tracking-tight">
-              SMA Strategy Backtester
+              SMA/EMA Strategy Backtester
             </h1>
             <span className="text-xs text-zinc-600 font-mono">BTC/USD</span>
           </div>
           <div className="flex items-center gap-3">
             {result && (
               <CsvExport
-                results={result.smaResults}
+                smaResults={result.smaResults}
+                emaResults={result.emaResults}
                 params={result.params}
-                hodlReturn={result.hodl.annualizedReturn}
+                hodlReturn={result.hodl.totalReturn}
               />
             )}
             <Button
@@ -158,7 +146,6 @@ export function Dashboard() {
         />
       </header>
 
-      {/* Main Content */}
       <main className="px-6 py-6 space-y-6">
         {error && (
           <div className="p-4 bg-rose-950/50 border border-rose-900/50 rounded-lg text-rose-400 font-mono text-sm">
@@ -170,7 +157,7 @@ export function Dashboard() {
           <div className="p-12 text-center">
             <div className="inline-flex items-center gap-3 text-zinc-500">
               <span className="w-4 h-4 border-2 border-zinc-700 border-t-amber-500 rounded-full animate-spin" />
-              <span className="font-mono text-sm">Running backtest across all SMA periods...</span>
+              <span className="font-mono text-sm">Running backtest across all MA periods...</span>
             </div>
           </div>
         )}
@@ -179,38 +166,22 @@ export function Dashboard() {
           <>
             <SummaryStats
               bestSma={result.bestSma}
+              bestEma={result.bestEma}
               hodl={result.hodl}
               initialCapital={result.params.initialCapital}
               dateRange={result.dateRange}
             />
 
-            <div className="grid lg:grid-cols-2 gap-6">
-              <SmaReturnChart
-                results={result.smaResults}
-                hodlAnnualizedReturn={result.hodl.annualizedReturn}
-                onSelectPeriod={handleSelectPeriod}
-              />
-
-              {selectedPeriod && timeSeries && timeSeries.length > 0 && (
-                <PortfolioChart data={timeSeries} smaPeriod={selectedPeriod} />
-              )}
-            </div>
-
-            <ReturnsHeatmap
-              results={result.smaResults}
+            <MaSummaryTable
+              smaResults={result.smaResults}
+              emaResults={result.emaResults}
+              hodlReturn={result.hodl.totalReturn}
               onSelectPeriod={handleSelectPeriod}
               selectedPeriod={selectedPeriod ?? undefined}
             />
 
-            <ResultsTable
-              results={result.smaResults}
-              hodlAnnualizedReturn={result.hodl.annualizedReturn}
-              onSelectPeriod={handleSelectPeriod}
-              selectedPeriod={selectedPeriod ?? undefined}
-            />
-
-            {selectedPeriod && timeSeries && timeSeries.length > 0 && (
-              <DailyDataTable data={timeSeries} smaPeriod={selectedPeriod} />
+            {selectedPeriod && dailyData && dailyData.length > 0 && (
+              <DataTableVirtualized data={dailyData} smaPeriod={selectedPeriod} />
             )}
           </>
         )}

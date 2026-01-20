@@ -1,17 +1,13 @@
 import type {
   PricePoint,
   BacktestParams,
-  BacktestResult,
-  SmaResult,
-  DetailedDailyState,
+  MaResult,
+  DailyData,
+  DetailedBacktestResult,
 } from "./types";
 import { calculateAllSmas } from "./sma";
-import { simulateStrategy, calculateHodl } from "./simulator";
-import { calculateATR } from "./atr";
-
-export interface DetailedBacktestResult extends BacktestResult {
-  selectedPeriodTimeSeries?: DetailedDailyState[];
-}
+import { calculateAllEmas } from "./ema";
+import { simulateMaStrategy, calculateHodl, generateDailyData } from "./simulator";
 
 const WARMUP_DAYS = 200;
 
@@ -28,60 +24,52 @@ export function runBacktest(
     smaMax,
     buyOnLong,
     shortOnShort,
-    longLeverage,
-    shortLeverage,
-    trailingStop,
   } = params;
-
-  const smaMap = calculateAllSmas(pricePoints, smaMin, smaMax);
 
   const startIndex = WARMUP_DAYS - 1;
   const tradingPricePoints = pricePoints.slice(startIndex);
 
-  // Pre-calculate ATR values when trailing stop is enabled
-  let tradingAtrValues: (number | null)[] | undefined;
-  if (trailingStop?.enabled) {
-    const closePrices = pricePoints.map((p) => p.closePrice);
-    const atrValues = calculateATR(closePrices, trailingStop.atrPeriod);
-    tradingAtrValues = atrValues.slice(startIndex);
-  }
+  const smaMap = calculateAllSmas(pricePoints, smaMin, smaMax);
+  const emaMap = calculateAllEmas(pricePoints, smaMin, smaMax);
 
   const hodl = calculateHodl(tradingPricePoints, initialCapital);
 
-  const smaResults: SmaResult[] = [];
-  let selectedPeriodTimeSeries: DetailedDailyState[] | undefined;
+  const smaResults: MaResult[] = [];
+  const emaResults: MaResult[] = [];
+
+  const simulatorParams = {
+    initialCapital,
+    exchangeFeePercent,
+    gasFeePerTrade,
+    buyOnLong,
+    shortOnShort,
+  };
 
   for (let period = smaMin; period <= smaMax; period++) {
     const smaValues = smaMap.get(period);
-    if (!smaValues) continue;
+    const emaValues = emaMap.get(period);
+
+    if (!smaValues || !emaValues) continue;
 
     const tradingSmaValues = smaValues.slice(startIndex);
+    const tradingEmaValues = emaValues.slice(startIndex);
 
-    const { result, timeSeries } = simulateStrategy(tradingPricePoints, tradingSmaValues, {
-      initialCapital,
-      exchangeFeePercent,
-      gasFeePerTrade,
-      buyOnLong,
-      shortOnShort,
-      longLeverage,
-      shortLeverage,
-      trailingStop,
-      atrValues: tradingAtrValues,
-    });
+    const smaSimResult = simulateMaStrategy(tradingPricePoints, tradingSmaValues, simulatorParams);
+    smaSimResult.result.period = period;
+    smaResults.push(smaSimResult.result);
 
-    result.period = period;
-    smaResults.push(result);
-
-    if (period === selectedPeriod) {
-      selectedPeriodTimeSeries = timeSeries;
-    }
+    const emaSimResult = simulateMaStrategy(tradingPricePoints, tradingEmaValues, simulatorParams);
+    emaSimResult.result.period = period;
+    emaResults.push(emaSimResult.result);
   }
 
-  const bestSma = smaResults.reduce((best, current) => {
-    if (current.liquidated) return best;
-    if (best.liquidated) return current;
-    return current.annualizedReturn > best.annualizedReturn ? current : best;
-  }, smaResults[0]);
+  const bestSma = smaResults.reduce((best, current) =>
+    current.totalReturn > best.totalReturn ? current : best
+  , smaResults[0]);
+
+  const bestEma = emaResults.reduce((best, current) =>
+    current.totalReturn > best.totalReturn ? current : best
+  , emaResults[0]);
 
   const dateRange = {
     start: tradingPricePoints[0].date,
@@ -89,51 +77,36 @@ export function runBacktest(
     days: tradingPricePoints.length,
   };
 
-  return {
-    params,
-    hodl,
-    smaResults,
-    bestSma,
-    dateRange,
-    selectedPeriodTimeSeries,
-  };
-}
+  let dailyData: DailyData[] | undefined;
 
-export function runSingleSmaBacktest(
-  pricePoints: PricePoint[],
-  params: BacktestParams,
-  smaPeriod: number
-): { result: SmaResult; timeSeries: DetailedDailyState[]; hodl: ReturnType<typeof calculateHodl> } {
-  const smaMap = calculateAllSmas(pricePoints, smaPeriod, smaPeriod);
-  const smaValues = smaMap.get(smaPeriod)!;
+  if (selectedPeriod !== undefined) {
+    const smaValues = smaMap.get(selectedPeriod);
+    const emaValues = emaMap.get(selectedPeriod);
 
-  const startIndex = WARMUP_DAYS - 1;
-  const tradingPricePoints = pricePoints.slice(startIndex);
-  const tradingSmaValues = smaValues.slice(startIndex);
+    if (smaValues && emaValues) {
+      const tradingSmaValues = smaValues.slice(startIndex);
+      const tradingEmaValues = emaValues.slice(startIndex);
 
-  // Pre-calculate ATR values when trailing stop is enabled
-  let tradingAtrValues: (number | null)[] | undefined;
-  if (params.trailingStop?.enabled) {
-    const closePrices = pricePoints.map((p) => p.closePrice);
-    const atrValues = calculateATR(closePrices, params.trailingStop.atrPeriod);
-    tradingAtrValues = atrValues.slice(startIndex);
+      dailyData = generateDailyData(
+        tradingPricePoints,
+        tradingSmaValues,
+        tradingEmaValues,
+        simulatorParams
+      );
+    }
   }
 
-  const { result, timeSeries } = simulateStrategy(tradingPricePoints, tradingSmaValues, {
-    initialCapital: params.initialCapital,
-    exchangeFeePercent: params.exchangeFeePercent,
-    gasFeePerTrade: params.gasFeePerTrade,
-    buyOnLong: params.buyOnLong,
-    shortOnShort: params.shortOnShort,
-    longLeverage: params.longLeverage,
-    shortLeverage: params.shortLeverage,
-    trailingStop: params.trailingStop,
-    atrValues: tradingAtrValues,
-  });
-
-  result.period = smaPeriod;
-
-  const hodl = calculateHodl(tradingPricePoints, params.initialCapital);
-
-  return { result, timeSeries, hodl };
+  return {
+    params,
+    hodl: {
+      totalReturn: hodl.totalReturn,
+      finalValue: hodl.finalValue,
+    },
+    smaResults,
+    emaResults,
+    bestSma,
+    bestEma,
+    dateRange,
+    dailyData,
+  };
 }
