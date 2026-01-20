@@ -16,10 +16,10 @@
  */
 
 import * as runtime from "@prisma/client/runtime/client"
-import type * as Prisma from "../models.ts"
-import { type PrismaClient } from "./class.ts"
+import type * as Prisma from "../models"
+import { type PrismaClient } from "./class"
 
-export type * from '../models.ts'
+export type * from '../models'
 
 export type DMMF = typeof runtime.DMMF
 
@@ -385,8 +385,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 export const ModelName = {
   PriceData: 'PriceData',
-  StrategyConfig: 'StrategyConfig',
-  SavedOptimizationResult: 'SavedOptimizationResult'
+  SavedOptimizationResult: 'SavedOptimizationResult',
+  StrategyConfig: 'StrategyConfig'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -402,7 +402,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "priceData" | "strategyConfig" | "savedOptimizationResult"
+    modelProps: "priceData" | "savedOptimizationResult" | "strategyConfig"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -480,80 +480,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    StrategyConfig: {
-      payload: Prisma.$StrategyConfigPayload<ExtArgs>
-      fields: Prisma.StrategyConfigFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.StrategyConfigFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StrategyConfigPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.StrategyConfigFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StrategyConfigPayload>
-        }
-        findFirst: {
-          args: Prisma.StrategyConfigFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StrategyConfigPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.StrategyConfigFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StrategyConfigPayload>
-        }
-        findMany: {
-          args: Prisma.StrategyConfigFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StrategyConfigPayload>[]
-        }
-        create: {
-          args: Prisma.StrategyConfigCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StrategyConfigPayload>
-        }
-        createMany: {
-          args: Prisma.StrategyConfigCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.StrategyConfigCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StrategyConfigPayload>[]
-        }
-        delete: {
-          args: Prisma.StrategyConfigDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StrategyConfigPayload>
-        }
-        update: {
-          args: Prisma.StrategyConfigUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StrategyConfigPayload>
-        }
-        deleteMany: {
-          args: Prisma.StrategyConfigDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.StrategyConfigUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.StrategyConfigUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StrategyConfigPayload>[]
-        }
-        upsert: {
-          args: Prisma.StrategyConfigUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StrategyConfigPayload>
-        }
-        aggregate: {
-          args: Prisma.StrategyConfigAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateStrategyConfig>
-        }
-        groupBy: {
-          args: Prisma.StrategyConfigGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.StrategyConfigGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.StrategyConfigCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.StrategyConfigCountAggregateOutputType> | number
-        }
-      }
-    }
     SavedOptimizationResult: {
       payload: Prisma.$SavedOptimizationResultPayload<ExtArgs>
       fields: Prisma.SavedOptimizationResultFieldRefs
@@ -628,6 +554,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    StrategyConfig: {
+      payload: Prisma.$StrategyConfigPayload<ExtArgs>
+      fields: Prisma.StrategyConfigFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.StrategyConfigFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StrategyConfigPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.StrategyConfigFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StrategyConfigPayload>
+        }
+        findFirst: {
+          args: Prisma.StrategyConfigFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StrategyConfigPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.StrategyConfigFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StrategyConfigPayload>
+        }
+        findMany: {
+          args: Prisma.StrategyConfigFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StrategyConfigPayload>[]
+        }
+        create: {
+          args: Prisma.StrategyConfigCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StrategyConfigPayload>
+        }
+        createMany: {
+          args: Prisma.StrategyConfigCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.StrategyConfigCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StrategyConfigPayload>[]
+        }
+        delete: {
+          args: Prisma.StrategyConfigDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StrategyConfigPayload>
+        }
+        update: {
+          args: Prisma.StrategyConfigUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StrategyConfigPayload>
+        }
+        deleteMany: {
+          args: Prisma.StrategyConfigDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.StrategyConfigUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.StrategyConfigUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StrategyConfigPayload>[]
+        }
+        upsert: {
+          args: Prisma.StrategyConfigUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StrategyConfigPayload>
+        }
+        aggregate: {
+          args: Prisma.StrategyConfigAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateStrategyConfig>
+        }
+        groupBy: {
+          args: Prisma.StrategyConfigGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StrategyConfigGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.StrategyConfigCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StrategyConfigCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -677,24 +677,6 @@ export const PriceDataScalarFieldEnum = {
 export type PriceDataScalarFieldEnum = (typeof PriceDataScalarFieldEnum)[keyof typeof PriceDataScalarFieldEnum]
 
 
-export const StrategyConfigScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  maDuration: 'maDuration',
-  buyOnLongSignal: 'buyOnLongSignal',
-  shortOnShort: 'shortOnShort',
-  longLeverage: 'longLeverage',
-  shortLeverage: 'shortLeverage',
-  initialCapital: 'initialCapital',
-  gasFeePerTrade: 'gasFeePerTrade',
-  exchangeFee: 'exchangeFee',
-  signalThreshold: 'signalThreshold',
-  simulationStartDate: 'simulationStartDate'
-} as const
-
-export type StrategyConfigScalarFieldEnum = (typeof StrategyConfigScalarFieldEnum)[keyof typeof StrategyConfigScalarFieldEnum]
-
-
 export const SavedOptimizationResultScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -706,6 +688,24 @@ export const SavedOptimizationResultScalarFieldEnum = {
 } as const
 
 export type SavedOptimizationResultScalarFieldEnum = (typeof SavedOptimizationResultScalarFieldEnum)[keyof typeof SavedOptimizationResultScalarFieldEnum]
+
+
+export const StrategyConfigScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  maDuration: 'maDuration',
+  buyOnLongSignal: 'buyOnLongSignal',
+  shortOnShort: 'shortOnShort',
+  longLeverage: 'longLeverage',
+  shortLeverage: 'shortLeverage',
+  initialCapital: 'initialCapital',
+  gasFeePerTrade: 'gasFeePerTrade',
+  exchangeFee: 'exchangeFee',
+  simulationStartDate: 'simulationStartDate',
+  signalThreshold: 'signalThreshold'
+} as const
+
+export type StrategyConfigScalarFieldEnum = (typeof StrategyConfigScalarFieldEnum)[keyof typeof StrategyConfigScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -731,14 +731,6 @@ export const QueryMode = {
 export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
 
 
-export const NullsOrder = {
-  first: 'first',
-  last: 'last'
-} as const
-
-export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
-
-
 export const JsonNullValueFilter = {
   DbNull: DbNull,
   JsonNull: JsonNull,
@@ -746,6 +738,14 @@ export const JsonNullValueFilter = {
 } as const
 
 export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
+
+
+export const NullsOrder = {
+  first: 'first',
+  last: 'last'
+} as const
+
+export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
 
 
 
@@ -825,13 +825,6 @@ export type ListStringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaMod
 
 
 /**
- * Reference to a field of type 'Boolean'
- */
-export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
-    
-
-
-/**
  * Reference to a field of type 'Json'
  */
 export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
@@ -842,6 +835,13 @@ export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'J
  * Reference to a field of type 'QueryMode'
  */
 export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
+    
+
+
+/**
+ * Reference to a field of type 'Boolean'
+ */
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 
@@ -954,8 +954,8 @@ export type PrismaClientOptions = ({
 }
 export type GlobalOmitConfig = {
   priceData?: Prisma.PriceDataOmit
-  strategyConfig?: Prisma.StrategyConfigOmit
   savedOptimizationResult?: Prisma.SavedOptimizationResultOmit
+  strategyConfig?: Prisma.StrategyConfigOmit
 }
 
 /* Types for Logging */

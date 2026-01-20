@@ -1,72 +1,55 @@
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
-import pg from "pg";
-import { PrismaClient } from "../generated/prisma/client.ts";
-import priceDataJson from "../data/btc-price-data.json";
+import { Pool } from "pg";
+import { PrismaClient } from "../generated/prisma/client";
+import priceData from "../data/btc-price-data.json";
 
-interface PriceDataRow {
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
+
+interface PriceDataEntry {
   unixTimestamp: number;
   date: string;
   closePrice: number;
 }
 
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
-
 async function main(): Promise<void> {
-  console.log("Seeding database...");
-
-  const priceData = priceDataJson as PriceDataRow[];
-  console.log(`Loading ${priceData.length} price records...`);
+  console.log("Seeding database with BTC price data...");
 
   const existingCount = await prisma.priceData.count();
   if (existingCount > 0) {
-    console.log(`Found ${existingCount} existing records. Clearing table...`);
-    await prisma.priceData.deleteMany();
+    console.log(`Database already contains ${existingCount} records. Skipping seed.`);
+    console.log("To re-seed, run: npx prisma migrate reset");
+    return;
   }
+
+  const data = priceData as PriceDataEntry[];
+  console.log(`Found ${data.length} price records to insert.`);
 
   const batchSize = 500;
-  for (let i = 0; i < priceData.length; i += batchSize) {
-    const batch = priceData.slice(i, i + batchSize);
+  let inserted = 0;
+
+  for (let i = 0; i < data.length; i += batchSize) {
+    const batch = data.slice(i, i + batchSize);
     await prisma.priceData.createMany({
-      data: batch.map((row) => ({
-        unixTimestamp: BigInt(row.unixTimestamp),
-        date: new Date(row.date),
-        closePrice: row.closePrice,
+      data: batch.map((entry) => ({
+        unixTimestamp: entry.unixTimestamp,
+        date: new Date(entry.date),
+        closePrice: entry.closePrice,
       })),
+      skipDuplicates: true,
     });
-    console.log(`Inserted ${Math.min(i + batchSize, priceData.length)} / ${priceData.length} records`);
+    inserted += batch.length;
+    console.log(`Inserted ${inserted}/${data.length} records...`);
   }
 
-  const defaultConfig = await prisma.strategyConfig.findUnique({
-    where: { name: "default" },
-  });
-
-  if (!defaultConfig) {
-    await prisma.strategyConfig.create({
-      data: {
-        name: "default",
-        maDuration: 44,
-        buyOnLongSignal: true,
-        shortOnShort: true,
-        longLeverage: 2.75,
-        shortLeverage: 1.0,
-        initialCapital: 1000,
-        gasFeePerTrade: 0,
-        exchangeFee: 0.0005,
-        signalThreshold: 0,
-      },
-    });
-    console.log("Created default strategy configuration");
-  }
-
-  console.log("Seeding complete!");
+  console.log("Seed complete!");
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error("Seed failed:", e);
     process.exit(1);
   })
   .finally(async () => {

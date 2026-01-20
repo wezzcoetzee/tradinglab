@@ -1,1 +1,0 @@
-export const FAIR_COMPARISON_START_DAY = 200;

@@ -8,7 +8,7 @@
  *
  * 🟢 You can import this file directly.
  */
-export type * from './models/PriceData.ts'
-export type * from './models/StrategyConfig.ts'
-export type * from './models/SavedOptimizationResult.ts'
-export type * from './commonInputTypes.ts'
+export type * from './models/PriceData'
+export type * from './models/SavedOptimizationResult'
+export type * from './models/StrategyConfig'
+export type * from './commonInputTypes'

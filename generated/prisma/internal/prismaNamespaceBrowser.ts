@@ -17,8 +17,8 @@
 
 import * as runtime from "@prisma/client/runtime/index-browser"
 
-export type * from '../models.ts'
-export type * from './prismaNamespace.ts'
+export type * from '../models'
+export type * from './prismaNamespace'
 
 export const Decimal = runtime.Decimal
 
@@ -52,8 +52,8 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   PriceData: 'PriceData',
-  StrategyConfig: 'StrategyConfig',
-  SavedOptimizationResult: 'SavedOptimizationResult'
+  SavedOptimizationResult: 'SavedOptimizationResult',
+  StrategyConfig: 'StrategyConfig'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -82,24 +82,6 @@ export const PriceDataScalarFieldEnum = {
 export type PriceDataScalarFieldEnum = (typeof PriceDataScalarFieldEnum)[keyof typeof PriceDataScalarFieldEnum]
 
 
-export const StrategyConfigScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  maDuration: 'maDuration',
-  buyOnLongSignal: 'buyOnLongSignal',
-  shortOnShort: 'shortOnShort',
-  longLeverage: 'longLeverage',
-  shortLeverage: 'shortLeverage',
-  initialCapital: 'initialCapital',
-  gasFeePerTrade: 'gasFeePerTrade',
-  exchangeFee: 'exchangeFee',
-  signalThreshold: 'signalThreshold',
-  simulationStartDate: 'simulationStartDate'
-} as const
-
-export type StrategyConfigScalarFieldEnum = (typeof StrategyConfigScalarFieldEnum)[keyof typeof StrategyConfigScalarFieldEnum]
-
-
 export const SavedOptimizationResultScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -111,6 +93,24 @@ export const SavedOptimizationResultScalarFieldEnum = {
 } as const
 
 export type SavedOptimizationResultScalarFieldEnum = (typeof SavedOptimizationResultScalarFieldEnum)[keyof typeof SavedOptimizationResultScalarFieldEnum]
+
+
+export const StrategyConfigScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  maDuration: 'maDuration',
+  buyOnLongSignal: 'buyOnLongSignal',
+  shortOnShort: 'shortOnShort',
+  longLeverage: 'longLeverage',
+  shortLeverage: 'shortLeverage',
+  initialCapital: 'initialCapital',
+  gasFeePerTrade: 'gasFeePerTrade',
+  exchangeFee: 'exchangeFee',
+  simulationStartDate: 'simulationStartDate',
+  signalThreshold: 'signalThreshold'
+} as const
+
+export type StrategyConfigScalarFieldEnum = (typeof StrategyConfigScalarFieldEnum)[keyof typeof StrategyConfigScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -136,14 +136,6 @@ export const QueryMode = {
 export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
 
 
-export const NullsOrder = {
-  first: 'first',
-  last: 'last'
-} as const
-
-export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
-
-
 export const JsonNullValueFilter = {
   DbNull: 'DbNull',
   JsonNull: 'JsonNull',
@@ -151,4 +143,12 @@ export const JsonNullValueFilter = {
 } as const
 
 export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
+
+
+export const NullsOrder = {
+  first: 'first',
+  last: 'last'
+} as const
+
+export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
 
