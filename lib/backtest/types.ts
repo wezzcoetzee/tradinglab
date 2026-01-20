@@ -13,6 +13,7 @@ export interface BacktestParams {
   shortOnShort: boolean;
   longLeverage: number;
   shortLeverage: number;
+  trailingStop?: TrailingStopConfig;
 }
 
 export type Position = "LONG" | "SHORT" | "NONE";
@@ -36,6 +37,8 @@ export interface SmaResult {
   finalValue: number;
   trades: number;
   liquidated: boolean;
+  trailingStopTriggers?: number;
+  tradeAuditTrail?: TradeAuditEntry[];
 }
 
 export interface BacktestResult {
@@ -61,7 +64,36 @@ export interface PortfolioTimeSeries {
   hodlValue: number;
 }
 
-export type TradeAction = "ENTER_LONG" | "EXIT_LONG" | "ENTER_SHORT" | "EXIT_SHORT";
+export type TradeAction =
+  | "ENTER_LONG"
+  | "EXIT_LONG"
+  | "ENTER_SHORT"
+  | "EXIT_SHORT"
+  | "PARTIAL_CLOSE_LONG"
+  | "PARTIAL_CLOSE_SHORT"
+  | "STOP_EXIT_LONG"
+  | "STOP_EXIT_SHORT";
+
+export interface TrailingStopConfig {
+  enabled: boolean;
+  atrPeriod: number;
+  atrMultiplier: number;
+  partialClosePercent: number;
+}
+
+export interface TradeAuditEntry {
+  date: Date;
+  action: TradeAction;
+  price: number;
+  quantity: number;
+  value: number;
+  fee: number;
+  pnl: number;
+  pnlPercent: number;
+  stopPrice: number | null;
+  atr: number | null;
+  positionSizeRemaining: number;
+}
 
 export interface DetailedDailyState {
   date: Date;
@@ -73,4 +105,7 @@ export interface DetailedDailyState {
   drawdown: number;
   hodlDrawdown: number;
   tradeAction?: TradeAction;
+  atr?: number | null;
+  trailingStopPrice?: number | null;
+  tradeAudit?: TradeAuditEntry;
 }

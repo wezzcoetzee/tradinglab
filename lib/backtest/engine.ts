@@ -7,6 +7,7 @@ import type {
 } from "./types";
 import { calculateAllSmas } from "./sma";
 import { simulateStrategy, calculateHodl } from "./simulator";
+import { calculateATR } from "./atr";
 
 export interface DetailedBacktestResult extends BacktestResult {
   selectedPeriodTimeSeries?: DetailedDailyState[];
@@ -29,12 +30,21 @@ export function runBacktest(
     shortOnShort,
     longLeverage,
     shortLeverage,
+    trailingStop,
   } = params;
 
   const smaMap = calculateAllSmas(pricePoints, smaMin, smaMax);
 
   const startIndex = WARMUP_DAYS - 1;
   const tradingPricePoints = pricePoints.slice(startIndex);
+
+  // Pre-calculate ATR values when trailing stop is enabled
+  let tradingAtrValues: (number | null)[] | undefined;
+  if (trailingStop?.enabled) {
+    const closePrices = pricePoints.map((p) => p.closePrice);
+    const atrValues = calculateATR(closePrices, trailingStop.atrPeriod);
+    tradingAtrValues = atrValues.slice(startIndex);
+  }
 
   const hodl = calculateHodl(tradingPricePoints, initialCapital);
 
@@ -55,6 +65,8 @@ export function runBacktest(
       shortOnShort,
       longLeverage,
       shortLeverage,
+      trailingStop,
+      atrValues: tradingAtrValues,
     });
 
     result.period = period;
@@ -99,6 +111,14 @@ export function runSingleSmaBacktest(
   const tradingPricePoints = pricePoints.slice(startIndex);
   const tradingSmaValues = smaValues.slice(startIndex);
 
+  // Pre-calculate ATR values when trailing stop is enabled
+  let tradingAtrValues: (number | null)[] | undefined;
+  if (params.trailingStop?.enabled) {
+    const closePrices = pricePoints.map((p) => p.closePrice);
+    const atrValues = calculateATR(closePrices, params.trailingStop.atrPeriod);
+    tradingAtrValues = atrValues.slice(startIndex);
+  }
+
   const { result, timeSeries } = simulateStrategy(tradingPricePoints, tradingSmaValues, {
     initialCapital: params.initialCapital,
     exchangeFeePercent: params.exchangeFeePercent,
@@ -107,6 +127,8 @@ export function runSingleSmaBacktest(
     shortOnShort: params.shortOnShort,
     longLeverage: params.longLeverage,
     shortLeverage: params.shortLeverage,
+    trailingStop: params.trailingStop,
+    atrValues: tradingAtrValues,
   });
 
   result.period = smaPeriod;

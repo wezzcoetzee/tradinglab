@@ -2,6 +2,13 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { runBacktest, type BacktestParams, type PricePoint } from "@/lib/backtest";
 
+interface TrailingStopRequest {
+  enabled: boolean;
+  atrPeriod: number;
+  atrMultiplier: number;
+  partialClosePercent: number;
+}
+
 interface BacktestRequestBody {
   initialCapital: number;
   exchangeFeePercent: number;
@@ -13,6 +20,7 @@ interface BacktestRequestBody {
   longLeverage: number;
   shortLeverage: number;
   selectedPeriod?: number;
+  trailingStop?: TrailingStopRequest;
 }
 
 export async function POST(request: Request): Promise<NextResponse> {
@@ -30,6 +38,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       longLeverage = 1,
       shortLeverage = 1,
       selectedPeriod,
+      trailingStop,
     } = body;
 
     if (smaMin < 2 || smaMax > 200 || smaMin > smaMax) {
@@ -51,6 +60,29 @@ export async function POST(request: Request): Promise<NextResponse> {
         { error: "Leverage must be at least 1." },
         { status: 400 }
       );
+    }
+
+    if (trailingStop?.enabled) {
+      if (trailingStop.atrPeriod < 5 || trailingStop.atrPeriod > 50) {
+        return NextResponse.json(
+          { error: "ATR period must be between 5 and 50." },
+          { status: 400 }
+        );
+      }
+
+      if (trailingStop.atrMultiplier < 1.0 || trailingStop.atrMultiplier > 10.0) {
+        return NextResponse.json(
+          { error: "ATR multiplier must be between 1.0 and 10.0." },
+          { status: 400 }
+        );
+      }
+
+      if (trailingStop.partialClosePercent < 1 || trailingStop.partialClosePercent > 100) {
+        return NextResponse.json(
+          { error: "Partial close percent must be between 1 and 100." },
+          { status: 400 }
+        );
+      }
     }
 
     const priceData = await prisma.priceData.findMany({
@@ -80,6 +112,14 @@ export async function POST(request: Request): Promise<NextResponse> {
       shortOnShort,
       longLeverage,
       shortLeverage,
+      trailingStop: trailingStop?.enabled
+        ? {
+            enabled: true,
+            atrPeriod: trailingStop.atrPeriod,
+            atrMultiplier: trailingStop.atrMultiplier,
+            partialClosePercent: trailingStop.partialClosePercent,
+          }
+        : undefined,
     };
 
     const result = runBacktest(pricePoints, params, selectedPeriod);

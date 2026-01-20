@@ -11,12 +11,16 @@ interface DailyDataTableProps {
   smaPeriod: number;
 }
 
-type SortField = "date" | "closePrice" | "sma" | "signal" | "portfolioValue" | "hodlValue" | "drawdown";
+type SortField = "date" | "closePrice" | "sma" | "signal" | "portfolioValue" | "hodlValue" | "drawdown" | "atr" | "trailingStopPrice";
 type SortDirection = "asc" | "desc";
 
 export function DailyDataTable({ data, smaPeriod }: DailyDataTableProps) {
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+
+  const hasAtrData = useMemo(() => {
+    return data.some((d) => d.atr !== undefined && d.atr !== null);
+  }, [data]);
 
   const sortedData = useMemo(() => {
     return [...data].sort((a, b) => {
@@ -51,6 +55,14 @@ export function DailyDataTable({ data, smaPeriod }: DailyDataTableProps) {
         case "drawdown":
           aVal = a.drawdown;
           bVal = b.drawdown;
+          break;
+        case "atr":
+          aVal = a.atr ?? -Infinity;
+          bVal = b.atr ?? -Infinity;
+          break;
+        case "trailingStopPrice":
+          aVal = a.trailingStopPrice ?? -Infinity;
+          bVal = b.trailingStopPrice ?? -Infinity;
           break;
         default:
           return 0;
@@ -97,12 +109,18 @@ export function DailyDataTable({ data, smaPeriod }: DailyDataTableProps) {
   const getTradeActionBadge = (action: string | undefined) => {
     if (!action) return null;
 
-    const isEntry = action.startsWith("ENTER");
-    const bgColor = isEntry ? "bg-blue-500/20 text-blue-400" : "bg-purple-500/20 text-purple-400";
+    let bgColor = "bg-purple-500/20 text-purple-400";
+    if (action.startsWith("ENTER")) {
+      bgColor = "bg-blue-500/20 text-blue-400";
+    } else if (action.startsWith("STOP_EXIT")) {
+      bgColor = "bg-red-500/20 text-red-400";
+    } else if (action.startsWith("PARTIAL_CLOSE")) {
+      bgColor = "bg-orange-500/20 text-orange-400";
+    }
 
     return (
       <span className={`text-xs px-1.5 py-0.5 rounded ${bgColor}`}>
-        {action.replace("_", " ")}
+        {action.replace(/_/g, " ")}
       </span>
     );
   };
@@ -142,11 +160,21 @@ export function DailyDataTable({ data, smaPeriod }: DailyDataTableProps) {
                 <th className={headerClass} onClick={() => handleSort("drawdown")}>
                   Drawdown {renderSortIcon("drawdown")}
                 </th>
+                {hasAtrData && (
+                  <>
+                    <th className={headerClass} onClick={() => handleSort("atr")}>
+                      ATR {renderSortIcon("atr")}
+                    </th>
+                    <th className={headerClass} onClick={() => handleSort("trailingStopPrice")}>
+                      Stop {renderSortIcon("trailingStopPrice")}
+                    </th>
+                  </>
+                )}
                 <th className="text-left px-3 py-2 text-xs whitespace-nowrap">Trade</th>
               </tr>
             </thead>
             <tbody>
-              {sortedData.map((row, index) => {
+              {sortedData.map((row) => {
                 const originalIndex = data.findIndex(
                   (d) => d.date.getTime() === row.date.getTime()
                 );
@@ -184,6 +212,20 @@ export function DailyDataTable({ data, smaPeriod }: DailyDataTableProps) {
                     }`}>
                       {formatPercent(row.drawdown)}
                     </td>
+                    {hasAtrData && (
+                      <>
+                        <td className="px-3 py-1.5 font-mono text-xs text-muted-foreground">
+                          {row.atr !== undefined && row.atr !== null
+                            ? formatCurrency(row.atr)
+                            : "-"}
+                        </td>
+                        <td className="px-3 py-1.5 font-mono text-xs text-muted-foreground">
+                          {row.trailingStopPrice !== undefined && row.trailingStopPrice !== null
+                            ? formatCurrency(row.trailingStopPrice)
+                            : "-"}
+                        </td>
+                      </>
+                    )}
                     <td className="px-3 py-1.5">
                       {getTradeActionBadge(row.tradeAction)}
                     </td>

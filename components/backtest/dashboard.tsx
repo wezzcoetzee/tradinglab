@@ -113,89 +113,93 @@ export function Dashboard() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4 space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">SMA Strategy Backtester</h1>
-          <p className="text-muted-foreground mt-1">
-            Compare Simple Moving Average trading strategies against HODL
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {result && (
-            <CsvExport
-              results={result.smaResults}
-              params={result.params}
-              hodlReturn={result.hodl.annualizedReturn}
-            />
-          )}
-          <ThemeToggle />
-        </div>
-      </div>
-
-      <div className="grid lg:grid-cols-[400px_1fr] gap-8">
-        <div>
-          <BacktestForm
-            onSubmit={handleSubmit}
-            isLoading={isLoading}
-            defaultValues={urlFormData}
-          />
-        </div>
-
-        <div className="space-y-6">
-          {error && (
-            <div className="p-4 bg-destructive/10 border border-destructive/50 rounded-lg text-destructive">
-              {error}
-            </div>
-          )}
-
-          {isLoading && (
-            <div className="p-8 text-center text-muted-foreground">
-              Running backtest across all SMA periods...
-            </div>
-          )}
-
-          {result && !isLoading && (
-            <>
-              <SummaryStats
-                bestSma={result.bestSma}
-                hodl={result.hodl}
-                initialCapital={result.params.initialCapital}
-                dateRange={result.dateRange}
-              />
-
-              <div className="grid lg:grid-cols-2 gap-6">
-                <SmaReturnChart
-                  results={result.smaResults}
-                  hodlAnnualizedReturn={result.hodl.annualizedReturn}
-                  onSelectPeriod={handleSelectPeriod}
-                />
-
-                {selectedPeriod && timeSeries && timeSeries.length > 0 && (
-                  <PortfolioChart data={timeSeries} smaPeriod={selectedPeriod} />
-                )}
-              </div>
-
-              <ReturnsHeatmap
+    <div className="min-h-screen bg-zinc-950">
+      {/* Fixed Header */}
+      <header className="sticky top-0 z-50 bg-zinc-950/95 backdrop-blur-sm border-b border-zinc-800">
+        <div className="flex items-center justify-between px-6 py-3 border-b border-zinc-800/50">
+          <div className="flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-amber-500" />
+            <h1 className="text-lg font-semibold text-zinc-100 tracking-tight">
+              SMA Strategy Backtester
+            </h1>
+            <span className="text-xs text-zinc-600 font-mono">BTC/USD</span>
+          </div>
+          <div className="flex items-center gap-3">
+            {result && (
+              <CsvExport
                 results={result.smaResults}
-                onSelectPeriod={handleSelectPeriod}
-                selectedPeriod={selectedPeriod ?? undefined}
+                params={result.params}
+                hodlReturn={result.hodl.annualizedReturn}
               />
+            )}
+            <ThemeToggle />
+          </div>
+        </div>
 
-              <ResultsTable
+        <BacktestForm
+          onSubmit={handleSubmit}
+          isLoading={isLoading}
+          defaultValues={urlFormData}
+        />
+      </header>
+
+      {/* Main Content */}
+      <main className="px-6 py-6 space-y-6">
+        {error && (
+          <div className="p-4 bg-rose-950/50 border border-rose-900/50 rounded-lg text-rose-400 font-mono text-sm">
+            {error}
+          </div>
+        )}
+
+        {isLoading && (
+          <div className="p-12 text-center">
+            <div className="inline-flex items-center gap-3 text-zinc-500">
+              <span className="w-4 h-4 border-2 border-zinc-700 border-t-amber-500 rounded-full animate-spin" />
+              <span className="font-mono text-sm">Running backtest across all SMA periods...</span>
+            </div>
+          </div>
+        )}
+
+        {result && !isLoading && (
+          <>
+            <SummaryStats
+              bestSma={result.bestSma}
+              hodl={result.hodl}
+              initialCapital={result.params.initialCapital}
+              dateRange={result.dateRange}
+            />
+
+            <div className="grid lg:grid-cols-2 gap-6">
+              <SmaReturnChart
                 results={result.smaResults}
                 hodlAnnualizedReturn={result.hodl.annualizedReturn}
                 onSelectPeriod={handleSelectPeriod}
-                selectedPeriod={selectedPeriod ?? undefined}
               />
 
               {selectedPeriod && timeSeries && timeSeries.length > 0 && (
-                <DailyDataTable data={timeSeries} smaPeriod={selectedPeriod} />
+                <PortfolioChart data={timeSeries} smaPeriod={selectedPeriod} />
               )}
-            </>
-          )}
-        </div>
-      </div>
+            </div>
+
+            <ReturnsHeatmap
+              results={result.smaResults}
+              onSelectPeriod={handleSelectPeriod}
+              selectedPeriod={selectedPeriod ?? undefined}
+            />
+
+            <ResultsTable
+              results={result.smaResults}
+              hodlAnnualizedReturn={result.hodl.annualizedReturn}
+              onSelectPeriod={handleSelectPeriod}
+              selectedPeriod={selectedPeriod ?? undefined}
+            />
+
+            {selectedPeriod && timeSeries && timeSeries.length > 0 && (
+              <DailyDataTable data={timeSeries} smaPeriod={selectedPeriod} />
+            )}
+          </>
+        )}
+      </main>
     </div>
   );
 }

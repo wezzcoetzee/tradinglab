@@ -4,6 +4,8 @@ import type {
   SmaResult,
   DetailedDailyState,
   TradeAction,
+  TrailingStopConfig,
+  TradeAuditEntry,
 } from "./types";
 
 interface SimulatorParams {
@@ -14,6 +16,8 @@ interface SimulatorParams {
   shortOnShort: boolean;
   longLeverage: number;
   shortLeverage: number;
+  trailingStop?: TrailingStopConfig;
+  atrValues?: (number | null)[];
 }
 
 interface SimulatorState {
@@ -25,6 +29,15 @@ interface SimulatorState {
   maxDrawdown: number;
   trades: number;
   liquidated: boolean;
+}
+
+interface TrailingStopState {
+  stopPrice: number | null;
+  highestCloseSinceEntry: number;
+  lowestCloseSinceEntry: number;
+  originalPositionSize: number;
+  remainingPositionSize: number;
+  hasPartialClosed: boolean;
 }
 
 function calculateTradeFee(
@@ -114,6 +127,99 @@ function determineSignal(
   return "NONE";
 }
 
+function initTrailingStopState(): TrailingStopState {
+  return {
+    stopPrice: null,
+    highestCloseSinceEntry: 0,
+    lowestCloseSinceEntry: Infinity,
+    originalPositionSize: 0,
+    remainingPositionSize: 0,
+    hasPartialClosed: false,
+  };
+}
+
+function updateTrailingStop(
+  position: Position,
+  closePrice: number,
+  atr: number | null,
+  multiplier: number,
+  stopState: TrailingStopState
+): number | null {
+  if (position === "NONE" || atr === null) {
+    return null;
+  }
+
+  if (position === "LONG") {
+    if (closePrice > stopState.highestCloseSinceEntry) {
+      stopState.highestCloseSinceEntry = closePrice;
+    }
+    const newStop = stopState.highestCloseSinceEntry - multiplier * atr;
+    if (stopState.stopPrice === null || newStop > stopState.stopPrice) {
+      stopState.stopPrice = newStop;
+    }
+  } else if (position === "SHORT") {
+    if (closePrice < stopState.lowestCloseSinceEntry) {
+      stopState.lowestCloseSinceEntry = closePrice;
+    }
+    const newStop = stopState.lowestCloseSinceEntry + multiplier * atr;
+    if (stopState.stopPrice === null || newStop < stopState.stopPrice) {
+      stopState.stopPrice = newStop;
+    }
+  }
+
+  return stopState.stopPrice;
+}
+
+function isStopTriggered(
+  position: Position,
+  closePrice: number,
+  stopPrice: number | null
+): boolean {
+  if (position === "NONE" || stopPrice === null) {
+    return false;
+  }
+
+  if (position === "LONG") {
+    return closePrice <= stopPrice;
+  }
+
+  if (position === "SHORT") {
+    return closePrice >= stopPrice;
+  }
+
+  return false;
+}
+
+function createAuditEntry(
+  date: Date,
+  action: TradeAction,
+  price: number,
+  quantity: number,
+  value: number,
+  fee: number,
+  entryPrice: number,
+  stopPrice: number | null,
+  atr: number | null,
+  positionSizeRemaining: number
+): TradeAuditEntry {
+  const pnl = value - quantity;
+  const pnlPercent = quantity > 0 ? pnl / quantity : 0;
+
+  return {
+    date,
+    action,
+    price,
+    quantity,
+    value,
+    fee,
+    pnl,
+    pnlPercent,
+    stopPrice,
+    atr,
+    positionSizeRemaining,
+  };
+}
+
 export function simulateStrategy(
   pricePoints: PricePoint[],
   smaValues: (number | null)[],
@@ -127,7 +233,11 @@ export function simulateStrategy(
     shortOnShort,
     longLeverage,
     shortLeverage,
+    trailingStop,
+    atrValues,
   } = params;
+
+  const trailingStopEnabled = trailingStop?.enabled && atrValues && atrValues.length > 0;
 
   const state: SimulatorState = {
     cash: initialCapital,
@@ -140,6 +250,10 @@ export function simulateStrategy(
     liquidated: false,
   };
 
+  let stopState = initTrailingStopState();
+  let trailingStopTriggers = 0;
+  const tradeAuditTrail: TradeAuditEntry[] = [];
+
   const timeSeries: DetailedDailyState[] = [];
   const hodlQuantity = initialCapital / pricePoints[0].closePrice;
   let hodlPeakValue = initialCapital;
@@ -147,12 +261,17 @@ export function simulateStrategy(
   for (let i = 0; i < pricePoints.length; i++) {
     const { date, closePrice } = pricePoints[i];
     const sma = smaValues[i];
+    const atr = trailingStopEnabled ? atrValues[i] : null;
     const hodlValue = hodlQuantity * closePrice;
 
     if (hodlValue > hodlPeakValue) {
       hodlPeakValue = hodlValue;
     }
     const hodlDrawdown = hodlPeakValue > 0 ? (hodlPeakValue - hodlValue) / hodlPeakValue : 0;
+
+    let tradeAction: TradeAction | undefined;
+    let tradeAudit: TradeAuditEntry | undefined;
+    let currentStopPrice: number | null = null;
 
     if (state.liquidated) {
       timeSeries.push({
@@ -164,10 +283,13 @@ export function simulateStrategy(
         hodlValue,
         drawdown: 1,
         hodlDrawdown,
+        atr,
+        trailingStopPrice: null,
       });
       continue;
     }
 
+    // 1. Check liquidation
     if (
       state.position !== "NONE" &&
       isLiquidated(state, closePrice, longLeverage, shortLeverage)
@@ -176,6 +298,7 @@ export function simulateStrategy(
       state.cash = 0;
       state.position = "NONE";
       state.positionSize = 0;
+      stopState = initTrailingStopState();
       timeSeries.push({
         date,
         closePrice,
@@ -185,10 +308,91 @@ export function simulateStrategy(
         hodlValue,
         drawdown: 1,
         hodlDrawdown,
+        atr,
+        trailingStopPrice: null,
       });
       continue;
     }
 
+    // 2. Update ATR trailing stop (ratchet behavior)
+    if (trailingStopEnabled && state.position !== "NONE" && trailingStop) {
+      currentStopPrice = updateTrailingStop(
+        state.position,
+        closePrice,
+        atr,
+        trailingStop.atrMultiplier,
+        stopState
+      );
+    }
+
+    // 3. Check if stop triggered → partial/full close
+    if (
+      trailingStopEnabled &&
+      trailingStop &&
+      state.position !== "NONE" &&
+      !stopState.hasPartialClosed &&
+      isStopTriggered(state.position, closePrice, currentStopPrice)
+    ) {
+      trailingStopTriggers++;
+      const partialPercent = trailingStop.partialClosePercent / 100;
+      const exitValue = calculatePortfolioValue(state, closePrice, longLeverage, shortLeverage);
+      const previousPosition = state.position;
+
+      if (partialPercent >= 1) {
+        // Full close
+        const exitFee = calculateTradeFee(exitValue, exchangeFeePercent, gasFeePerTrade);
+        tradeAction = previousPosition === "LONG" ? "STOP_EXIT_LONG" : "STOP_EXIT_SHORT";
+
+        tradeAudit = createAuditEntry(
+          date,
+          tradeAction,
+          closePrice,
+          state.positionSize,
+          exitValue - exitFee,
+          exitFee,
+          state.entryPrice,
+          currentStopPrice,
+          atr,
+          0
+        );
+        tradeAuditTrail.push(tradeAudit);
+
+        state.cash = exitValue - exitFee;
+        state.position = "NONE";
+        state.positionSize = 0;
+        state.trades++;
+        stopState = initTrailingStopState();
+      } else {
+        // Partial close
+        const closeValue = exitValue * partialPercent;
+        const exitFee = calculateTradeFee(closeValue, exchangeFeePercent, gasFeePerTrade);
+        const remainingValue = exitValue * (1 - partialPercent);
+
+        tradeAction = previousPosition === "LONG" ? "PARTIAL_CLOSE_LONG" : "PARTIAL_CLOSE_SHORT";
+
+        tradeAudit = createAuditEntry(
+          date,
+          tradeAction,
+          closePrice,
+          state.positionSize * partialPercent,
+          closeValue - exitFee,
+          exitFee,
+          state.entryPrice,
+          currentStopPrice,
+          atr,
+          remainingValue
+        );
+        tradeAuditTrail.push(tradeAudit);
+
+        state.cash = closeValue - exitFee;
+        state.positionSize = remainingValue;
+        stopState.hasPartialClosed = true;
+        stopState.remainingPositionSize = remainingValue;
+        state.trades++;
+      }
+    }
+
+    // 4. Calculate portfolio value
     const portfolioValue = calculatePortfolioValue(
       state,
       closePrice,
@@ -207,11 +411,11 @@ export function simulateStrategy(
       state.maxDrawdown = currentDrawdown;
     }
 
+    // 5. Check SMA signal
     const targetPosition = determineSignal(closePrice, sma, buyOnLong, shortOnShort);
-    let tradeAction: TradeAction | undefined;
     const previousPosition = state.position;
 
-    if (targetPosition !== state.position) {
+    if (targetPosition !== state.position && !tradeAction) {
       if (state.position !== "NONE") {
         const exitValue = calculatePortfolioValue(
           state,
@@ -220,11 +424,27 @@ export function simulateStrategy(
           shortLeverage
         );
         const exitFee = calculateTradeFee(exitValue, exchangeFeePercent, gasFeePerTrade);
-        state.cash = exitValue - exitFee;
         tradeAction = previousPosition === "LONG" ? "EXIT_LONG" : "EXIT_SHORT";
+
+        tradeAudit = createAuditEntry(
+          date,
+          tradeAction,
+          closePrice,
+          state.positionSize,
+          exitValue - exitFee,
+          exitFee,
+          state.entryPrice,
+          currentStopPrice,
+          atr,
+          0
+        );
+        tradeAuditTrail.push(tradeAudit);
+
+        state.cash = exitValue - exitFee;
         state.position = "NONE";
         state.positionSize = 0;
         state.trades++;
+        stopState = initTrailingStopState();
       }
 
       if (targetPosition !== "NONE" && state.cash > 0) {
@@ -238,10 +458,32 @@ export function simulateStrategy(
           state.cash = 0;
           state.trades++;
           tradeAction = targetPosition === "LONG" ? "ENTER_LONG" : "ENTER_SHORT";
+
+          // Initialize trailing stop state for new position
+          stopState = initTrailingStopState();
+          stopState.originalPositionSize = entryCapital;
+          stopState.remainingPositionSize = entryCapital;
+          stopState.highestCloseSinceEntry = closePrice;
+          stopState.lowestCloseSinceEntry = closePrice;
+
+          tradeAudit = createAuditEntry(
+            date,
+            tradeAction,
+            closePrice,
+            entryCapital,
+            entryCapital,
+            entryFee,
+            closePrice,
+            null,
+            atr,
+            entryCapital
+          );
+          tradeAuditTrail.push(tradeAudit);
         }
       }
     }
 
+    // 6. Record daily state with audit info
     const finalValue = calculatePortfolioValue(
       state,
       closePrice,
@@ -259,6 +501,9 @@ export function simulateStrategy(
       drawdown: currentDrawdown,
       hodlDrawdown,
       tradeAction,
+      atr,
+      trailingStopPrice: state.position !== "NONE" ? currentStopPrice : null,
+      tradeAudit,
     });
   }
 
@@ -284,6 +529,8 @@ export function simulateStrategy(
       finalValue,
       trades: state.trades,
       liquidated: state.liquidated,
+      trailingStopTriggers: trailingStopEnabled ? trailingStopTriggers : undefined,
+      tradeAuditTrail: tradeAuditTrail.length > 0 ? tradeAuditTrail : undefined,
     },
     timeSeries,
   };
