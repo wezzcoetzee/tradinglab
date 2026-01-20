@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   LineChart,
   Line,
@@ -12,6 +12,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import type { DetailedDailyState } from "@/lib/backtest";
 import { formatCurrency, formatDate } from "@/lib/formatting";
 import { useChartColors } from "@/hooks/use-chart-colors";
@@ -23,6 +24,7 @@ interface PortfolioChartProps {
 
 export function PortfolioChart({ data, smaPeriod }: PortfolioChartProps) {
   const colors = useChartColors();
+  const [isLogScale, setIsLogScale] = useState(false);
 
   const chartData = useMemo(() => {
     const sampled = data.filter((_, i) => i % 7 === 0 || i === data.length - 1);
@@ -33,10 +35,25 @@ export function PortfolioChart({ data, smaPeriod }: PortfolioChartProps) {
     }));
   }, [data]);
 
+  const yAxisDomain = useMemo(() => {
+    if (!isLogScale || chartData.length === 0) return undefined;
+    const allValues = chartData.flatMap((d) => [d.sma, d.hodl]);
+    const min = Math.max(1, Math.min(...allValues));
+    const max = Math.max(...allValues);
+    return [min, max] as [number, number];
+  }, [isLogScale, chartData]);
+
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle>Portfolio Value Over Time ({smaPeriod}D SMA vs HODL)</CardTitle>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setIsLogScale(!isLogScale)}
+        >
+          {isLogScale ? "Log" : "Linear"}
+        </Button>
       </CardHeader>
       <CardContent>
         <div className="h-[400px]">
@@ -52,6 +69,8 @@ export function PortfolioChart({ data, smaPeriod }: PortfolioChartProps) {
                 tick={{ fontSize: 12 }}
                 tickFormatter={(v) => formatCurrency(v)}
                 width={80}
+                scale={isLogScale ? "log" : "auto"}
+                domain={yAxisDomain}
               />
               <Tooltip
                 formatter={(value) => formatCurrency(Number(value))}
