@@ -12,7 +12,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import type { DetailedDailyState } from "@/lib/backtest";
 import { formatCurrency, formatDate } from "@/lib/formatting";
 import { useChartColors } from "@/hooks/use-chart-colors";
@@ -47,13 +46,30 @@ export function PortfolioChart({ data, smaPeriod }: PortfolioChartProps) {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle>Portfolio Value Over Time ({smaPeriod}D SMA vs HODL)</CardTitle>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setIsLogScale(!isLogScale)}
-        >
-          {isLogScale ? "Log" : "Linear"}
-        </Button>
+        <div className="flex rounded-md border border-zinc-700 overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setIsLogScale(false)}
+            className={`px-3 py-1 text-xs font-medium transition-colors ${
+              !isLogScale
+                ? "bg-zinc-700 text-zinc-100"
+                : "bg-transparent text-zinc-400 hover:text-zinc-200"
+            }`}
+          >
+            Linear
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsLogScale(true)}
+            className={`px-3 py-1 text-xs font-medium transition-colors ${
+              isLogScale
+                ? "bg-zinc-700 text-zinc-100"
+                : "bg-transparent text-zinc-400 hover:text-zinc-200"
+            }`}
+          >
+            Log
+          </button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="h-[400px]">

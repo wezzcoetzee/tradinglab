@@ -1,11 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 export interface BacktestFormData {
   initialCapital: number;
@@ -202,7 +208,33 @@ export function BacktestForm({
           </div>
 
           {/* Section 2: Leverage */}
-          <div className="flex items-end gap-4 p-4 bg-zinc-900/50 rounded-lg border border-zinc-800/50">
+          <div className="relative flex items-end gap-4 p-4 bg-zinc-900/50 rounded-lg border border-zinc-800/50">
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="absolute top-2 right-2 p-1 rounded hover:bg-zinc-800 transition-colors"
+                >
+                  <Info className="w-3.5 h-3.5 text-zinc-500 hover:text-zinc-300" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 bg-zinc-900 border-zinc-700 text-zinc-300" side="bottom" align="end">
+                <div className="space-y-2">
+                  <h4 className="font-medium text-zinc-100">Leverage Settings</h4>
+                  <p className="text-sm">
+                    Configure the leverage multiplier for your long and short positions.
+                  </p>
+                  <ul className="text-sm space-y-1 text-zinc-400">
+                    <li><span className="text-emerald-400">Long</span>: Multiplier when price is above SMA (bullish)</li>
+                    <li><span className="text-rose-400">Short</span>: Multiplier when price is below SMA (bearish)</li>
+                    <li><span className="text-amber-400">Same</span>: Use identical leverage for both directions</li>
+                  </ul>
+                  <p className="text-xs text-zinc-500 pt-1">
+                    Higher leverage amplifies both gains and losses. Use with caution.
+                  </p>
+                </div>
+              </PopoverContent>
+            </Popover>
             <div className="space-y-1.5 w-24">
               <Label htmlFor="longLeverage" className="text-[11px] uppercase tracking-wider text-zinc-500 font-medium">
                 Long
@@ -262,7 +294,33 @@ export function BacktestForm({
           </div>
 
           {/* Section 3: ATR Stop Loss */}
-          <div className="flex items-end gap-4 p-4 bg-zinc-900/50 rounded-lg border border-zinc-800/50">
+          <div className="relative flex items-end gap-4 p-4 bg-zinc-900/50 rounded-lg border border-zinc-800/50">
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="absolute top-2 right-2 p-1 rounded hover:bg-zinc-800 transition-colors"
+                >
+                  <Info className="w-3.5 h-3.5 text-zinc-500 hover:text-zinc-300" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 bg-zinc-900 border-zinc-700 text-zinc-300" side="bottom" align="end">
+                <div className="space-y-2">
+                  <h4 className="font-medium text-zinc-100">ATR Trailing Stop</h4>
+                  <p className="text-sm">
+                    A dynamic stop-loss based on Average True Range (ATR) that trails the price as it moves in your favor.
+                  </p>
+                  <ul className="text-sm space-y-1 text-zinc-400">
+                    <li><span className="text-zinc-300">Period</span>: Number of days to calculate ATR (volatility measure)</li>
+                    <li><span className="text-zinc-300">Multiplier</span>: ATR × multiplier = stop distance from peak</li>
+                    <li><span className="text-zinc-300">Close %</span>: Portion of position to close when stop is hit</li>
+                  </ul>
+                  <p className="text-xs text-zinc-500 pt-1">
+                    Higher multiplier = wider stop (fewer triggers, larger losses). Lower = tighter stop (more triggers, smaller losses).
+                  </p>
+                </div>
+              </PopoverContent>
+            </Popover>
             <div className="flex items-center gap-2 h-10">
               <Switch
                 id="trailingStopEnabled"
