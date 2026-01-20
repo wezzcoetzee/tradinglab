@@ -12,6 +12,7 @@ import {
   SummaryStats,
   DailyDataTable,
 } from "@/components/backtest";
+import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useUrlParams } from "@/hooks/use-url-params";
 import type { DetailedBacktestResult } from "@/lib/backtest";
@@ -132,13 +133,27 @@ export function Dashboard() {
                 hodlReturn={result.hodl.annualizedReturn}
               />
             )}
+            <Button
+              type="submit"
+              form="backtest-form"
+              disabled={isLoading}
+              className="h-8 px-4 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold text-sm tracking-wide transition-colors disabled:opacity-50"
+            >
+              {isLoading ? (
+                <span className="flex items-center gap-2">
+                  <span className="w-3 h-3 border-2 border-zinc-950/30 border-t-zinc-950 rounded-full animate-spin" />
+                  Running...
+                </span>
+              ) : (
+                "Run Backtest"
+              )}
+            </Button>
             <ThemeToggle />
           </div>
         </div>
 
         <BacktestForm
           onSubmit={handleSubmit}
-          isLoading={isLoading}
           defaultValues={urlFormData}
         />
       </header>

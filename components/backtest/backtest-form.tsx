@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Info } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -32,13 +31,11 @@ export interface BacktestFormData {
 
 interface BacktestFormProps {
   onSubmit: (data: BacktestFormData) => void;
-  isLoading: boolean;
   defaultValues?: Partial<BacktestFormData>;
 }
 
 export function BacktestForm({
   onSubmit,
-  isLoading,
   defaultValues,
 }: BacktestFormProps) {
   const [formData, setFormData] = useState<BacktestFormData>({
@@ -81,7 +78,7 @@ export function BacktestForm({
 
   return (
     <div className="w-full bg-zinc-950 border-b border-zinc-800">
-      <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4">
+      <form id="backtest-form" onSubmit={handleSubmit} className="px-6 py-4">
         {/* 3 Section Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_auto] gap-4">
           {/* Section 1: Required Data */}
@@ -101,7 +98,7 @@ export function BacktestForm({
                   onChange={(e) =>
                     updateField("initialCapital", parseFloat(e.target.value) || 0)
                   }
-                  className="w-full h-10 pl-7 bg-zinc-900 border-zinc-800 text-zinc-100 font-mono focus:border-amber-500/50 focus:ring-amber-500/20"
+                  className="w-full h-10 pl-7 bg-zinc-900 border-zinc-800 text-zinc-100 font-mono focus:border-amber-500/50 focus:ring-amber-500/20 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               </div>
             </div>
@@ -120,7 +117,7 @@ export function BacktestForm({
                   onChange={(e) =>
                     updateField("exchangeFeePercent", parseFloat(e.target.value) || 0)
                   }
-                  className="w-full h-10 pr-7 bg-zinc-900 border-zinc-800 text-zinc-100 font-mono focus:border-amber-500/50 focus:ring-amber-500/20"
+                  className="w-full h-10 pr-7 bg-zinc-900 border-zinc-800 text-zinc-100 font-mono focus:border-amber-500/50 focus:ring-amber-500/20 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600">%</span>
               </div>
@@ -141,12 +138,12 @@ export function BacktestForm({
                   onChange={(e) =>
                     updateField("gasFeePerTrade", parseFloat(e.target.value) || 0)
                   }
-                  className="w-full h-10 pl-7 bg-zinc-900 border-zinc-800 text-zinc-100 font-mono focus:border-amber-500/50 focus:ring-amber-500/20"
+                  className="w-full h-10 pl-7 bg-zinc-900 border-zinc-800 text-zinc-100 font-mono focus:border-amber-500/50 focus:ring-amber-500/20 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               </div>
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 col-span-2 sm:col-span-1">
               <Label className="text-[11px] uppercase tracking-wider text-zinc-500 font-medium">
                 SMA Range
               </Label>
@@ -159,7 +156,7 @@ export function BacktestForm({
                   onChange={(e) =>
                     updateField("smaMin", parseInt(e.target.value) || 2)
                   }
-                  className="w-full h-10 bg-zinc-900 border-zinc-800 text-zinc-100 font-mono text-center focus:border-amber-500/50 focus:ring-amber-500/20"
+                  className="w-[70px] h-10 bg-zinc-900 border-zinc-800 text-zinc-100 font-mono text-center focus:border-amber-500/50 focus:ring-amber-500/20 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
                 <span className="text-zinc-600 shrink-0">→</span>
                 <Input
@@ -170,7 +167,7 @@ export function BacktestForm({
                   onChange={(e) =>
                     updateField("smaMax", parseInt(e.target.value) || 200)
                   }
-                  className="w-full h-10 bg-zinc-900 border-zinc-800 text-zinc-100 font-mono text-center focus:border-amber-500/50 focus:ring-amber-500/20"
+                  className="w-[70px] h-10 bg-zinc-900 border-zinc-800 text-zinc-100 font-mono text-center focus:border-amber-500/50 focus:ring-amber-500/20 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               </div>
             </div>
@@ -250,7 +247,7 @@ export function BacktestForm({
                   onChange={(e) =>
                     updateField("longLeverage", parseFloat(e.target.value) || 1)
                   }
-                  className="w-full h-10 pr-6 bg-zinc-900 border-zinc-800 text-zinc-100 font-mono focus:border-amber-500/50 focus:ring-amber-500/20"
+                  className="w-full h-10 pr-6 bg-zinc-900 border-zinc-800 text-zinc-100 font-mono focus:border-amber-500/50 focus:ring-amber-500/20 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600">×</span>
               </div>
@@ -272,7 +269,7 @@ export function BacktestForm({
                   onChange={(e) =>
                     updateField("shortLeverage", parseFloat(e.target.value) || 1)
                   }
-                  className="w-full h-10 pr-6 bg-zinc-900 border-zinc-800 text-zinc-100 font-mono focus:border-amber-500/50 focus:ring-amber-500/20 disabled:opacity-50"
+                  className="w-full h-10 pr-6 bg-zinc-900 border-zinc-800 text-zinc-100 font-mono focus:border-amber-500/50 focus:ring-amber-500/20 disabled:opacity-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600">×</span>
               </div>
@@ -350,7 +347,7 @@ export function BacktestForm({
                 onChange={(e) =>
                   updateField("atrPeriod", parseInt(e.target.value) || 14)
                 }
-                className="w-full h-10 bg-zinc-900 border-zinc-800 text-zinc-100 font-mono text-center focus:border-amber-500/50 focus:ring-amber-500/20 disabled:opacity-50"
+                className="w-full h-10 bg-zinc-900 border-zinc-800 text-zinc-100 font-mono text-center focus:border-amber-500/50 focus:ring-amber-500/20 disabled:opacity-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
             </div>
 
@@ -370,7 +367,7 @@ export function BacktestForm({
                   onChange={(e) =>
                     updateField("atrMultiplier", parseFloat(e.target.value) || 2.5)
                   }
-                  className="w-full h-10 pr-6 bg-zinc-900 border-zinc-800 text-zinc-100 font-mono focus:border-amber-500/50 focus:ring-amber-500/20 disabled:opacity-50"
+                  className="w-full h-10 pr-6 bg-zinc-900 border-zinc-800 text-zinc-100 font-mono focus:border-amber-500/50 focus:ring-amber-500/20 disabled:opacity-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600">×</span>
               </div>
@@ -392,30 +389,12 @@ export function BacktestForm({
                   onChange={(e) =>
                     updateField("partialClosePercent", parseInt(e.target.value) || 100)
                   }
-                  className="w-full h-10 pr-7 bg-zinc-900 border-zinc-800 text-zinc-100 font-mono focus:border-amber-500/50 focus:ring-amber-500/20 disabled:opacity-50"
+                  className="w-full h-10 pr-7 bg-zinc-900 border-zinc-800 text-zinc-100 font-mono focus:border-amber-500/50 focus:ring-amber-500/20 disabled:opacity-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600">%</span>
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Submit Button - Right Aligned */}
-        <div className="flex justify-end">
-          <Button
-            type="submit"
-            disabled={isLoading}
-            className="h-10 px-8 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold tracking-wide transition-colors disabled:opacity-50"
-          >
-            {isLoading ? (
-              <span className="flex items-center gap-2">
-                <span className="w-4 h-4 border-2 border-zinc-950/30 border-t-zinc-950 rounded-full animate-spin" />
-                Running...
-              </span>
-            ) : (
-              "Run Backtest"
-            )}
-          </Button>
         </div>
       </form>
     </div>
