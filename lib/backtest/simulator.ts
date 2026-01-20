@@ -14,6 +14,8 @@ interface SimulatorParams {
   shortOnShort: boolean;
   longLeverage: number;
   shortLeverage: number;
+  atrMultiplier: number;
+  atrPeriod: number;
 }
 
 interface SimulatorState {
@@ -25,6 +27,9 @@ interface SimulatorState {
   maxDrawdown: number;
   trades: number;
   liquidated: boolean;
+  highestCloseSinceEntry: number | null;
+  lowestCloseSinceEntry: number | null;
+  trailingStopPrice: number | null;
 }
 
 function calculateTradeFee(
@@ -114,9 +119,58 @@ function determineSignal(
   return "NONE";
 }
 
+function isTrailingStopEnabled(atrMultiplier: number, atrPeriod: number): boolean {
+  return atrMultiplier > 0 && atrPeriod > 0;
+}
+
+function calculateTrailingStopPrice(
+  position: Position,
+  extremeClose: number | null,
+  currentAtr: number | null,
+  atrMultiplier: number,
+  currentStopPrice: number | null
+): number | null {
+  if (position === "NONE" || extremeClose === null || currentAtr === null) {
+    return null;
+  }
+
+  if (position === "LONG") {
+    const newStop = extremeClose - atrMultiplier * currentAtr;
+    if (currentStopPrice === null) return newStop;
+    return Math.max(newStop, currentStopPrice);
+  }
+
+  if (position === "SHORT") {
+    const newStop = extremeClose + atrMultiplier * currentAtr;
+    if (currentStopPrice === null) return newStop;
+    return Math.min(newStop, currentStopPrice);
+  }
+
+  return null;
+}
+
+function isTrailingStopTriggered(
+  position: Position,
+  closePrice: number,
+  stopPrice: number | null
+): boolean {
+  if (stopPrice === null) return false;
+
+  if (position === "LONG") {
+    return closePrice <= stopPrice;
+  }
+
+  if (position === "SHORT") {
+    return closePrice >= stopPrice;
+  }
+
+  return false;
+}
+
 export function simulateStrategy(
   pricePoints: PricePoint[],
   smaValues: (number | null)[],
+  atrValues: (number | null)[],
   params: SimulatorParams
 ): { result: SmaResult; timeSeries: DetailedDailyState[] } {
   const {
@@ -127,7 +181,11 @@ export function simulateStrategy(
     shortOnShort,
     longLeverage,
     shortLeverage,
+    atrMultiplier,
+    atrPeriod,
   } = params;
+
+  const trailingStopEnabled = isTrailingStopEnabled(atrMultiplier, atrPeriod);
 
   const state: SimulatorState = {
     cash: initialCapital,
@@ -138,6 +196,9 @@ export function simulateStrategy(
     maxDrawdown: 0,
     trades: 0,
     liquidated: false,
+    highestCloseSinceEntry: null,
+    lowestCloseSinceEntry: null,
+    trailingStopPrice: null,
   };
 
   const timeSeries: DetailedDailyState[] = [];
@@ -207,9 +268,55 @@ export function simulateStrategy(
       state.maxDrawdown = currentDrawdown;
     }
 
-    const targetPosition = determineSignal(closePrice, sma, buyOnLong, shortOnShort);
     let tradeAction: TradeAction | undefined;
     const previousPosition = state.position;
+
+    if (state.position !== "NONE" && trailingStopEnabled) {
+      if (state.position === "LONG") {
+        state.highestCloseSinceEntry =
+          state.highestCloseSinceEntry === null
+            ? closePrice
+            : Math.max(state.highestCloseSinceEntry, closePrice);
+      } else if (state.position === "SHORT") {
+        state.lowestCloseSinceEntry =
+          state.lowestCloseSinceEntry === null
+            ? closePrice
+            : Math.min(state.lowestCloseSinceEntry, closePrice);
+      }
+
+      const extremeClose =
+        state.position === "LONG"
+          ? state.highestCloseSinceEntry
+          : state.lowestCloseSinceEntry;
+
+      state.trailingStopPrice = calculateTrailingStopPrice(
+        state.position,
+        extremeClose,
+        atrValues[i],
+        atrMultiplier,
+        state.trailingStopPrice
+      );
+
+      if (isTrailingStopTriggered(state.position, closePrice, state.trailingStopPrice)) {
+        const exitValue = calculatePortfolioValue(
+          state,
+          closePrice,
+          longLeverage,
+          shortLeverage
+        );
+        const exitFee = calculateTradeFee(exitValue, exchangeFeePercent, gasFeePerTrade);
+        state.cash = exitValue - exitFee;
+        tradeAction = previousPosition === "LONG" ? "EXIT_LONG" : "EXIT_SHORT";
+        state.position = "NONE";
+        state.positionSize = 0;
+        state.highestCloseSinceEntry = null;
+        state.lowestCloseSinceEntry = null;
+        state.trailingStopPrice = null;
+        state.trades++;
+      }
+    }
+
+    const targetPosition = determineSignal(closePrice, sma, buyOnLong, shortOnShort);
 
     if (targetPosition !== state.position) {
       if (state.position !== "NONE") {
@@ -224,6 +331,9 @@ export function simulateStrategy(
         tradeAction = previousPosition === "LONG" ? "EXIT_LONG" : "EXIT_SHORT";
         state.position = "NONE";
         state.positionSize = 0;
+        state.highestCloseSinceEntry = null;
+        state.lowestCloseSinceEntry = null;
+        state.trailingStopPrice = null;
         state.trades++;
       }
 
@@ -238,6 +348,21 @@ export function simulateStrategy(
           state.cash = 0;
           state.trades++;
           tradeAction = targetPosition === "LONG" ? "ENTER_LONG" : "ENTER_SHORT";
+
+          if (trailingStopEnabled) {
+            if (targetPosition === "LONG") {
+              state.highestCloseSinceEntry = closePrice;
+            } else {
+              state.lowestCloseSinceEntry = closePrice;
+            }
+            state.trailingStopPrice = calculateTrailingStopPrice(
+              targetPosition,
+              closePrice,
+              atrValues[i],
+              atrMultiplier,
+              null
+            );
+          }
         }
       }
     }

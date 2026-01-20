@@ -12,6 +12,8 @@ interface BacktestRequestBody {
   shortOnShort: boolean;
   longLeverage: number;
   shortLeverage: number;
+  atrMultiplier?: number;
+  atrPeriod?: number;
   selectedPeriod?: number;
 }
 
@@ -29,6 +31,8 @@ export async function POST(request: Request): Promise<NextResponse> {
       shortOnShort = true,
       longLeverage = 1,
       shortLeverage = 1,
+      atrMultiplier = 0,
+      atrPeriod = 0,
       selectedPeriod,
     } = body;
 
@@ -80,6 +84,8 @@ export async function POST(request: Request): Promise<NextResponse> {
       shortOnShort,
       longLeverage,
       shortLeverage,
+      atrMultiplier,
+      atrPeriod,
     };
 
     const result = runBacktest(pricePoints, params, selectedPeriod);

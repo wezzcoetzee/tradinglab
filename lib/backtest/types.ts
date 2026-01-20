@@ -13,6 +13,8 @@ export interface BacktestParams {
   shortOnShort: boolean;
   longLeverage: number;
   shortLeverage: number;
+  atrMultiplier: number;
+  atrPeriod: number;
 }
 
 export type Position = "LONG" | "SHORT" | "NONE";

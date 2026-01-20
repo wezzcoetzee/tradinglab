@@ -18,6 +18,8 @@ export interface BacktestFormData {
   sameLeverage: boolean;
   longLeverage: number;
   shortLeverage: number;
+  atrPeriod: number;
+  atrMultiplier: number;
 }
 
 interface BacktestFormProps {
@@ -42,6 +44,8 @@ export function BacktestForm({
     sameLeverage: defaultValues?.sameLeverage ?? true,
     longLeverage: defaultValues?.longLeverage ?? 1,
     shortLeverage: defaultValues?.shortLeverage ?? 1,
+    atrPeriod: defaultValues?.atrPeriod ?? 14,
+    atrMultiplier: defaultValues?.atrMultiplier ?? 2.5,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -221,6 +225,47 @@ export function BacktestForm({
                   />
                 </div>
               )}
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <Label className="text-base font-medium">Trailing Stop</Label>
+              <p className="text-sm text-muted-foreground">
+                ATR-based trailing stop. Set either value to 0 to disable.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="atrPeriod">ATR Period</Label>
+                <Input
+                  id="atrPeriod"
+                  type="number"
+                  min={0}
+                  max={50}
+                  step={1}
+                  value={formData.atrPeriod}
+                  onChange={(e) =>
+                    updateField("atrPeriod", parseInt(e.target.value) || 0)
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="atrMultiplier">ATR Multiplier (k)</Label>
+                <Input
+                  id="atrMultiplier"
+                  type="number"
+                  min={0}
+                  max={10}
+                  step={0.1}
+                  value={formData.atrMultiplier}
+                  onChange={(e) =>
+                    updateField("atrMultiplier", parseFloat(e.target.value) || 0)
+                  }
+                />
+              </div>
             </div>
           </div>
 
