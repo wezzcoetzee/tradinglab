@@ -1,48 +1,27 @@
-Add ATR-Based Trailing Stop Loss to existing BTC strategy
+Would it be possible to add an ATR Trailing Stop Loss to this tool as part of the backtests? THe idea would be that the ATR
+Trailing Stop Loss is set from the pkea value after a LONG or SHORT Position is added.
 
-Context
+If I LONG BTC at $90k and it rallies to $125k, the ATR is calcualted from $125k until the Price goes above that position
+again, or the price crosses the MA and becomes a SHORT entry.
 
-- Timeframe: keep exactly the same as current strategy
-- Entry logic: completely unchanged (long when Close > 44 SMA, short when Close < 44 SMA)
-- This change affects exit logic only — no change to entries
+If I SHORT BTC at $90k and it drops to $70k, the ATR is calculated from $70k until the price falls bellow that position
+again, or the price crosses the MA and becomes a LONG entry.
 
-ATR
+I want the ability to configure both the amount of profit I take as a percentage, the ATR value and the Multipler for the
+ATR.
 
-- Use standard ATR(14)
-- True Range = max(high-low, abs(high-prev_close), abs(low-prev_close))
-- ATR = 14-period moving average (usually RMA/Wilder) of True Range
+Since ATR uses a HIGH/LOW and we only have the close, use a close-only approximation
 
-Trailing Stop – Long positions
+The ATR element should be able to be toggled on and off for strategies
 
-- On entry bar: highest_since_entry = close    (or high if you prefer classic Chandelier style)
-- On every subsequent bar while long:
-  highest_since_entry = max(highest_since_entry, close)   (or high)
-  stop_price = highest_since_entry - k * current_ATR(14)
-- If close < stop_price → exit long
-- The stop must only move up (tighten), never down
+ATRs are Fixed, the only ones that can be tested are
 
-Trailing Stop – Short positions
+- 10
+- 14
+- 20
 
-- On entry bar: lowest_since_entry = close    (or low)
-- On every subsequent bar while short:
-  lowest_since_entry = min(lowest_since_entry, close)   (or low)
-  stop_price = lowest_since_entry + k * current_ATR(14)
-- If close > stop_price → exit short
-- Stop must only move down (tighten), never up
+Multipliers are between 2 and 4, with 0.5 step increments.
 
-Parameters
+Ensure you use the CLAUDE.md file in the ~/.claude location. ENsure you use the Frontend Design Skill as well.
 
-- k (ATR multiplier): configurable, default = 2.5
-
-Rules
-
-- Use close price to check against stop_price (not intrabar prices)
-- No partial exits
-- Do not loosen the stop — pure ratchet behavior
-- Keep full compatibility with existing backtest & live automation
-
-Output
-
-- Show the updated complete strategy logic/pseudocode
-- Add clear inline comments explaining the trailing stop calculation
-- (Optional) suggest 2–3 alternative k values to test on BTC (e.g. 2.0, 3.0, 4.0)
+Please create a PRD with User Stories that you will follow to implement this feature, including the clean up. Put this in the the same folder ast this file
