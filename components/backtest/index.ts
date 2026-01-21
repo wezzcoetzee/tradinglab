@@ -4,3 +4,5 @@ export { SummaryStats } from "./summary-stats";
 export { MaSummaryTable } from "./ma-summary-table";
 export { DataTableVirtualized } from "./data-table-virtualized";
 export { Dashboard } from "./dashboard";
+export { PortfolioChart } from "./portfolio-chart";
+export { MaPerformanceChart } from "./ma-performance-chart";

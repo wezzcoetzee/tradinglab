@@ -8,6 +8,8 @@ import {
   DataTableVirtualized,
   SummaryStats,
   CsvExport,
+  MaPerformanceChart,
+  PortfolioChart,
 } from "@/components/backtest";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -172,17 +174,37 @@ export function Dashboard() {
               dateRange={result.dateRange}
             />
 
-            <MaSummaryTable
-              smaResults={result.smaResults}
-              emaResults={result.emaResults}
-              hodlReturn={result.hodl.totalReturn}
-              onSelectPeriod={handleSelectPeriod}
-              selectedPeriod={selectedPeriod ?? undefined}
-            />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <MaPerformanceChart
+                smaResults={result.smaResults}
+                emaResults={result.emaResults}
+                hodlReturn={result.hodl.totalReturn}
+              />
+              {selectedPeriod && dailyData && dailyData.length > 0 ? (
+                <PortfolioChart dailyData={dailyData} smaPeriod={selectedPeriod} />
+              ) : (
+                <div className="flex items-center justify-center rounded-xl border border-dashed border-zinc-800 bg-zinc-900/50 text-zinc-500 text-sm">
+                  Select a period to view portfolio chart
+                </div>
+              )}
+            </div>
 
-            {selectedPeriod && dailyData && dailyData.length > 0 && (
-              <DataTableVirtualized data={dailyData} smaPeriod={selectedPeriod} />
-            )}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <MaSummaryTable
+                smaResults={result.smaResults}
+                emaResults={result.emaResults}
+                hodlReturn={result.hodl.totalReturn}
+                onSelectPeriod={handleSelectPeriod}
+                selectedPeriod={selectedPeriod ?? undefined}
+              />
+              {selectedPeriod && dailyData && dailyData.length > 0 ? (
+                <DataTableVirtualized data={dailyData} smaPeriod={selectedPeriod} />
+              ) : (
+                <div className="flex items-center justify-center rounded-xl border border-dashed border-zinc-800 bg-zinc-900/50 text-zinc-500 text-sm min-h-[400px]">
+                  Select a period to view daily data
+                </div>
+              )}
+            </div>
           </>
         )}
       </main>
