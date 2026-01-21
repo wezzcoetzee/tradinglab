@@ -12,8 +12,6 @@ const PARAM_KEYS = {
   smaMax: "max",
   buyOnLong: "long",
   shortOnShort: "short",
-  longLeverage: "llev",
-  shortLeverage: "slev",
   optimizeLeverage: "optlev",
 } as const;
 
@@ -25,7 +23,6 @@ const DEFAULT_VALUES: BacktestFormData = {
   smaMax: 200,
   buyOnLong: true,
   shortOnShort: false,
-  leverage: { long: 1, short: 1 },
   optimizeLeverage: false,
 };
 
@@ -42,8 +39,6 @@ export function useUrlParams() {
     const max = searchParams.get(PARAM_KEYS.smaMax);
     const long = searchParams.get(PARAM_KEYS.buyOnLong);
     const short = searchParams.get(PARAM_KEYS.shortOnShort);
-    const llev = searchParams.get(PARAM_KEYS.longLeverage);
-    const slev = searchParams.get(PARAM_KEYS.shortLeverage);
     const optlev = searchParams.get(PARAM_KEYS.optimizeLeverage);
 
     return {
@@ -54,10 +49,6 @@ export function useUrlParams() {
       smaMax: max ? parseInt(max) : DEFAULT_VALUES.smaMax,
       buyOnLong: long !== null ? long === "1" : DEFAULT_VALUES.buyOnLong,
       shortOnShort: short !== null ? short === "1" : DEFAULT_VALUES.shortOnShort,
-      leverage: {
-        long: llev ? parseFloat(llev) : DEFAULT_VALUES.leverage.long,
-        short: slev ? parseFloat(slev) : DEFAULT_VALUES.leverage.short,
-      },
       optimizeLeverage: optlev !== null ? optlev === "1" : DEFAULT_VALUES.optimizeLeverage,
     };
   }, [searchParams]);
@@ -86,12 +77,6 @@ export function useUrlParams() {
       }
       if (data.shortOnShort !== DEFAULT_VALUES.shortOnShort) {
         params.set(PARAM_KEYS.shortOnShort, data.shortOnShort ? "1" : "0");
-      }
-      if (data.leverage.long !== DEFAULT_VALUES.leverage.long) {
-        params.set(PARAM_KEYS.longLeverage, data.leverage.long.toString());
-      }
-      if (data.leverage.short !== DEFAULT_VALUES.leverage.short) {
-        params.set(PARAM_KEYS.shortLeverage, data.leverage.short.toString());
       }
       if (data.optimizeLeverage !== DEFAULT_VALUES.optimizeLeverage) {
         params.set(PARAM_KEYS.optimizeLeverage, data.optimizeLeverage ? "1" : "0");

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { runBacktest, type BacktestParams, type PricePoint, type LeverageConfig, type SelectedConfig } from "@/lib/backtest";
+import { runBacktest, type BacktestParams, type PricePoint, type SelectedConfig } from "@/lib/backtest";
 
 interface BacktestRequestBody {
   initialCapital: number;
@@ -10,7 +10,6 @@ interface BacktestRequestBody {
   smaMax: number;
   buyOnLong: boolean;
   shortOnShort: boolean;
-  leverage?: LeverageConfig;
   optimizeLeverage?: boolean;
   selectedConfig?: SelectedConfig;
 }
@@ -27,7 +26,6 @@ export async function POST(request: Request): Promise<NextResponse> {
       smaMax = 200,
       buyOnLong = true,
       shortOnShort = false,
-      leverage = { long: 1, short: 1 },
       optimizeLeverage = false,
       selectedConfig,
     } = body;
@@ -42,13 +40,6 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (initialCapital <= 0) {
       return NextResponse.json(
         { error: "Initial capital must be positive." },
-        { status: 400 }
-      );
-    }
-
-    if (leverage.long < 0.5 || leverage.long > 3 || leverage.short < 0.5 || leverage.short > 3) {
-      return NextResponse.json(
-        { error: "Leverage must be between 0.5 and 3." },
         { status: 400 }
       );
     }
@@ -78,7 +69,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       smaMax,
       buyOnLong,
       shortOnShort,
-      leverage,
+      leverage: { long: 1, short: 1 },
       optimizeLeverage,
     };
 

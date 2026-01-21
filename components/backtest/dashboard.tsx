@@ -41,7 +41,6 @@ export function Dashboard() {
           smaMax: formData.smaMax,
           buyOnLong: formData.buyOnLong,
           shortOnShort: formData.shortOnShort,
-          leverage: formData.leverage,
           optimizeLeverage: formData.optimizeLeverage,
         }),
       });
