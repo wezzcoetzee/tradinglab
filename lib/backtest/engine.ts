@@ -25,7 +25,6 @@ export function runBacktest(
   const {
     initialCapital,
     exchangeFeePercent,
-    gasFeePerTrade,
     smaMin,
     smaMax,
     buyOnLong,
@@ -46,7 +45,6 @@ export function runBacktest(
   const baseSim = {
     initialCapital,
     exchangeFeePercent,
-    gasFeePerTrade,
     buyOnLong,
     shortOnShort,
   };

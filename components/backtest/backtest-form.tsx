@@ -8,7 +8,6 @@ import { Switch } from "@/components/ui/switch";
 export interface BacktestFormData {
   initialCapital: number;
   exchangeFeePercent: number;
-  gasFeePerTrade: number;
   smaMin: number;
   smaMax: number;
   buyOnLong: boolean;
@@ -19,16 +18,17 @@ export interface BacktestFormData {
 interface BacktestFormProps {
   onSubmit: (data: BacktestFormData) => void;
   defaultValues?: Partial<BacktestFormData>;
+  actions?: React.ReactNode;
 }
 
 export function BacktestForm({
   onSubmit,
   defaultValues,
+  actions,
 }: BacktestFormProps) {
   const [formData, setFormData] = useState<BacktestFormData>({
     initialCapital: defaultValues?.initialCapital ?? 1000,
     exchangeFeePercent: defaultValues?.exchangeFeePercent ?? 0,
-    gasFeePerTrade: defaultValues?.gasFeePerTrade ?? 0,
     smaMin: defaultValues?.smaMin ?? 2,
     smaMax: defaultValues?.smaMax ?? 200,
     buyOnLong: defaultValues?.buyOnLong ?? true,
@@ -89,26 +89,6 @@ export function BacktestForm({
                 className="w-20 h-10 pr-7 bg-zinc-900 border-zinc-800 text-zinc-100 font-mono focus:border-amber-500/50 focus:ring-amber-500/20 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600">%</span>
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="gasFeePerTrade" className="text-[11px] uppercase tracking-wider text-zinc-500 font-medium">
-              Gas
-            </Label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600">$</span>
-              <Input
-                id="gasFeePerTrade"
-                type="number"
-                min={0}
-                step={0.01}
-                value={formData.gasFeePerTrade}
-                onChange={(e) =>
-                  updateField("gasFeePerTrade", parseFloat(e.target.value) || 0)
-                }
-                className="w-20 h-10 pl-7 bg-zinc-900 border-zinc-800 text-zinc-100 font-mono focus:border-amber-500/50 focus:ring-amber-500/20 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              />
             </div>
           </div>
 
@@ -186,6 +166,15 @@ export function BacktestForm({
               </label>
             </div>
           </div>
+
+          {actions && (
+            <>
+              <div className="flex-1" />
+              <div className="flex items-end gap-3">
+                {actions}
+              </div>
+            </>
+          )}
         </div>
       </form>
     </div>

@@ -5,7 +5,6 @@ import { runBacktest, type BacktestParams, type PricePoint, type SelectedConfig 
 interface BacktestRequestBody {
   initialCapital: number;
   exchangeFeePercent: number;
-  gasFeePerTrade?: number;
   smaMin: number;
   smaMax: number;
   buyOnLong: boolean;
@@ -21,7 +20,6 @@ export async function POST(request: Request): Promise<NextResponse> {
     const {
       initialCapital = 1000,
       exchangeFeePercent = 0,
-      gasFeePerTrade = 0,
       smaMin = 2,
       smaMax = 200,
       buyOnLong = true,
@@ -64,7 +62,6 @@ export async function POST(request: Request): Promise<NextResponse> {
     const params: BacktestParams = {
       initialCapital,
       exchangeFeePercent,
-      gasFeePerTrade,
       smaMin,
       smaMax,
       buyOnLong,

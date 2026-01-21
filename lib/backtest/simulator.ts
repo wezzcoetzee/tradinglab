@@ -3,7 +3,6 @@ import type { PricePoint, MaResult, Signal, DailyData, LeverageConfig } from "./
 interface SimulatorParams {
   initialCapital: number;
   exchangeFeePercent: number;
-  gasFeePerTrade: number;
   buyOnLong: boolean;
   shortOnShort: boolean;
   leverage: LeverageConfig;
@@ -13,10 +12,9 @@ type Position = "LONG" | "SHORT" | "CASH";
 
 function calculateTradeFee(
   value: number,
-  exchangeFeePercent: number,
-  gasFee: number
+  exchangeFeePercent: number
 ): number {
-  return value * (exchangeFeePercent / 100) + gasFee;
+  return value * (exchangeFeePercent / 100);
 }
 
 function determinePosition(
@@ -38,7 +36,7 @@ export function simulateMaStrategy(
   maValues: (number | null)[],
   params: SimulatorParams
 ): { result: MaResult; balances: number[] } {
-  const { initialCapital, exchangeFeePercent, gasFeePerTrade, buyOnLong, shortOnShort, leverage } = params;
+  const { initialCapital, exchangeFeePercent, buyOnLong, shortOnShort, leverage } = params;
 
   let cash = initialCapital;
   let position: Position = "CASH";
@@ -66,7 +64,7 @@ export function simulateMaStrategy(
         const priceChange = (closePrice - entryPrice) / entryPrice;
         const leveragedReturn = priceChange * leverage.long;
         const exitValue = entryCapital * (1 + leveragedReturn);
-        const fee = calculateTradeFee(Math.max(0, exitValue), exchangeFeePercent, gasFeePerTrade);
+        const fee = calculateTradeFee(Math.max(0, exitValue), exchangeFeePercent);
         cash = Math.max(0, exitValue - fee);
         entryPrice = 0;
         entryCapital = 0;
@@ -75,7 +73,7 @@ export function simulateMaStrategy(
         const priceChange = (closePrice - entryPrice) / entryPrice;
         const leveragedReturn = -priceChange * leverage.short;
         const exitValue = entryCapital * (1 + leveragedReturn);
-        const fee = calculateTradeFee(Math.max(0, exitValue), exchangeFeePercent, gasFeePerTrade);
+        const fee = calculateTradeFee(Math.max(0, exitValue), exchangeFeePercent);
         cash = Math.max(0, exitValue - fee);
         entryPrice = 0;
         entryCapital = 0;
@@ -83,13 +81,13 @@ export function simulateMaStrategy(
       }
 
       if (targetPosition === "LONG" && cash > 0) {
-        const fee = calculateTradeFee(cash, exchangeFeePercent, gasFeePerTrade);
+        const fee = calculateTradeFee(cash, exchangeFeePercent);
         entryCapital = cash - fee;
         entryPrice = closePrice;
         cash = 0;
         trades++;
       } else if (targetPosition === "SHORT" && cash > 0) {
-        const fee = calculateTradeFee(cash, exchangeFeePercent, gasFeePerTrade);
+        const fee = calculateTradeFee(cash, exchangeFeePercent);
         entryCapital = cash - fee;
         entryPrice = closePrice;
         cash = 0;

@@ -40,7 +40,6 @@ export function CsvExport({ smaResults, params, hodlReturn }: CsvExportProps) {
       `# Backtest Parameters`,
       `# Initial Capital: $${params.initialCapital}`,
       `# Exchange Fee: ${params.exchangeFeePercent}%`,
-      `# Gas Fee: $${params.gasFeePerTrade}`,
       `# MA Range: ${params.smaMin}-${params.smaMax}`,
       `# Buy on Long: ${params.buyOnLong}`,
       `# Short on Short: ${params.shortOnShort}`,

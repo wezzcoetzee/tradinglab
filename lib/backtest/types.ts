@@ -11,7 +11,6 @@ export interface LeverageConfig {
 export interface BacktestParams {
   initialCapital: number;
   exchangeFeePercent: number;
-  gasFeePerTrade: number;
   smaMin: number;
   smaMax: number;
   buyOnLong: boolean;
