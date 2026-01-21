@@ -4,17 +4,24 @@ import type {
   MaResult,
   DailyData,
   DetailedBacktestResult,
+  LeverageConfig,
 } from "./types";
 import { calculateAllSmas } from "./sma";
 import { calculateAllEmas } from "./ema";
 import { simulateMaStrategy, calculateHodl, generateDailyData } from "./simulator";
 
 const WARMUP_DAYS = 200;
+const LEVERAGE_VALUES = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3];
+
+export interface SelectedConfig {
+  period: number;
+  leverage: LeverageConfig;
+}
 
 export function runBacktest(
   pricePoints: PricePoint[],
   params: BacktestParams,
-  selectedPeriod?: number
+  selectedConfig?: SelectedConfig
 ): DetailedBacktestResult {
   const {
     initialCapital,
@@ -24,6 +31,8 @@ export function runBacktest(
     smaMax,
     buyOnLong,
     shortOnShort,
+    leverage,
+    optimizeLeverage,
   } = params;
 
   const startIndex = WARMUP_DAYS - 1;
@@ -37,13 +46,16 @@ export function runBacktest(
   const smaResults: MaResult[] = [];
   const emaResults: MaResult[] = [];
 
-  const simulatorParams = {
+  const baseSim = {
     initialCapital,
     exchangeFeePercent,
     gasFeePerTrade,
     buyOnLong,
     shortOnShort,
   };
+
+  const longLeverages = optimizeLeverage ? LEVERAGE_VALUES : [leverage.long];
+  const shortLeverages = optimizeLeverage ? LEVERAGE_VALUES : [leverage.short];
 
   for (let period = smaMin; period <= smaMax; period++) {
     const smaValues = smaMap.get(period);
@@ -54,13 +66,22 @@ export function runBacktest(
     const tradingSmaValues = smaValues.slice(startIndex);
     const tradingEmaValues = emaValues.slice(startIndex);
 
-    const smaSimResult = simulateMaStrategy(tradingPricePoints, tradingSmaValues, simulatorParams);
-    smaSimResult.result.period = period;
-    smaResults.push(smaSimResult.result);
+    for (const longLev of longLeverages) {
+      for (const shortLev of shortLeverages) {
+        const simulatorParams = {
+          ...baseSim,
+          leverage: { long: longLev, short: shortLev },
+        };
 
-    const emaSimResult = simulateMaStrategy(tradingPricePoints, tradingEmaValues, simulatorParams);
-    emaSimResult.result.period = period;
-    emaResults.push(emaSimResult.result);
+        const smaSimResult = simulateMaStrategy(tradingPricePoints, tradingSmaValues, simulatorParams);
+        smaSimResult.result.period = period;
+        smaResults.push(smaSimResult.result);
+
+        const emaSimResult = simulateMaStrategy(tradingPricePoints, tradingEmaValues, simulatorParams);
+        emaSimResult.result.period = period;
+        emaResults.push(emaSimResult.result);
+      }
+    }
   }
 
   const bestSma = smaResults.reduce((best, current) =>
@@ -79,9 +100,9 @@ export function runBacktest(
 
   let dailyData: DailyData[] | undefined;
 
-  if (selectedPeriod !== undefined) {
-    const smaValues = smaMap.get(selectedPeriod);
-    const emaValues = emaMap.get(selectedPeriod);
+  if (selectedConfig !== undefined) {
+    const smaValues = smaMap.get(selectedConfig.period);
+    const emaValues = emaMap.get(selectedConfig.period);
 
     if (smaValues && emaValues) {
       const tradingSmaValues = smaValues.slice(startIndex);
@@ -91,7 +112,7 @@ export function runBacktest(
         tradingPricePoints,
         tradingSmaValues,
         tradingEmaValues,
-        simulatorParams
+        { ...baseSim, leverage: selectedConfig.leverage }
       );
     }
   }

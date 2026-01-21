@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Slider } from "@/components/ui/slider";
+import type { LeverageConfig } from "@/lib/backtest/types";
 
 export interface BacktestFormData {
   initialCapital: number;
@@ -13,6 +15,8 @@ export interface BacktestFormData {
   smaMax: number;
   buyOnLong: boolean;
   shortOnShort: boolean;
+  leverage: LeverageConfig;
+  optimizeLeverage: boolean;
 }
 
 interface BacktestFormProps {
@@ -32,6 +36,8 @@ export function BacktestForm({
     smaMax: defaultValues?.smaMax ?? 200,
     buyOnLong: defaultValues?.buyOnLong ?? true,
     shortOnShort: defaultValues?.shortOnShort ?? false,
+    leverage: defaultValues?.leverage ?? { long: 1, short: 1 },
+    optimizeLeverage: defaultValues?.optimizeLeverage ?? false,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -166,6 +172,77 @@ export function BacktestForm({
                   className="border-zinc-700 data-[state=checked]:bg-rose-600 data-[state=checked]:border-rose-600"
                 />
                 <span className="text-sm text-zinc-300">Short</span>
+              </label>
+            </div>
+          </div>
+
+          <div className="h-8 w-px bg-zinc-800 mx-2" />
+
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <Label className="text-[11px] uppercase tracking-wider text-zinc-500 font-medium">
+                Long Lev
+              </Label>
+              <span className="text-xs font-mono text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                {formData.leverage.long}x
+              </span>
+            </div>
+            <Slider
+              value={[formData.leverage.long]}
+              onValueChange={([value]) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  leverage: { ...prev.leverage, long: value },
+                }))
+              }
+              min={0.5}
+              max={3}
+              step={0.25}
+              disabled={formData.optimizeLeverage}
+              className="w-28 [&_[role=slider]]:bg-emerald-500 [&_[role=slider]]:border-emerald-600 [&_.relative]:bg-zinc-800 [&_[data-disabled]]:opacity-40"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <Label className="text-[11px] uppercase tracking-wider text-zinc-500 font-medium">
+                Short Lev
+              </Label>
+              <span className="text-xs font-mono text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded">
+                {formData.leverage.short}x
+              </span>
+            </div>
+            <Slider
+              value={[formData.leverage.short]}
+              onValueChange={([value]) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  leverage: { ...prev.leverage, short: value },
+                }))
+              }
+              min={0.5}
+              max={3}
+              step={0.25}
+              disabled={formData.optimizeLeverage}
+              className="w-28 [&_[role=slider]]:bg-rose-500 [&_[role=slider]]:border-rose-600 [&_.relative]:bg-zinc-800 [&_[data-disabled]]:opacity-40"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-[11px] uppercase tracking-wider text-zinc-500 font-medium">
+              Optimize
+            </Label>
+            <div className="flex items-center h-10">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  id="optimizeLeverage"
+                  checked={formData.optimizeLeverage}
+                  onCheckedChange={(checked) =>
+                    updateField("optimizeLeverage", checked === true)
+                  }
+                  className="border-zinc-700 data-[state=checked]:bg-amber-600 data-[state=checked]:border-amber-600"
+                />
+                <span className="text-sm text-zinc-300">Leverage</span>
               </label>
             </div>
           </div>

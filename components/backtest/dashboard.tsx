@@ -14,14 +14,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useUrlParams } from "@/hooks/use-url-params";
-import type { DetailedBacktestResult, DailyData } from "@/lib/backtest";
+import type { DetailedBacktestResult, DailyData, LeverageConfig, SelectedConfig } from "@/lib/backtest";
 
 export function Dashboard() {
   const { formData: urlFormData, updateUrl } = useUrlParams();
   const [result, setResult] = useState<DetailedBacktestResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedPeriod, setSelectedPeriod] = useState<number | null>(null);
+  const [selectedConfig, setSelectedConfig] = useState<SelectedConfig | null>(null);
   const [dailyData, setDailyData] = useState<DailyData[] | undefined>(undefined);
 
   const handleSubmit = async (formData: BacktestFormData) => {
@@ -41,6 +41,8 @@ export function Dashboard() {
           smaMax: formData.smaMax,
           buyOnLong: formData.buyOnLong,
           shortOnShort: formData.shortOnShort,
+          leverage: formData.leverage,
+          optimizeLeverage: formData.optimizeLeverage,
         }),
       });
 
@@ -51,9 +53,10 @@ export function Dashboard() {
 
       const data = (await response.json()) as DetailedBacktestResult;
       setResult(data);
-      setSelectedPeriod(data.bestSma.period);
+      const bestConfig = { period: data.bestSma.period, leverage: data.bestSma.leverage };
+      setSelectedConfig(bestConfig);
 
-      await fetchDailyData(data.bestSma.period, formData);
+      await fetchDailyData(bestConfig, formData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -61,18 +64,10 @@ export function Dashboard() {
     }
   };
 
-  const fetchDailyData = async (period: number, formData?: BacktestFormData) => {
+  const fetchDailyData = async (config: SelectedConfig, formData?: BacktestFormData) => {
     if (!result && !formData) return;
 
-    const params = formData || {
-      initialCapital: result!.params.initialCapital,
-      exchangeFeePercent: result!.params.exchangeFeePercent,
-      gasFeePerTrade: result!.params.gasFeePerTrade,
-      smaMin: result!.params.smaMin,
-      smaMax: result!.params.smaMax,
-      buyOnLong: result!.params.buyOnLong,
-      shortOnShort: result!.params.shortOnShort,
-    };
+    const params = formData || result!.params;
 
     try {
       const response = await fetch("/api/backtest", {
@@ -80,7 +75,7 @@ export function Dashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...params,
-          selectedPeriod: period,
+          selectedConfig: config,
         }),
       });
 
@@ -98,9 +93,9 @@ export function Dashboard() {
     }
   };
 
-  const handleSelectPeriod = (period: number) => {
-    setSelectedPeriod(period);
-    fetchDailyData(period);
+  const handleSelectConfig = (config: SelectedConfig) => {
+    setSelectedConfig(config);
+    fetchDailyData(config);
   };
 
   return (
@@ -180,11 +175,11 @@ export function Dashboard() {
                 emaResults={result.emaResults}
                 hodlReturn={result.hodl.totalReturn}
               />
-              {selectedPeriod && dailyData && dailyData.length > 0 ? (
-                <PortfolioChart dailyData={dailyData} smaPeriod={selectedPeriod} />
+              {selectedConfig && dailyData && dailyData.length > 0 ? (
+                <PortfolioChart dailyData={dailyData} smaPeriod={selectedConfig.period} />
               ) : (
                 <div className="flex items-center justify-center rounded-xl border border-dashed border-zinc-800 bg-zinc-900/50 text-zinc-500 text-sm">
-                  Select a period to view portfolio chart
+                  Select a configuration to view portfolio chart
                 </div>
               )}
             </div>
@@ -194,14 +189,15 @@ export function Dashboard() {
                 smaResults={result.smaResults}
                 emaResults={result.emaResults}
                 hodlReturn={result.hodl.totalReturn}
-                onSelectPeriod={handleSelectPeriod}
-                selectedPeriod={selectedPeriod ?? undefined}
+                onSelectConfig={handleSelectConfig}
+                selectedConfig={selectedConfig ?? undefined}
+                optimizeLeverage={result.params.optimizeLeverage}
               />
-              {selectedPeriod && dailyData && dailyData.length > 0 ? (
-                <DataTableVirtualized data={dailyData} smaPeriod={selectedPeriod} />
+              {selectedConfig && dailyData && dailyData.length > 0 ? (
+                <DataTableVirtualized data={dailyData} smaPeriod={selectedConfig.period} />
               ) : (
                 <div className="flex items-center justify-center rounded-xl border border-dashed border-zinc-800 bg-zinc-900/50 text-zinc-500 text-sm min-h-[400px]">
-                  Select a period to view daily data
+                  Select a configuration to view daily data
                 </div>
               )}
             </div>

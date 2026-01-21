@@ -69,23 +69,23 @@ export function SummaryStats({
           <StatCard
             label="Best SMA Period"
             value={`${bestSma.period}D`}
-            subValue={`${bestSma.trades} trades`}
+            subValue={`${bestSma.trades} trades · ${bestSma.leverage.long}x/${bestSma.leverage.short}x`}
           />
           <StatCard
             label="Best SMA Return"
             value={formatPercent(bestSma.totalReturn)}
-            subValue={formatCurrency(bestSma.finalValue)}
+            subValue={bestSma.liquidated ? "LIQUIDATED" : formatCurrency(bestSma.finalValue)}
             positive={bestSma.totalReturn > 0}
           />
           <StatCard
             label="Best EMA Period"
             value={`${bestEma.period}D`}
-            subValue={`${bestEma.trades} trades`}
+            subValue={`${bestEma.trades} trades · ${bestEma.leverage.long}x/${bestEma.leverage.short}x`}
           />
           <StatCard
             label="Best EMA Return"
             value={formatPercent(bestEma.totalReturn)}
-            subValue={formatCurrency(bestEma.finalValue)}
+            subValue={bestEma.liquidated ? "LIQUIDATED" : formatCurrency(bestEma.finalValue)}
             positive={bestEma.totalReturn > 0}
           />
         </div>

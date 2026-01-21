@@ -3,6 +3,11 @@ export interface PricePoint {
   closePrice: number;
 }
 
+export interface LeverageConfig {
+  long: number;
+  short: number;
+}
+
 export interface BacktestParams {
   initialCapital: number;
   exchangeFeePercent: number;
@@ -11,6 +16,8 @@ export interface BacktestParams {
   smaMax: number;
   buyOnLong: boolean;
   shortOnShort: boolean;
+  leverage: LeverageConfig;
+  optimizeLeverage: boolean;
 }
 
 export type Signal = 1 | 0;
@@ -20,6 +27,8 @@ export interface MaResult {
   totalReturn: number;
   finalValue: number;
   trades: number;
+  leverage: LeverageConfig;
+  liquidated: boolean;
 }
 
 export interface BacktestResult {

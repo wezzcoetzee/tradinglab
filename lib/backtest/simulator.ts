@@ -1,4 +1,4 @@
-import type { PricePoint, MaResult, Signal, DailyData } from "./types";
+import type { PricePoint, MaResult, Signal, DailyData, LeverageConfig } from "./types";
 
 interface SimulatorParams {
   initialCapital: number;
@@ -6,6 +6,7 @@ interface SimulatorParams {
   gasFeePerTrade: number;
   buyOnLong: boolean;
   shortOnShort: boolean;
+  leverage: LeverageConfig;
 }
 
 type Position = "LONG" | "SHORT" | "CASH";
@@ -37,14 +38,14 @@ export function simulateMaStrategy(
   maValues: (number | null)[],
   params: SimulatorParams
 ): { result: MaResult; balances: number[] } {
-  const { initialCapital, exchangeFeePercent, gasFeePerTrade, buyOnLong, shortOnShort } = params;
+  const { initialCapital, exchangeFeePercent, gasFeePerTrade, buyOnLong, shortOnShort, leverage } = params;
 
   let cash = initialCapital;
   let position: Position = "CASH";
-  let btcQuantity = 0;
-  let shortEntryPrice = 0;
-  let shortEntryValue = 0;
+  let entryPrice = 0;
+  let entryCapital = 0;
   let trades = 0;
+  let liquidated = false;
 
   const balances: number[] = [];
 
@@ -52,39 +53,45 @@ export function simulateMaStrategy(
     const { closePrice } = pricePoints[i];
     const ma = maValues[i];
 
+    if (liquidated) {
+      balances.push(0);
+      continue;
+    }
+
     const signal: Signal = ma !== null && closePrice > ma ? 1 : 0;
     const targetPosition = determinePosition(signal, buyOnLong, shortOnShort);
 
     if (targetPosition !== position) {
-      // Exit current position
       if (position === "LONG") {
-        const exitValue = btcQuantity * closePrice;
-        const fee = calculateTradeFee(exitValue, exchangeFeePercent, gasFeePerTrade);
-        cash = exitValue - fee;
-        btcQuantity = 0;
+        const priceChange = (closePrice - entryPrice) / entryPrice;
+        const leveragedReturn = priceChange * leverage.long;
+        const exitValue = entryCapital * (1 + leveragedReturn);
+        const fee = calculateTradeFee(Math.max(0, exitValue), exchangeFeePercent, gasFeePerTrade);
+        cash = Math.max(0, exitValue - fee);
+        entryPrice = 0;
+        entryCapital = 0;
         trades++;
       } else if (position === "SHORT") {
-        const priceChange = (closePrice - shortEntryPrice) / shortEntryPrice;
-        const pnl = -priceChange * shortEntryValue;
-        const exitValue = shortEntryValue + pnl;
-        const fee = calculateTradeFee(exitValue, exchangeFeePercent, gasFeePerTrade);
-        cash = exitValue - fee;
-        shortEntryPrice = 0;
-        shortEntryValue = 0;
+        const priceChange = (closePrice - entryPrice) / entryPrice;
+        const leveragedReturn = -priceChange * leverage.short;
+        const exitValue = entryCapital * (1 + leveragedReturn);
+        const fee = calculateTradeFee(Math.max(0, exitValue), exchangeFeePercent, gasFeePerTrade);
+        cash = Math.max(0, exitValue - fee);
+        entryPrice = 0;
+        entryCapital = 0;
         trades++;
       }
 
-      // Enter new position
       if (targetPosition === "LONG" && cash > 0) {
         const fee = calculateTradeFee(cash, exchangeFeePercent, gasFeePerTrade);
-        const entryCapital = cash - fee;
-        btcQuantity = entryCapital / closePrice;
+        entryCapital = cash - fee;
+        entryPrice = closePrice;
         cash = 0;
         trades++;
       } else if (targetPosition === "SHORT" && cash > 0) {
         const fee = calculateTradeFee(cash, exchangeFeePercent, gasFeePerTrade);
-        shortEntryValue = cash - fee;
-        shortEntryPrice = closePrice;
+        entryCapital = cash - fee;
+        entryPrice = closePrice;
         cash = 0;
         trades++;
       }
@@ -92,32 +99,56 @@ export function simulateMaStrategy(
       position = targetPosition;
     }
 
-    // Calculate current portfolio value
     let portfolioValue: number;
     if (position === "LONG") {
-      portfolioValue = btcQuantity * closePrice;
+      const priceChange = (closePrice - entryPrice) / entryPrice;
+      const leveragedReturn = priceChange * leverage.long;
+      portfolioValue = entryCapital * (1 + leveragedReturn);
+
+      if (leveragedReturn <= -1) {
+        liquidated = true;
+        portfolioValue = 0;
+        cash = 0;
+        entryCapital = 0;
+        position = "CASH";
+      }
     } else if (position === "SHORT") {
-      const priceChange = (closePrice - shortEntryPrice) / shortEntryPrice;
-      portfolioValue = shortEntryValue * (1 - priceChange);
+      const priceChange = (closePrice - entryPrice) / entryPrice;
+      const leveragedReturn = -priceChange * leverage.short;
+      portfolioValue = entryCapital * (1 + leveragedReturn);
+
+      if (leveragedReturn <= -1) {
+        liquidated = true;
+        portfolioValue = 0;
+        cash = 0;
+        entryCapital = 0;
+        position = "CASH";
+      }
     } else {
       portfolioValue = cash;
     }
 
-    balances.push(portfolioValue);
+    balances.push(Math.max(0, portfolioValue));
   }
 
-  // Calculate final value
   const lastPrice = pricePoints[pricePoints.length - 1].closePrice;
   let finalValue: number;
-  if (position === "LONG") {
-    finalValue = btcQuantity * lastPrice;
+
+  if (liquidated) {
+    finalValue = 0;
+  } else if (position === "LONG") {
+    const priceChange = (lastPrice - entryPrice) / entryPrice;
+    const leveragedReturn = priceChange * leverage.long;
+    finalValue = entryCapital * (1 + leveragedReturn);
   } else if (position === "SHORT") {
-    const priceChange = (lastPrice - shortEntryPrice) / shortEntryPrice;
-    finalValue = shortEntryValue * (1 - priceChange);
+    const priceChange = (lastPrice - entryPrice) / entryPrice;
+    const leveragedReturn = -priceChange * leverage.short;
+    finalValue = entryCapital * (1 + leveragedReturn);
   } else {
     finalValue = cash;
   }
 
+  finalValue = Math.max(0, finalValue);
   const totalReturn = (finalValue - initialCapital) / initialCapital;
 
   return {
@@ -126,6 +157,8 @@ export function simulateMaStrategy(
       totalReturn,
       finalValue,
       trades,
+      leverage: { ...leverage },
+      liquidated,
     },
     balances,
   };
