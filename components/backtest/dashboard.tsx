@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useUrlParams } from "@/hooks/use-url-params";
-import type { DetailedBacktestResult, DailyData, LeverageConfig, SelectedConfig } from "@/lib/backtest";
+import type { DetailedBacktestResult, DailyData, SelectedConfig } from "@/lib/backtest";
 
 export function Dashboard() {
   const { formData: urlFormData, updateUrl } = useUrlParams();
@@ -105,7 +105,7 @@ export function Dashboard() {
           <div className="flex items-center gap-3">
             <div className="w-2 h-2 rounded-full bg-amber-500" />
             <h1 className="text-lg font-semibold text-zinc-100 tracking-tight">
-              SMA/EMA Strategy Backtester
+              SMA Strategy Backtester
             </h1>
             <span className="text-xs text-zinc-600 font-mono">BTC/USD</span>
           </div>
@@ -113,7 +113,6 @@ export function Dashboard() {
             {result && (
               <CsvExport
                 smaResults={result.smaResults}
-                emaResults={result.emaResults}
                 params={result.params}
                 hodlReturn={result.hodl.totalReturn}
               />
@@ -163,7 +162,6 @@ export function Dashboard() {
           <>
             <SummaryStats
               bestSma={result.bestSma}
-              bestEma={result.bestEma}
               hodl={result.hodl}
               initialCapital={result.params.initialCapital}
               dateRange={result.dateRange}
@@ -172,7 +170,6 @@ export function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <MaPerformanceChart
                 smaResults={result.smaResults}
-                emaResults={result.emaResults}
                 hodlReturn={result.hodl.totalReturn}
               />
               {selectedConfig && dailyData && dailyData.length > 0 ? (
@@ -187,7 +184,6 @@ export function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <MaSummaryTable
                 smaResults={result.smaResults}
-                emaResults={result.emaResults}
                 hodlReturn={result.hodl.totalReturn}
                 onSelectConfig={handleSelectConfig}
                 selectedConfig={selectedConfig ?? undefined}

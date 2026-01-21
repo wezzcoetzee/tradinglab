@@ -49,19 +49,16 @@ export function DataTableVirtualized({ data, smaPeriod }: DataTableVirtualizedPr
     { key: "date", label: "Date", width: "w-28" },
     { key: "close", label: "Close", width: "w-28" },
     { key: "sma", label: `SMA(${smaPeriod})`, width: "w-28" },
-    { key: "ema", label: `EMA(${smaPeriod})`, width: "w-28" },
-    { key: "smaSignal", label: "SMA Sig", width: "w-20" },
-    { key: "emaSignal", label: "EMA Sig", width: "w-20" },
+    { key: "smaSignal", label: "Signal", width: "w-20" },
     { key: "hodl", label: "HODL", width: "w-28" },
     { key: "smaBalance", label: "SMA Bal", width: "w-28" },
-    { key: "emaBalance", label: "EMA Bal", width: "w-28" },
   ];
 
   return (
     <div className="bg-zinc-900/50 rounded-lg border border-zinc-800/50">
       <div className="px-4 py-3 border-b border-zinc-800/50">
         <h3 className="text-sm font-medium text-zinc-300">
-          Daily Data — MA Period: {smaPeriod}
+          Daily Data — SMA Period: {smaPeriod}
         </h3>
         <p className="text-xs text-zinc-500 mt-1">
           {data.length.toLocaleString()} rows
@@ -122,9 +119,6 @@ export function DataTableVirtualized({ data, smaPeriod }: DataTableVirtualizedPr
                 <div className="w-28 px-3 text-zinc-400 font-mono shrink-0">
                   {formatMa(row.sma)}
                 </div>
-                <div className="w-28 px-3 text-zinc-400 font-mono shrink-0">
-                  {formatMa(row.ema)}
-                </div>
                 <div className="w-20 px-3 shrink-0">
                   <span
                     className={`inline-flex items-center justify-center w-6 h-6 rounded text-xs font-medium ${
@@ -134,17 +128,6 @@ export function DataTableVirtualized({ data, smaPeriod }: DataTableVirtualizedPr
                     }`}
                   >
                     {row.smaSignal}
-                  </span>
-                </div>
-                <div className="w-20 px-3 shrink-0">
-                  <span
-                    className={`inline-flex items-center justify-center w-6 h-6 rounded text-xs font-medium ${
-                      row.emaSignal === 1
-                        ? "bg-emerald-500/20 text-emerald-400"
-                        : "bg-rose-500/20 text-rose-400"
-                    }`}
-                  >
-                    {row.emaSignal}
                   </span>
                 </div>
                 <div className="w-28 px-3 text-zinc-300 font-mono shrink-0">
@@ -159,17 +142,6 @@ export function DataTableVirtualized({ data, smaPeriod }: DataTableVirtualizedPr
                     }
                   >
                     {formatPrice(row.smaBalance)}
-                  </span>
-                </div>
-                <div className="w-28 px-3 font-mono shrink-0">
-                  <span
-                    className={
-                      row.emaBalance >= row.hodlValue
-                        ? "text-emerald-400"
-                        : "text-zinc-300"
-                    }
-                  >
-                    {formatPrice(row.emaBalance)}
                   </span>
                 </div>
               </div>

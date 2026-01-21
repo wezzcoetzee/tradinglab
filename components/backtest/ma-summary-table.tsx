@@ -11,26 +11,22 @@ interface SelectedConfig {
 
 interface MaSummaryTableProps {
   smaResults: MaResult[];
-  emaResults: MaResult[];
   hodlReturn: number;
   onSelectConfig: (config: SelectedConfig) => void;
   selectedConfig?: SelectedConfig;
   optimizeLeverage: boolean;
 }
 
-type SortField = "period" | "longLev" | "shortLev" | "sma" | "ema" | "hodl";
+type SortField = "period" | "longLev" | "shortLev" | "sma" | "hodl";
 type SortDirection = "asc" | "desc";
 
 interface TableRow {
   period: number;
   leverage: LeverageConfig;
   smaReturn: number;
-  emaReturn: number;
   hodlReturn: number;
   smaLiquidated: boolean;
-  emaLiquidated: boolean;
   isBestSma: boolean;
-  isBestEma: boolean;
   key: string;
 }
 
@@ -51,7 +47,6 @@ function makeKey(period: number, lev: LeverageConfig): string {
 
 export function MaSummaryTable({
   smaResults,
-  emaResults,
   hodlReturn,
   onSelectConfig,
   selectedConfig,
@@ -66,38 +61,22 @@ export function MaSummaryTable({
     , smaResults[0]);
   }, [smaResults]);
 
-  const bestEma = useMemo(() => {
-    return emaResults.reduce((best, current) =>
-      current.totalReturn > best.totalReturn ? current : best
-    , emaResults[0]);
-  }, [emaResults]);
-
   const rows: TableRow[] = useMemo(() => {
-    const emaMap = new Map(emaResults.map(r => [makeKey(r.period, r.leverage), r]));
-
     return smaResults.map((sma) => {
       const key = makeKey(sma.period, sma.leverage);
-      const ema = emaMap.get(key);
       return {
         period: sma.period,
         leverage: sma.leverage,
         smaReturn: sma.totalReturn,
-        emaReturn: ema?.totalReturn ?? 0,
         hodlReturn,
         smaLiquidated: sma.liquidated,
-        emaLiquidated: ema?.liquidated ?? false,
         isBestSma: sma.period === bestSma.period &&
           sma.leverage.long === bestSma.leverage.long &&
           sma.leverage.short === bestSma.leverage.short,
-        isBestEma: ema ? (
-          ema.period === bestEma.period &&
-          ema.leverage.long === bestEma.leverage.long &&
-          ema.leverage.short === bestEma.leverage.short
-        ) : false,
         key,
       };
     });
-  }, [smaResults, emaResults, hodlReturn, bestSma, bestEma]);
+  }, [smaResults, hodlReturn, bestSma]);
 
   const sortedRows = useMemo(() => {
     const sorted = [...rows];
@@ -121,10 +100,6 @@ export function MaSummaryTable({
         case "sma":
           aVal = a.smaReturn;
           bVal = b.smaReturn;
-          break;
-        case "ema":
-          aVal = a.emaReturn;
-          bVal = b.emaReturn;
           break;
         case "hodl":
           aVal = a.hodlReturn;
@@ -166,7 +141,7 @@ export function MaSummaryTable({
   return (
     <div className="bg-zinc-900/50 rounded-lg border border-zinc-800/50">
       <div className="px-4 py-3 border-b border-zinc-800/50 flex items-center justify-between">
-        <h3 className="text-sm font-medium text-zinc-300">MA Performance Summary</h3>
+        <h3 className="text-sm font-medium text-zinc-300">SMA Performance Summary</h3>
         <span className="text-xs text-zinc-500">{rows.length} configurations</span>
       </div>
       <div className="overflow-auto max-h-[500px]">
@@ -215,15 +190,6 @@ export function MaSummaryTable({
               </th>
               <th className="px-4 py-3 text-right font-medium">
                 <button
-                  onClick={() => handleSort("ema")}
-                  className="flex items-center gap-1.5 ml-auto hover:text-zinc-300 transition-colors"
-                >
-                  EMA %
-                  {getSortIcon("ema")}
-                </button>
-              </th>
-              <th className="px-4 py-3 text-right font-medium">
-                <button
                   onClick={() => handleSort("hodl")}
                   className="flex items-center gap-1.5 ml-auto hover:text-zinc-300 transition-colors"
                 >
@@ -247,13 +213,8 @@ export function MaSummaryTable({
                 <td className="px-4 py-2.5 text-zinc-300 font-mono">
                   {row.period}
                   {row.isBestSma && (
-                    <span className="ml-2 px-1.5 py-0.5 text-[10px] bg-blue-500/20 text-blue-400 rounded">
-                      Best SMA
-                    </span>
-                  )}
-                  {row.isBestEma && (
-                    <span className="ml-2 px-1.5 py-0.5 text-[10px] bg-purple-500/20 text-purple-400 rounded">
-                      Best EMA
+                    <span className="ml-2 px-1.5 py-0.5 text-[10px] bg-amber-500/20 text-amber-400 rounded">
+                      Best
                     </span>
                   )}
                 </td>
@@ -269,9 +230,6 @@ export function MaSummaryTable({
                 )}
                 <td className={`px-4 py-2.5 text-right font-mono ${getReturnColor(row.smaReturn, row.smaLiquidated)}`}>
                   {row.smaLiquidated ? "LIQ" : formatPercent(row.smaReturn)}
-                </td>
-                <td className={`px-4 py-2.5 text-right font-mono ${getReturnColor(row.emaReturn, row.emaLiquidated)}`}>
-                  {row.emaLiquidated ? "LIQ" : formatPercent(row.emaReturn)}
                 </td>
                 <td className={`px-4 py-2.5 text-right font-mono ${getReturnColor(row.hodlReturn, false)}`}>
                   {formatPercent(row.hodlReturn)}

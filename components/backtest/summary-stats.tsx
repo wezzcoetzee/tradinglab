@@ -6,7 +6,6 @@ import { formatPercent, formatCurrency, formatDate } from "@/lib/formatting";
 
 interface SummaryStatsProps {
   bestSma: MaResult;
-  bestEma: MaResult;
   hodl: {
     totalReturn: number;
     finalValue: number;
@@ -51,14 +50,10 @@ function StatCard({
 
 export function SummaryStats({
   bestSma,
-  bestEma,
   hodl,
   initialCapital,
   dateRange,
 }: SummaryStatsProps) {
-  const bestOverall = bestSma.totalReturn > bestEma.totalReturn ? bestSma : bestEma;
-  const bestType = bestSma.totalReturn > bestEma.totalReturn ? "SMA" : "EMA";
-
   return (
     <Card>
       <CardHeader>
@@ -78,32 +73,21 @@ export function SummaryStats({
             positive={bestSma.totalReturn > 0}
           />
           <StatCard
-            label="Best EMA Period"
-            value={`${bestEma.period}D`}
-            subValue={`${bestEma.trades} trades · ${bestEma.leverage.long}x/${bestEma.leverage.short}x`}
-          />
-          <StatCard
-            label="Best EMA Return"
-            value={formatPercent(bestEma.totalReturn)}
-            subValue={bestEma.liquidated ? "LIQUIDATED" : formatCurrency(bestEma.finalValue)}
-            positive={bestEma.totalReturn > 0}
-          />
-        </div>
-        <div className="mt-6 pt-4 border-t grid grid-cols-2 md:grid-cols-4 gap-6">
-          <StatCard
             label="HODL Return"
             value={formatPercent(hodl.totalReturn)}
             subValue={formatCurrency(hodl.finalValue)}
             positive={hodl.totalReturn > 0}
           />
           <StatCard
-            label={`Best ${bestType} vs HODL`}
-            value={`${bestOverall.totalReturn > hodl.totalReturn ? "+" : ""}${formatPercent(
-              bestOverall.totalReturn - hodl.totalReturn
+            label="SMA vs HODL"
+            value={`${bestSma.totalReturn > hodl.totalReturn ? "+" : ""}${formatPercent(
+              bestSma.totalReturn - hodl.totalReturn
             )}`}
-            subValue={bestOverall.totalReturn > hodl.totalReturn ? `${bestType} wins` : "HODL wins"}
-            positive={bestOverall.totalReturn > hodl.totalReturn}
+            subValue={bestSma.totalReturn > hodl.totalReturn ? "SMA wins" : "HODL wins"}
+            positive={bestSma.totalReturn > hodl.totalReturn}
           />
+        </div>
+        <div className="mt-6 pt-4 border-t grid grid-cols-2 md:grid-cols-4 gap-6">
           <StatCard
             label="Initial Capital"
             value={formatCurrency(initialCapital)}

@@ -24,14 +24,12 @@ interface PortfolioChartProps {
 const COLORS = {
   hodl: "#a1a1aa",
   sma: "#f59e0b",
-  ema: "#3b82f6",
 };
 
 export function PortfolioChart({ dailyData, smaPeriod }: PortfolioChartProps) {
   const [useLogScale, setUseLogScale] = useState(true);
   const [showHodl, setShowHodl] = useState(true);
   const [showSma, setShowSma] = useState(true);
-  const [showEma, setShowEma] = useState(true);
 
   const chartData = useMemo(() => {
     const maxPoints = 500;
@@ -42,14 +40,13 @@ export function PortfolioChart({ dailyData, smaPeriod }: PortfolioChartProps) {
         date: formatDate(d.date, false),
         hodlValue: d.hodlValue,
         smaBalance: d.smaBalance,
-        emaBalance: d.emaBalance,
       }));
   }, [dailyData]);
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Portfolio Value ({smaPeriod}D MA)</CardTitle>
+        <CardTitle>Portfolio Value ({smaPeriod}D SMA)</CardTitle>
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
@@ -72,17 +69,6 @@ export function PortfolioChart({ dailyData, smaPeriod }: PortfolioChartProps) {
               />
               <Label htmlFor="sma-toggle" className="text-sm text-amber-500">
                 SMA
-              </Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Switch
-                id="ema-toggle"
-                size="sm"
-                checked={showEma}
-                onCheckedChange={setShowEma}
-              />
-              <Label htmlFor="ema-toggle" className="text-sm text-blue-500">
-                EMA
               </Label>
             </div>
           </div>
@@ -128,20 +114,12 @@ export function PortfolioChart({ dailyData, smaPeriod }: PortfolioChartProps) {
                 labelStyle={{ color: "#a1a1aa" }}
                 formatter={(value, name) => [
                   typeof value === "number" ? formatCurrency(value) : "-",
-                  name === "hodlValue"
-                    ? "HODL"
-                    : name === "smaBalance"
-                    ? "SMA"
-                    : "EMA",
+                  name === "hodlValue" ? "HODL" : "SMA",
                 ]}
               />
               <Legend
                 formatter={(value) =>
-                  value === "hodlValue"
-                    ? "HODL"
-                    : value === "smaBalance"
-                    ? "SMA"
-                    : "EMA"
+                  value === "hodlValue" ? "HODL" : "SMA"
                 }
               />
               {showHodl && (
@@ -162,16 +140,6 @@ export function PortfolioChart({ dailyData, smaPeriod }: PortfolioChartProps) {
                   strokeWidth={1.5}
                   dot={false}
                   name="smaBalance"
-                />
-              )}
-              {showEma && (
-                <Line
-                  type="monotone"
-                  dataKey="emaBalance"
-                  stroke={COLORS.ema}
-                  strokeWidth={1.5}
-                  dot={false}
-                  name="emaBalance"
                 />
               )}
             </LineChart>

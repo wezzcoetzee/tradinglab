@@ -38,9 +38,7 @@ export interface BacktestResult {
     finalValue: number;
   };
   smaResults: MaResult[];
-  emaResults: MaResult[];
   bestSma: MaResult;
-  bestEma: MaResult;
   dateRange: {
     start: Date;
     end: Date;
@@ -53,12 +51,9 @@ export interface DailyData {
   date: Date;
   closePrice: number;
   sma: number | null;
-  ema: number | null;
   smaSignal: Signal;
-  emaSignal: Signal;
   hodlValue: number;
   smaBalance: number;
-  emaBalance: number;
 }
 
 export interface DetailedBacktestResult extends BacktestResult {

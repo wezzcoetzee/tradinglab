@@ -185,7 +185,6 @@ export function calculateHodl(
 export function generateDailyData(
   pricePoints: PricePoint[],
   smaValues: (number | null)[],
-  emaValues: (number | null)[],
   params: SimulatorParams
 ): DailyData[] {
   const { initialCapital } = params;
@@ -193,11 +192,6 @@ export function generateDailyData(
   const smaSimResult = simulateMaStrategy(pricePoints, smaValues, params);
   const smaBalances = smaSimResult.balances;
 
-  // Simulate EMA strategy
-  const emaSimResult = simulateMaStrategy(pricePoints, emaValues, params);
-  const emaBalances = emaSimResult.balances;
-
-  // Calculate HODL
   const hodlResult = calculateHodl(pricePoints, initialCapital);
   const hodlBalances = hodlResult.balances;
 
@@ -206,22 +200,17 @@ export function generateDailyData(
   for (let i = 0; i < pricePoints.length; i++) {
     const { date, closePrice } = pricePoints[i];
     const sma = smaValues[i];
-    const ema = emaValues[i];
 
     const smaSignal: Signal = sma !== null && closePrice > sma ? 1 : 0;
-    const emaSignal: Signal = ema !== null && closePrice > ema ? 1 : 0;
 
     dailyData.push({
       day: i + 1,
       date,
       closePrice,
       sma,
-      ema,
       smaSignal,
-      emaSignal,
       hodlValue: hodlBalances[i],
       smaBalance: smaBalances[i],
-      emaBalance: emaBalances[i],
     });
   }
 
