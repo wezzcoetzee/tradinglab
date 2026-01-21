@@ -58,3 +58,8 @@ export interface DailyData {
 export interface DetailedBacktestResult extends BacktestResult {
   dailyData?: DailyData[];
 }
+
+export interface SelectedConfig {
+  period: number;
+  leverage: LeverageConfig;
+}

@@ -2,12 +2,8 @@
 
 import { useState, useMemo } from "react";
 import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
-import type { MaResult, LeverageConfig } from "@/lib/backtest";
-
-interface SelectedConfig {
-  period: number;
-  leverage: LeverageConfig;
-}
+import type { MaResult, LeverageConfig, SelectedConfig } from "@/lib/backtest";
+import { formatPercent } from "@/lib/formatting";
 
 interface MaSummaryTableProps {
   smaResults: MaResult[];
@@ -28,10 +24,6 @@ interface TableRow {
   smaLiquidated: boolean;
   isBestSma: boolean;
   key: string;
-}
-
-function formatPercent(value: number): string {
-  return `${(value * 100).toFixed(1)}%`;
 }
 
 function getReturnColor(value: number, liquidated: boolean): string {
@@ -229,10 +221,10 @@ export function MaSummaryTable({
                   </>
                 )}
                 <td className={`px-4 py-2.5 text-right font-mono ${getReturnColor(row.smaReturn, row.smaLiquidated)}`}>
-                  {row.smaLiquidated ? "LIQ" : formatPercent(row.smaReturn)}
+                  {row.smaLiquidated ? "LIQ" : formatPercent(row.smaReturn, 1)}
                 </td>
                 <td className={`px-4 py-2.5 text-right font-mono ${getReturnColor(row.hodlReturn, false)}`}>
-                  {formatPercent(row.hodlReturn)}
+                  {formatPercent(row.hodlReturn, 1)}
                 </td>
               </tr>
             ))}

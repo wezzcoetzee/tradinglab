@@ -16,16 +16,12 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import type { MaResult } from "@/lib/backtest";
 import { formatPercent } from "@/lib/formatting";
+import { CHART_COLORS } from "@/lib/chart-constants";
 
 interface MaPerformanceChartProps {
   smaResults: MaResult[];
   hodlReturn: number;
 }
-
-const COLORS = {
-  hodl: "#a1a1aa",
-  sma: "#f59e0b",
-};
 
 export function MaPerformanceChart({
   smaResults,
@@ -137,12 +133,12 @@ export function MaPerformanceChart({
               {showHodl && (
                 <ReferenceLine
                   y={hodlReturn}
-                  stroke={COLORS.hodl}
+                  stroke={CHART_COLORS.hodl}
                   strokeDasharray="5 5"
                   strokeWidth={1.5}
                   label={{
                     value: `HODL: ${formatPercent(hodlReturn)}`,
-                    fill: COLORS.hodl,
+                    fill: CHART_COLORS.hodl,
                     fontSize: 11,
                     position: "right",
                   }}
@@ -152,7 +148,7 @@ export function MaPerformanceChart({
                 <Line
                   type="monotone"
                   dataKey="smaReturn"
-                  stroke={COLORS.sma}
+                  stroke={CHART_COLORS.sma}
                   strokeWidth={1.5}
                   dot={false}
                   name="smaReturn"

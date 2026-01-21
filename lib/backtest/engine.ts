@@ -4,18 +4,13 @@ import type {
   MaResult,
   DailyData,
   DetailedBacktestResult,
-  LeverageConfig,
+  SelectedConfig,
 } from "./types";
 import { calculateAllSmas } from "./sma";
 import { simulateMaStrategy, calculateHodl, generateDailyData } from "./simulator";
 
 const WARMUP_DAYS = 200;
 const LEVERAGE_VALUES = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3];
-
-export interface SelectedConfig {
-  period: number;
-  leverage: LeverageConfig;
-}
 
 export function runBacktest(
   pricePoints: PricePoint[],
@@ -67,8 +62,7 @@ export function runBacktest(
         };
 
         const smaSimResult = simulateMaStrategy(tradingPricePoints, tradingSmaValues, simulatorParams);
-        smaSimResult.result.period = period;
-        smaResults.push(smaSimResult.result);
+        smaResults.push({ ...smaSimResult.result, period });
       }
     }
   }

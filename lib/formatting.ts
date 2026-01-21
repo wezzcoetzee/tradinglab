@@ -19,3 +19,12 @@ export function formatDate(date: Date | string, includeDay = true): string {
     ...(includeDay && { day: "numeric" }),
   });
 }
+
+export function formatPrice(value: number): string {
+  return value.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}

@@ -17,6 +17,20 @@ function calculateTradeFee(
   return value * (exchangeFeePercent / 100);
 }
 
+function calculateLeveragedReturn(
+  entryPrice: number,
+  currentPrice: number,
+  leverageMultiplier: number,
+  isShort: boolean
+): number {
+  const priceChange = (currentPrice - entryPrice) / entryPrice;
+  return isShort ? -priceChange * leverageMultiplier : priceChange * leverageMultiplier;
+}
+
+function calculateSignal(closePrice: number, ma: number | null): Signal {
+  return ma !== null && closePrice > ma ? 1 : 0;
+}
+
 function determinePosition(
   signal: Signal,
   buyOnLong: boolean,
@@ -56,13 +70,12 @@ export function simulateMaStrategy(
       continue;
     }
 
-    const signal: Signal = ma !== null && closePrice > ma ? 1 : 0;
+    const signal = calculateSignal(closePrice, ma);
     const targetPosition = determinePosition(signal, buyOnLong, shortOnShort);
 
     if (targetPosition !== position) {
       if (position === "LONG") {
-        const priceChange = (closePrice - entryPrice) / entryPrice;
-        const leveragedReturn = priceChange * leverage.long;
+        const leveragedReturn = calculateLeveragedReturn(entryPrice, closePrice, leverage.long, false);
         const exitValue = entryCapital * (1 + leveragedReturn);
         const fee = calculateTradeFee(Math.max(0, exitValue), exchangeFeePercent);
         cash = Math.max(0, exitValue - fee);
@@ -70,8 +83,7 @@ export function simulateMaStrategy(
         entryCapital = 0;
         trades++;
       } else if (position === "SHORT") {
-        const priceChange = (closePrice - entryPrice) / entryPrice;
-        const leveragedReturn = -priceChange * leverage.short;
+        const leveragedReturn = calculateLeveragedReturn(entryPrice, closePrice, leverage.short, true);
         const exitValue = entryCapital * (1 + leveragedReturn);
         const fee = calculateTradeFee(Math.max(0, exitValue), exchangeFeePercent);
         cash = Math.max(0, exitValue - fee);
@@ -99,8 +111,7 @@ export function simulateMaStrategy(
 
     let portfolioValue: number;
     if (position === "LONG") {
-      const priceChange = (closePrice - entryPrice) / entryPrice;
-      const leveragedReturn = priceChange * leverage.long;
+      const leveragedReturn = calculateLeveragedReturn(entryPrice, closePrice, leverage.long, false);
       portfolioValue = entryCapital * (1 + leveragedReturn);
 
       if (leveragedReturn <= -1) {
@@ -111,8 +122,7 @@ export function simulateMaStrategy(
         position = "CASH";
       }
     } else if (position === "SHORT") {
-      const priceChange = (closePrice - entryPrice) / entryPrice;
-      const leveragedReturn = -priceChange * leverage.short;
+      const leveragedReturn = calculateLeveragedReturn(entryPrice, closePrice, leverage.short, true);
       portfolioValue = entryCapital * (1 + leveragedReturn);
 
       if (leveragedReturn <= -1) {
@@ -135,12 +145,10 @@ export function simulateMaStrategy(
   if (liquidated) {
     finalValue = 0;
   } else if (position === "LONG") {
-    const priceChange = (lastPrice - entryPrice) / entryPrice;
-    const leveragedReturn = priceChange * leverage.long;
+    const leveragedReturn = calculateLeveragedReturn(entryPrice, lastPrice, leverage.long, false);
     finalValue = entryCapital * (1 + leveragedReturn);
   } else if (position === "SHORT") {
-    const priceChange = (lastPrice - entryPrice) / entryPrice;
-    const leveragedReturn = -priceChange * leverage.short;
+    const leveragedReturn = calculateLeveragedReturn(entryPrice, lastPrice, leverage.short, true);
     finalValue = entryCapital * (1 + leveragedReturn);
   } else {
     finalValue = cash;
@@ -199,7 +207,7 @@ export function generateDailyData(
     const { date, closePrice } = pricePoints[i];
     const sma = smaValues[i];
 
-    const smaSignal: Signal = sma !== null && closePrice > sma ? 1 : 0;
+    const smaSignal = calculateSignal(closePrice, sma);
 
     dailyData.push({
       day: i + 1,

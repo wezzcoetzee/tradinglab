@@ -3,6 +3,7 @@
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import type { BacktestFormData } from "@/components/backtest";
+import { DEFAULT_BACKTEST_VALUES } from "@/lib/backtest/defaults";
 
 const PARAM_KEYS = {
   initialCapital: "capital",
@@ -13,16 +14,6 @@ const PARAM_KEYS = {
   shortOnShort: "short",
   optimizeLeverage: "optlev",
 } as const;
-
-const DEFAULT_VALUES: BacktestFormData = {
-  initialCapital: 1000,
-  exchangeFeePercent: 0,
-  smaMin: 2,
-  smaMax: 200,
-  buyOnLong: true,
-  shortOnShort: true,
-  optimizeLeverage: true,
-};
 
 export function useUrlParams() {
   const searchParams = useSearchParams();
@@ -39,13 +30,13 @@ export function useUrlParams() {
     const optlev = searchParams.get(PARAM_KEYS.optimizeLeverage);
 
     return {
-      initialCapital: capital ? parseFloat(capital) : DEFAULT_VALUES.initialCapital,
-      exchangeFeePercent: fee ? parseFloat(fee) : DEFAULT_VALUES.exchangeFeePercent,
-      smaMin: min ? parseInt(min) : DEFAULT_VALUES.smaMin,
-      smaMax: max ? parseInt(max) : DEFAULT_VALUES.smaMax,
-      buyOnLong: long !== null ? long === "1" : DEFAULT_VALUES.buyOnLong,
-      shortOnShort: short !== null ? short === "1" : DEFAULT_VALUES.shortOnShort,
-      optimizeLeverage: optlev !== null ? optlev === "1" : DEFAULT_VALUES.optimizeLeverage,
+      initialCapital: capital ? parseFloat(capital) : DEFAULT_BACKTEST_VALUES.initialCapital,
+      exchangeFeePercent: fee ? parseFloat(fee) : DEFAULT_BACKTEST_VALUES.exchangeFeePercent,
+      smaMin: min ? parseInt(min) : DEFAULT_BACKTEST_VALUES.smaMin,
+      smaMax: max ? parseInt(max) : DEFAULT_BACKTEST_VALUES.smaMax,
+      buyOnLong: long !== null ? long === "1" : DEFAULT_BACKTEST_VALUES.buyOnLong,
+      shortOnShort: short !== null ? short === "1" : DEFAULT_BACKTEST_VALUES.shortOnShort,
+      optimizeLeverage: optlev !== null ? optlev === "1" : DEFAULT_BACKTEST_VALUES.optimizeLeverage,
     };
   }, [searchParams]);
 
@@ -53,25 +44,25 @@ export function useUrlParams() {
     (data: BacktestFormData) => {
       const params = new URLSearchParams();
 
-      if (data.initialCapital !== DEFAULT_VALUES.initialCapital) {
+      if (data.initialCapital !== DEFAULT_BACKTEST_VALUES.initialCapital) {
         params.set(PARAM_KEYS.initialCapital, data.initialCapital.toString());
       }
-      if (data.exchangeFeePercent !== DEFAULT_VALUES.exchangeFeePercent) {
+      if (data.exchangeFeePercent !== DEFAULT_BACKTEST_VALUES.exchangeFeePercent) {
         params.set(PARAM_KEYS.exchangeFeePercent, data.exchangeFeePercent.toString());
       }
-      if (data.smaMin !== DEFAULT_VALUES.smaMin) {
+      if (data.smaMin !== DEFAULT_BACKTEST_VALUES.smaMin) {
         params.set(PARAM_KEYS.smaMin, data.smaMin.toString());
       }
-      if (data.smaMax !== DEFAULT_VALUES.smaMax) {
+      if (data.smaMax !== DEFAULT_BACKTEST_VALUES.smaMax) {
         params.set(PARAM_KEYS.smaMax, data.smaMax.toString());
       }
-      if (data.buyOnLong !== DEFAULT_VALUES.buyOnLong) {
+      if (data.buyOnLong !== DEFAULT_BACKTEST_VALUES.buyOnLong) {
         params.set(PARAM_KEYS.buyOnLong, data.buyOnLong ? "1" : "0");
       }
-      if (data.shortOnShort !== DEFAULT_VALUES.shortOnShort) {
+      if (data.shortOnShort !== DEFAULT_BACKTEST_VALUES.shortOnShort) {
         params.set(PARAM_KEYS.shortOnShort, data.shortOnShort ? "1" : "0");
       }
-      if (data.optimizeLeverage !== DEFAULT_VALUES.optimizeLeverage) {
+      if (data.optimizeLeverage !== DEFAULT_BACKTEST_VALUES.optimizeLeverage) {
         params.set(PARAM_KEYS.optimizeLeverage, data.optimizeLeverage ? "1" : "0");
       }
 

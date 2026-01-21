@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { runBacktest, type BacktestParams, type PricePoint, type SelectedConfig } from "@/lib/backtest";
+import { DEFAULT_BACKTEST_VALUES } from "@/lib/backtest/defaults";
 
 interface BacktestRequestBody {
   initialCapital: number;
@@ -18,13 +19,13 @@ export async function POST(request: Request): Promise<NextResponse> {
     const body = (await request.json()) as BacktestRequestBody;
 
     const {
-      initialCapital = 1000,
-      exchangeFeePercent = 0,
-      smaMin = 2,
-      smaMax = 200,
-      buyOnLong = true,
-      shortOnShort = false,
-      optimizeLeverage = false,
+      initialCapital = DEFAULT_BACKTEST_VALUES.initialCapital,
+      exchangeFeePercent = DEFAULT_BACKTEST_VALUES.exchangeFeePercent,
+      smaMin = DEFAULT_BACKTEST_VALUES.smaMin,
+      smaMax = DEFAULT_BACKTEST_VALUES.smaMax,
+      buyOnLong = DEFAULT_BACKTEST_VALUES.buyOnLong,
+      shortOnShort = DEFAULT_BACKTEST_VALUES.shortOnShort,
+      optimizeLeverage = DEFAULT_BACKTEST_VALUES.optimizeLeverage,
       selectedConfig,
     } = body;
 

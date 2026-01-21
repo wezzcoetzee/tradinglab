@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { DEFAULT_BACKTEST_VALUES } from "@/lib/backtest/defaults";
 
 export interface BacktestFormData {
   initialCapital: number;
@@ -27,13 +28,13 @@ export function BacktestForm({
   actions,
 }: BacktestFormProps) {
   const [formData, setFormData] = useState<BacktestFormData>({
-    initialCapital: defaultValues?.initialCapital ?? 1000,
-    exchangeFeePercent: defaultValues?.exchangeFeePercent ?? 0,
-    smaMin: defaultValues?.smaMin ?? 2,
-    smaMax: defaultValues?.smaMax ?? 200,
-    buyOnLong: defaultValues?.buyOnLong ?? true,
-    shortOnShort: defaultValues?.shortOnShort ?? true,
-    optimizeLeverage: defaultValues?.optimizeLeverage ?? true,
+    initialCapital: defaultValues?.initialCapital ?? DEFAULT_BACKTEST_VALUES.initialCapital,
+    exchangeFeePercent: defaultValues?.exchangeFeePercent ?? DEFAULT_BACKTEST_VALUES.exchangeFeePercent,
+    smaMin: defaultValues?.smaMin ?? DEFAULT_BACKTEST_VALUES.smaMin,
+    smaMax: defaultValues?.smaMax ?? DEFAULT_BACKTEST_VALUES.smaMax,
+    buyOnLong: defaultValues?.buyOnLong ?? DEFAULT_BACKTEST_VALUES.buyOnLong,
+    shortOnShort: defaultValues?.shortOnShort ?? DEFAULT_BACKTEST_VALUES.shortOnShort,
+    optimizeLeverage: defaultValues?.optimizeLeverage ?? DEFAULT_BACKTEST_VALUES.optimizeLeverage,
   });
 
   const handleSubmit = (e: React.FormEvent) => {

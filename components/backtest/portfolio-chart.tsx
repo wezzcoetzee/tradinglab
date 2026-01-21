@@ -15,16 +15,12 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import type { DailyData } from "@/lib/backtest";
 import { formatCurrency, formatDate } from "@/lib/formatting";
+import { CHART_COLORS } from "@/lib/chart-constants";
 
 interface PortfolioChartProps {
   dailyData: DailyData[];
   smaPeriod: number;
 }
-
-const COLORS = {
-  hodl: "#a1a1aa",
-  sma: "#f59e0b",
-};
 
 export function PortfolioChart({ dailyData, smaPeriod }: PortfolioChartProps) {
   const [useLogScale, setUseLogScale] = useState(true);
@@ -126,7 +122,7 @@ export function PortfolioChart({ dailyData, smaPeriod }: PortfolioChartProps) {
                 <Line
                   type="monotone"
                   dataKey="hodlValue"
-                  stroke={COLORS.hodl}
+                  stroke={CHART_COLORS.hodl}
                   strokeWidth={1.5}
                   dot={false}
                   name="hodlValue"
@@ -136,7 +132,7 @@ export function PortfolioChart({ dailyData, smaPeriod }: PortfolioChartProps) {
                 <Line
                   type="monotone"
                   dataKey="smaBalance"
-                  stroke={COLORS.sma}
+                  stroke={CHART_COLORS.sma}
                   strokeWidth={1.5}
                   dot={false}
                   name="smaBalance"

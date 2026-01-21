@@ -3,27 +3,11 @@
 import { useRef } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import type { DailyData } from "@/lib/backtest";
+import { formatDate, formatPrice } from "@/lib/formatting";
 
 interface DataTableVirtualizedProps {
   data: DailyData[];
   smaPeriod: number;
-}
-
-function formatDate(date: Date): string {
-  return new Date(date).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function formatPrice(value: number): string {
-  return value.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
 }
 
 function formatMa(value: number | null): string {
