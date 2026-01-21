@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
+export const revalidate = 86400;
+
 export async function GET(): Promise<NextResponse> {
   try {
     const [first, last, count] = await Promise.all([
@@ -16,13 +18,21 @@ export async function GET(): Promise<NextResponse> {
       );
     }
 
-    return NextResponse.json({
-      startDate: first.date,
-      endDate: last.date,
-      totalRecords: count,
-      startPrice: Number(first.closePrice),
-      endPrice: Number(last.closePrice),
-    });
+    return NextResponse.json(
+      {
+        startDate: first.date,
+        endDate: last.date,
+        totalRecords: count,
+        startPrice: Number(first.closePrice),
+        endPrice: Number(last.closePrice),
+      },
+      {
+        headers: {
+          "Cache-Control":
+            "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800",
+        },
+      }
+    );
   } catch (error) {
     console.error("Price data error:", error);
     return NextResponse.json(

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { runBacktest, type BacktestParams, type PricePoint, type SelectedConfig } from "@/lib/backtest";
 import { DEFAULT_BACKTEST_VALUES } from "@/lib/backtest/defaults";
+import { backtestRateLimiter } from "@/lib/rate-limit";
 
 interface BacktestRequestBody {
   initialCapital: number;
@@ -15,6 +16,27 @@ interface BacktestRequestBody {
 }
 
 export async function POST(request: Request): Promise<NextResponse> {
+  const clientIp =
+    request.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
+    request.headers.get("x-real-ip") ??
+    "anonymous";
+
+  const rateLimit = backtestRateLimiter(clientIp);
+  if (!rateLimit.allowed) {
+    const retryAfter = Math.ceil((rateLimit.resetAt - Date.now()) / 1000);
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(retryAfter),
+          "X-RateLimit-Remaining": "0",
+          "X-RateLimit-Reset": String(rateLimit.resetAt),
+        },
+      }
+    );
+  }
+
   try {
     const body = (await request.json()) as BacktestRequestBody;
 
