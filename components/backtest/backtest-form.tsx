@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 
 export interface BacktestFormData {
   initialCapital: number;
@@ -32,8 +32,8 @@ export function BacktestForm({
     smaMin: defaultValues?.smaMin ?? 2,
     smaMax: defaultValues?.smaMax ?? 200,
     buyOnLong: defaultValues?.buyOnLong ?? true,
-    shortOnShort: defaultValues?.shortOnShort ?? false,
-    optimizeLeverage: defaultValues?.optimizeLeverage ?? false,
+    shortOnShort: defaultValues?.shortOnShort ?? true,
+    optimizeLeverage: defaultValues?.optimizeLeverage ?? true,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -147,25 +147,21 @@ export function BacktestForm({
             </Label>
             <div className="flex items-center gap-6 h-10">
               <label className="flex items-center gap-2 cursor-pointer">
-                <Checkbox
+                <Switch
                   id="buyOnLong"
                   checked={formData.buyOnLong}
-                  onCheckedChange={(checked) =>
-                    updateField("buyOnLong", checked === true)
-                  }
-                  className="border-zinc-700 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+                  onCheckedChange={(checked) => updateField("buyOnLong", checked)}
+                  className="data-[state=checked]:bg-emerald-600"
                 />
                 <span className="text-sm text-zinc-300">Long</span>
               </label>
 
               <label className="flex items-center gap-2 cursor-pointer">
-                <Checkbox
+                <Switch
                   id="shortOnShort"
                   checked={formData.shortOnShort}
-                  onCheckedChange={(checked) =>
-                    updateField("shortOnShort", checked === true)
-                  }
-                  className="border-zinc-700 data-[state=checked]:bg-rose-600 data-[state=checked]:border-rose-600"
+                  onCheckedChange={(checked) => updateField("shortOnShort", checked)}
+                  className="data-[state=checked]:bg-rose-600"
                 />
                 <span className="text-sm text-zinc-300">Short</span>
               </label>
@@ -180,13 +176,11 @@ export function BacktestForm({
             </Label>
             <div className="flex items-center h-10">
               <label className="flex items-center gap-2 cursor-pointer">
-                <Checkbox
+                <Switch
                   id="optimizeLeverage"
                   checked={formData.optimizeLeverage}
-                  onCheckedChange={(checked) =>
-                    updateField("optimizeLeverage", checked === true)
-                  }
-                  className="border-zinc-700 data-[state=checked]:bg-amber-600 data-[state=checked]:border-amber-600"
+                  onCheckedChange={(checked) => updateField("optimizeLeverage", checked)}
+                  className="data-[state=checked]:bg-amber-600"
                 />
                 <span className="text-sm text-zinc-300">Leverage</span>
               </label>

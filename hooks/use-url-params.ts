@@ -22,8 +22,8 @@ const DEFAULT_VALUES: BacktestFormData = {
   smaMin: 2,
   smaMax: 200,
   buyOnLong: true,
-  shortOnShort: false,
-  optimizeLeverage: false,
+  shortOnShort: true,
+  optimizeLeverage: true,
 };
 
 export function useUrlParams() {
