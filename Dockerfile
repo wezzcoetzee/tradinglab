@@ -16,9 +16,6 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Copy production environment file for build-time env vars
-RUN cp .env.production .env
-
 # Generate Prisma client and build Next.js
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN bun run build
@@ -44,9 +41,6 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # Copy Prisma schema and generated client
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/generated ./generated
-
-# Copy production environment file
-COPY --from=builder --chown=nextjs:nodejs /app/.env.production ./.env
 
 USER nextjs
 
