@@ -60,6 +60,7 @@ function SortableHeader({ field, label, sortConfig, onSort, className }: Sortabl
     : ChevronsUpDown;
 
   const sortDirection = isSorted ? (sortConfig.direction === 'asc' ? 'descending' : 'ascending') : 'descending';
+  const isRightAligned = className?.includes('text-right');
 
   return (
     <TableHead
@@ -67,7 +68,7 @@ function SortableHeader({ field, label, sortConfig, onSort, className }: Sortabl
       onClick={() => onSort(field)}
       aria-label={`Sort by ${label} ${sortDirection}`}
     >
-      <div className="flex items-center gap-1">
+      <div className={`flex items-center gap-1 ${isRightAligned ? 'justify-end' : ''}`}>
         {label}
         <Icon className="h-4 w-4" aria-hidden="true" />
       </div>
