@@ -6,11 +6,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { BaselineCard } from '@/components/baseline-card';
 import { MetricsCards, type Metrics } from '@/components/metrics-cards';
+import { OptimalStrategyCard } from '@/components/optimal-strategy-card';
 import {
   formatCurrency,
   formatPercent,
   getReturnColorClass,
   getVsHoldColorClass,
+  formatAtrConfig,
+  calculateVsHold,
 } from '@/lib/format';
 import type { BacktestResult, BuyAndHoldBaseline } from '@/lib/backtest/types';
 
@@ -19,14 +22,14 @@ interface ResultsTableProps {
   baseline: BuyAndHoldBaseline | null;
 }
 
-function formatAtrConfig(result: BacktestResult): string {
-  const { atr } = result.config;
-  if (!atr) return '-';
-  return `${atr.period}/${atr.multiplier}/${atr.closePercent}%`;
+interface VsHoldCellProps {
+  result: BacktestResult;
+  baseline: BuyAndHoldBaseline;
 }
 
-function calculateVsHold(finalBalance: number, baselineFinalValue: number): number {
-  return ((finalBalance - baselineFinalValue) / baselineFinalValue) * 100;
+function VsHoldCell({ result, baseline }: VsHoldCellProps) {
+  const vsHold = calculateVsHold(result.finalBalance, baseline.finalValue);
+  return <span className={getVsHoldColorClass(vsHold)}>{formatPercent(vsHold)}</span>;
 }
 
 export function ResultsTable({ results, baseline }: ResultsTableProps) {
@@ -64,6 +67,10 @@ export function ResultsTable({ results, baseline }: ResultsTableProps) {
 
         <MetricsCards metrics={metrics} />
 
+        {baseline && sortedResults.length > 0 && !sortedResults[0].isLiquidated && (
+          <OptimalStrategyCard result={sortedResults[0]} baseline={baseline} />
+        )}
+
         <Table>
           <TableHeader>
             <TableRow>
@@ -88,7 +95,7 @@ export function ResultsTable({ results, baseline }: ResultsTableProps) {
                 <TableCell>{result.config.smaPeriod}</TableCell>
                 <TableCell>{result.config.longLeverage}x</TableCell>
                 <TableCell>{result.config.shortLeverage}x</TableCell>
-                <TableCell>{formatAtrConfig(result)}</TableCell>
+                <TableCell>{formatAtrConfig(result.config.atr)}</TableCell>
                 <TableCell className="text-right font-mono">
                   {formatCurrency(result.finalBalance)}
                 </TableCell>
@@ -97,10 +104,7 @@ export function ResultsTable({ results, baseline }: ResultsTableProps) {
                 </TableCell>
                 <TableCell className="text-right font-mono">
                   {baseline ? (
-                    (() => {
-                      const vsHold = calculateVsHold(result.finalBalance, baseline.finalValue);
-                      return <span className={getVsHoldColorClass(vsHold)}>{formatPercent(vsHold)}</span>;
-                    })()
+                    <VsHoldCell result={result} baseline={baseline} />
                   ) : '-'}
                 </TableCell>
                 <TableCell className="text-right">{result.totalTrades}</TableCell>

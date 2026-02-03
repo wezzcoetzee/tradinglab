@@ -35,3 +35,12 @@ export function getVsHoldColorClass(vsHold: number): string {
   if (vsHold < -5) return 'text-destructive';
   return 'text-yellow-600';
 }
+
+export function formatAtrConfig(atr: { period: number; multiplier: number; closePercent: number } | undefined, emptyValue = '-'): string {
+  if (!atr) return emptyValue;
+  return `${atr.period}/${atr.multiplier}/${atr.closePercent}%`;
+}
+
+export function calculateVsHold(finalBalance: number, baselineFinalValue: number): number {
+  return ((finalBalance - baselineFinalValue) / baselineFinalValue) * 100;
+}
