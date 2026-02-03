@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react';
 
-import { CsvUpload } from '@/components/csv-upload';
+import { BacktestSetup } from '@/components/backtest-setup';
 import { OptimizationProgressCard } from '@/components/optimization-progress';
 import { ResultsTable } from '@/components/results-table';
 import { SmaComparisonTable } from '@/components/sma-comparison-table';
@@ -50,7 +50,7 @@ export default function Home() {
     <div className="flex min-h-screen items-start justify-center p-8">
       <div className="flex flex-col gap-8 w-full max-w-7xl">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <CsvUpload onDataLoaded={handleDataLoaded} actionButton={runButton} />
+          <BacktestSetup onDataLoaded={handleDataLoaded} actionButton={runButton} />
           <StrategyConfigForm onConfigChange={handleConfigChange} />
         </div>
 

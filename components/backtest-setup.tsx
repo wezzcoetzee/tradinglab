@@ -9,12 +9,12 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { validateCsv } from '@/lib/csv-validator';
 import type { CsvRow, ValidationResult } from '@/lib/types';
 
-interface CsvUploadProps {
+interface BacktestSetupProps {
   onDataLoaded?: (data: CsvRow[]) => void;
   actionButton?: React.ReactNode;
 }
 
-export function CsvUpload({ onDataLoaded, actionButton }: CsvUploadProps) {
+export function BacktestSetup({ onDataLoaded, actionButton }: BacktestSetupProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<ValidationResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -68,10 +68,10 @@ export function CsvUpload({ onDataLoaded, actionButton }: CsvUploadProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5" aria-hidden="true" />
-          CSV Upload
+          Backtest Setup
         </CardTitle>
         <CardDescription>
-          Upload your crypto backtest data (time, high, low, close, RSI, date)
+          Upload CSV with time, high, low, close, RSI, date columns
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -97,6 +97,10 @@ export function CsvUpload({ onDataLoaded, actionButton }: CsvUploadProps) {
           </Button>
           {actionButton}
         </div>
+
+        <p className="text-xs text-muted-foreground">
+          Tests SMA periods 20–160 with leverage 1×, 1.25×, 1.5×, 1.75×, 2×, 2.25×, 2.5×, 2.75×, 3×
+        </p>
 
         {result && result.valid && (
           <Alert>
