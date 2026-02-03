@@ -44,3 +44,11 @@ export function formatAtrConfig(atr: { period: number; multiplier: number; close
 export function calculateVsHold(finalBalance: number, baselineFinalValue: number): number {
   return ((finalBalance - baselineFinalValue) / baselineFinalValue) * 100;
 }
+
+export function getVsHoldBackgroundClass(vsHold: number): string {
+  if (vsHold >= 50) return 'bg-green-100 dark:bg-green-900/30';
+  if (vsHold >= 20) return 'bg-green-50 dark:bg-green-900/20';
+  if (vsHold >= 0) return 'bg-yellow-50 dark:bg-yellow-900/20';
+  if (vsHold >= -20) return 'bg-orange-50 dark:bg-orange-900/20';
+  return 'bg-red-50 dark:bg-red-900/20';
+}
