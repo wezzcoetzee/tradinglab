@@ -1,5 +1,5 @@
 import type { CsvRow, ValidationResult } from './types';
-import { REQUIRED_HEADERS, MIN_DATA_ROWS } from './types';
+import { MIN_DATA_ROWS, REQUIRED_HEADERS } from './types';
 
 const DATE_REGEX = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
 
