@@ -242,4 +242,194 @@ describe('generateBacktestConfigs', () => {
     expect(result.length).toBe(expectedTotal);
     expect(expectedTotal).toBe(11421);
   });
+
+  describe('with atr enabled', () => {
+    test('should_generate_60x_more_configurations_with_atr', () => {
+      const startingCapital = 1000;
+      const feeRate = 0.1;
+
+      const withoutAtr = generateBacktestConfigs(startingCapital, feeRate, false);
+      const withAtr = generateBacktestConfigs(startingCapital, feeRate, true);
+
+      expect(withAtr.length).toBe(withoutAtr.length * 60);
+      expect(withAtr.length).toBe(685260);
+    });
+
+    test('should_include_all_atr_periods', () => {
+      const startingCapital = 1000;
+      const feeRate = 0.1;
+
+      const result = generateBacktestConfigs(startingCapital, feeRate, true);
+
+      const atrPeriods = new Set(result.filter(c => c.atr).map(c => c.atr!.period));
+
+      expect(atrPeriods.has(10)).toBe(true);
+      expect(atrPeriods.has(14)).toBe(true);
+      expect(atrPeriods.has(20)).toBe(true);
+      expect(atrPeriods.size).toBe(3);
+    });
+
+    test('should_include_all_atr_multipliers', () => {
+      const startingCapital = 1000;
+      const feeRate = 0.1;
+
+      const result = generateBacktestConfigs(startingCapital, feeRate, true);
+
+      const multipliers = new Set(result.filter(c => c.atr).map(c => c.atr!.multiplier));
+
+      expect(multipliers.has(2)).toBe(true);
+      expect(multipliers.has(2.5)).toBe(true);
+      expect(multipliers.has(3)).toBe(true);
+      expect(multipliers.has(3.5)).toBe(true);
+      expect(multipliers.has(4)).toBe(true);
+      expect(multipliers.size).toBe(5);
+    });
+
+    test('should_include_all_atr_close_percents', () => {
+      const startingCapital = 1000;
+      const feeRate = 0.1;
+
+      const result = generateBacktestConfigs(startingCapital, feeRate, true);
+
+      const closePercents = new Set(result.filter(c => c.atr).map(c => c.atr!.closePercent));
+
+      expect(closePercents.has(10)).toBe(true);
+      expect(closePercents.has(25)).toBe(true);
+      expect(closePercents.has(50)).toBe(true);
+      expect(closePercents.has(100)).toBe(true);
+      expect(closePercents.size).toBe(4);
+    });
+
+    test('should_generate_60_atr_combinations', () => {
+      const startingCapital = 1000;
+      const feeRate = 0.1;
+
+      const result = generateBacktestConfigs(startingCapital, feeRate, true);
+
+      const atrConfigs = result
+        .filter(c => c.atr && c.smaPeriod === 20 && c.longLeverage === 1 && c.shortLeverage === 1)
+        .map(c => c.atr!);
+
+      const uniqueAtrConfigs = new Set(
+        atrConfigs.map(atr => `${atr.period}-${atr.multiplier}-${atr.closePercent}`)
+      );
+
+      expect(uniqueAtrConfigs.size).toBe(60);
+    });
+
+    test('should_have_atr_config_for_all_configs', () => {
+      const startingCapital = 1000;
+      const feeRate = 0.1;
+
+      const result = generateBacktestConfigs(startingCapital, feeRate, true);
+
+      const allHaveAtr = result.every(c => c.atr !== undefined);
+
+      expect(allHaveAtr).toBe(true);
+    });
+
+    test('should_not_have_atr_config_when_disabled', () => {
+      const startingCapital = 1000;
+      const feeRate = 0.1;
+
+      const result = generateBacktestConfigs(startingCapital, feeRate, false);
+
+      const noneHaveAtr = result.every(c => c.atr === undefined);
+
+      expect(noneHaveAtr).toBe(true);
+    });
+
+    test('should_default_to_atr_disabled', () => {
+      const startingCapital = 1000;
+      const feeRate = 0.1;
+
+      const result = generateBacktestConfigs(startingCapital, feeRate);
+
+      const noneHaveAtr = result.every(c => c.atr === undefined);
+
+      expect(noneHaveAtr).toBe(true);
+    });
+
+    test('should_combine_all_parameters_with_atr', () => {
+      const startingCapital = 1000;
+      const feeRate = 0.1;
+
+      const result = generateBacktestConfigs(startingCapital, feeRate, true);
+
+      const smaPeriods = 141;
+      const leverageValues = 9;
+      const atrPeriods = 3;
+      const atrMultipliers = 5;
+      const atrClosePercents = 4;
+
+      const expectedTotal =
+        smaPeriods * leverageValues * leverageValues * atrPeriods * atrMultipliers * atrClosePercents;
+
+      expect(result.length).toBe(expectedTotal);
+      expect(expectedTotal).toBe(685260);
+    });
+
+    test('should_generate_unique_configurations_with_atr', () => {
+      const startingCapital = 1000;
+      const feeRate = 0.1;
+
+      const result = generateBacktestConfigs(startingCapital, feeRate, true);
+
+      const configStrings = result.map(
+        c =>
+          `${c.smaPeriod}-${c.longLeverage}-${c.shortLeverage}-${c.atr?.period}-${c.atr?.multiplier}-${c.atr?.closePercent}`
+      );
+      const uniqueConfigs = new Set(configStrings);
+
+      expect(uniqueConfigs.size).toBe(685260);
+    });
+
+    test('should_maintain_base_config_properties_with_atr', () => {
+      const startingCapital = 5000;
+      const feeRate = 0.2;
+
+      const result = generateBacktestConfigs(startingCapital, feeRate, true);
+
+      const allHaveCorrectCapital = result.every(c => c.startingCapital === 5000);
+      const allHaveCorrectFeeRate = result.every(c => c.feeRate === 0.2);
+
+      expect(allHaveCorrectCapital).toBe(true);
+      expect(allHaveCorrectFeeRate).toBe(true);
+    });
+
+    test('should_include_specific_atr_combination', () => {
+      const startingCapital = 1000;
+      const feeRate = 0.1;
+
+      const result = generateBacktestConfigs(startingCapital, feeRate, true);
+
+      const specificConfig = result.find(
+        c =>
+          c.smaPeriod === 50 &&
+          c.longLeverage === 2.0 &&
+          c.shortLeverage === 1.5 &&
+          c.atr?.period === 14 &&
+          c.atr?.multiplier === 3 &&
+          c.atr?.closePercent === 50
+      );
+
+      expect(specificConfig).toBeDefined();
+    });
+
+    test('should_have_correct_atr_structure', () => {
+      const startingCapital = 1000;
+      const feeRate = 0.1;
+
+      const result = generateBacktestConfigs(startingCapital, feeRate, true);
+
+      const firstConfig = result[0];
+
+      expect(firstConfig.atr).toHaveProperty('period');
+      expect(firstConfig.atr).toHaveProperty('multiplier');
+      expect(firstConfig.atr).toHaveProperty('closePercent');
+      expect(typeof firstConfig.atr!.period).toBe('number');
+      expect(typeof firstConfig.atr!.multiplier).toBe('number');
+      expect(typeof firstConfig.atr!.closePercent).toBe('number');
+    });
+  });
 });

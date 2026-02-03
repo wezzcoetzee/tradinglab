@@ -1,5 +1,6 @@
 import type { BacktestBatchInput, BacktestBatchResult, BacktestResult } from './types';
 
+import { calculateAllATRs } from './atr-calculator';
 import { runBacktest } from './backtest-runner';
 import { generateBacktestConfigs } from './leverage-config';
 import { calculateAllSMAs, extractClosePrices } from './sma-calculator';
@@ -10,9 +11,14 @@ export function runAllBacktests(input: BacktestBatchInput): BacktestBatchResult 
   const closePrices = extractClosePrices(input.csvData);
   const allSMAs = calculateAllSMAs(closePrices);
 
+  const allATRs = input.strategyConfig.atrEnabled
+    ? calculateAllATRs(input.csvData)
+    : null;
+
   const configs = generateBacktestConfigs(
     input.strategyConfig.startingCapital,
-    input.strategyConfig.tradingFee
+    input.strategyConfig.tradingFee,
+    input.strategyConfig.atrEnabled
   );
 
   const results: BacktestResult[] = [];
@@ -23,7 +29,9 @@ export function runAllBacktests(input: BacktestBatchInput): BacktestBatchResult 
       throw new Error(`SMA values not found for period ${config.smaPeriod}`);
     }
 
-    const result = runBacktest(input.csvData, smaValues, config);
+    const atrValues = config.atr && allATRs ? allATRs.get(config.atr.period) ?? null : null;
+
+    const result = runBacktest(input.csvData, smaValues, config, atrValues);
     results.push(result);
   }
 

@@ -1,5 +1,7 @@
 import type { CsvRow } from '../types';
 
+import { MAX_SMA_PERIOD, MIN_SMA_PERIOD } from './constants';
+
 export function extractClosePrices(csvData: CsvRow[]): number[] {
   return csvData.map(row => row.close);
 }
@@ -20,9 +22,6 @@ export function calculateSMA(closePrices: number[], period: number): number[] {
 
   return sma;
 }
-
-const MIN_SMA_PERIOD = 20;
-const MAX_SMA_PERIOD = 160;
 
 export function calculateAllSMAs(closePrices: number[]): Map<number, number[]> {
   const smaMap = new Map<number, number[]>();

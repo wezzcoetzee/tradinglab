@@ -748,3 +748,786 @@ describe('runBacktest - edge cases', () => {
     expect(result.days.every(d => d.action === 'HOLD' || d.action === 'OPEN_SHORT')).toBe(true);
   });
 });
+
+describe('runBacktest - atr trailing stop', () => {
+  function generateCsvDataWithVolatility(days: number, startPrice: number = 100): CsvRow[] {
+    return Array.from({ length: days }, (_, i) => ({
+      time: i + 1,
+      high: startPrice + i * 0.5 + 5,
+      low: startPrice + i * 0.5 - 5,
+      close: startPrice + i * 0.5,
+      RSI: 50,
+      date: `${i + 1}/1/2024`,
+    }));
+  }
+
+  test('should_initialize_trailing_stop_on_position_open', () => {
+    const csvData = generateCsvDataWithVolatility(200);
+    const smaValues = Array(200).fill(90);
+    const atrValues = Array(200).fill(5);
+    const config: BacktestConfig = {
+      smaPeriod: 20,
+      longLeverage: 2,
+      shortLeverage: 2,
+      startingCapital: 1000,
+      feeRate: 0.1,
+      atr: {
+        period: 14,
+        multiplier: 2,
+        closePercent: 50,
+      },
+    };
+
+    const result = runBacktest(csvData, smaValues, config, atrValues);
+
+    const firstDay = result.days.find(d => d.action === 'OPEN_LONG');
+    expect(firstDay?.position?.trailingStop).toBeDefined();
+    expect(firstDay?.position?.trailingStop?.triggered).toBe(false);
+  });
+
+  test('should_trigger_partial_close_for_long_position', () => {
+    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
+      if (i < 165) {
+        return {
+          time: i + 1,
+          high: 105,
+          low: 95,
+          close: 100,
+          RSI: 50,
+          date: `${i + 1}/1/2024`,
+        };
+      }
+      return {
+        time: i + 1,
+        high: 85,
+        low: 75,
+        close: 80,
+        RSI: 50,
+        date: `${i + 1}/1/2024`,
+      };
+    });
+    const smaValues = Array(200).fill(90);
+    const atrValues = Array(200).fill(5);
+    const config: BacktestConfig = {
+      smaPeriod: 20,
+      longLeverage: 2,
+      shortLeverage: 2,
+      startingCapital: 1000,
+      feeRate: 0.1,
+      atr: {
+        period: 14,
+        multiplier: 2,
+        closePercent: 50,
+      },
+    };
+
+    const result = runBacktest(csvData, smaValues, config, atrValues);
+
+    const partialCloseDay = result.days.find(d => d.action === 'ATR_PARTIAL_CLOSE');
+    expect(partialCloseDay).toBeDefined();
+    expect(partialCloseDay?.position?.trailingStop?.triggered).toBe(true);
+  });
+
+  test('should_trigger_partial_close_for_short_position', () => {
+    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
+      if (i < 165) {
+        return {
+          time: i + 1,
+          high: 95,
+          low: 85,
+          close: 90,
+          RSI: 50,
+          date: `${i + 1}/1/2024`,
+        };
+      }
+      return {
+        time: i + 1,
+        high: 115,
+        low: 105,
+        close: 110,
+        RSI: 50,
+        date: `${i + 1}/1/2024`,
+      };
+    });
+    const smaValues = Array(200).fill(100);
+    const atrValues = Array(200).fill(5);
+    const config: BacktestConfig = {
+      smaPeriod: 20,
+      longLeverage: 2,
+      shortLeverage: 2,
+      startingCapital: 1000,
+      feeRate: 0.1,
+      atr: {
+        period: 14,
+        multiplier: 2,
+        closePercent: 50,
+      },
+    };
+
+    const result = runBacktest(csvData, smaValues, config, atrValues);
+
+    const partialCloseDay = result.days.find(d => d.action === 'ATR_PARTIAL_CLOSE');
+    expect(partialCloseDay).toBeDefined();
+  });
+
+  test('should_reduce_position_size_after_partial_close', () => {
+    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
+      if (i < 165) {
+        return {
+          time: i + 1,
+          high: 105,
+          low: 95,
+          close: 100,
+          RSI: 50,
+          date: `${i + 1}/1/2024`,
+        };
+      }
+      return {
+        time: i + 1,
+        high: 85,
+        low: 75,
+        close: 80,
+        RSI: 50,
+        date: `${i + 1}/1/2024`,
+      };
+    });
+    const smaValues = Array(200).fill(90);
+    const atrValues = Array(200).fill(5);
+    const config: BacktestConfig = {
+      smaPeriod: 20,
+      longLeverage: 2,
+      shortLeverage: 2,
+      startingCapital: 1000,
+      feeRate: 0.1,
+      atr: {
+        period: 14,
+        multiplier: 2,
+        closePercent: 50,
+      },
+    };
+
+    const result = runBacktest(csvData, smaValues, config, atrValues);
+
+    const partialCloseDay = result.days.find(d => d.action === 'ATR_PARTIAL_CLOSE');
+    const openDay = result.days.find(d => d.action === 'OPEN_LONG');
+
+    if (partialCloseDay && openDay) {
+      const originalValue = openDay.position!.entryValue;
+      const newValue = partialCloseDay.position!.entryValue;
+
+      expect(newValue).toBeLessThan(originalValue);
+      expect(newValue).toBe(originalValue * 0.5);
+    }
+  });
+
+  test('should_accumulate_sideline_value', () => {
+    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
+      if (i < 165) {
+        return {
+          time: i + 1,
+          high: 105,
+          low: 95,
+          close: 100,
+          RSI: 50,
+          date: `${i + 1}/1/2024`,
+        };
+      }
+      return {
+        time: i + 1,
+        high: 85,
+        low: 75,
+        close: 80,
+        RSI: 50,
+        date: `${i + 1}/1/2024`,
+      };
+    });
+    const smaValues = Array(200).fill(90);
+    const atrValues = Array(200).fill(5);
+    const config: BacktestConfig = {
+      smaPeriod: 20,
+      longLeverage: 2,
+      shortLeverage: 2,
+      startingCapital: 1000,
+      feeRate: 0.1,
+      atr: {
+        period: 14,
+        multiplier: 2,
+        closePercent: 50,
+      },
+    };
+
+    const result = runBacktest(csvData, smaValues, config, atrValues);
+
+    const partialCloseDay = result.days.find(d => d.action === 'ATR_PARTIAL_CLOSE');
+    expect(partialCloseDay?.sidelineValue).toBeGreaterThan(0);
+  });
+
+  test('should_not_trigger_again_after_first_trigger', () => {
+    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
+      if (i < 165) {
+        return {
+          time: i + 1,
+          high: 105,
+          low: 95,
+          close: 100,
+          RSI: 50,
+          date: `${i + 1}/1/2024`,
+        };
+      }
+      return {
+        time: i + 1,
+        high: 85,
+        low: 75,
+        close: 80,
+        RSI: 50,
+        date: `${i + 1}/1/2024`,
+      };
+    });
+    const smaValues = Array(200).fill(90);
+    const atrValues = Array(200).fill(5);
+    const config: BacktestConfig = {
+      smaPeriod: 20,
+      longLeverage: 2,
+      shortLeverage: 2,
+      startingCapital: 1000,
+      feeRate: 0.1,
+      atr: {
+        period: 14,
+        multiplier: 2,
+        closePercent: 50,
+      },
+    };
+
+    const result = runBacktest(csvData, smaValues, config, atrValues);
+
+    const partialCloseDays = result.days.filter(d => d.action === 'ATR_PARTIAL_CLOSE');
+    expect(partialCloseDays.length).toBe(1);
+  });
+
+  test('should_update_extreme_price_when_price_moves_favorably', () => {
+    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => ({
+      time: i + 1,
+      high: 100 + i * 0.5,
+      low: 90 + i * 0.5,
+      close: 95 + i * 0.5,
+      RSI: 50,
+      date: `${i + 1}/1/2024`,
+    }));
+    const smaValues = Array(200).fill(90);
+    const atrValues = Array(200).fill(5);
+    const config: BacktestConfig = {
+      smaPeriod: 20,
+      longLeverage: 2,
+      shortLeverage: 2,
+      startingCapital: 1000,
+      feeRate: 0.1,
+      atr: {
+        period: 14,
+        multiplier: 2,
+        closePercent: 50,
+      },
+    };
+
+    const result = runBacktest(csvData, smaValues, config, atrValues);
+
+    const openDay = result.days.find(d => d.action === 'OPEN_LONG');
+    const laterDay = result.days[result.days.length - 1];
+
+    if (openDay?.position && laterDay?.position) {
+      const initialExtreme = openDay.position.trailingStop?.extremePrice;
+      const laterExtreme = laterDay.position.trailingStop?.extremePrice;
+
+      if (initialExtreme && laterExtreme) {
+        expect(laterExtreme).toBeGreaterThan(initialExtreme);
+      }
+    }
+  });
+
+  test('should_combine_sideline_with_balance_on_new_position', () => {
+    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
+      if (i < 165) {
+        return {
+          time: i + 1,
+          high: 105,
+          low: 95,
+          close: 100,
+          RSI: 50,
+          date: `${i + 1}/1/2024`,
+        };
+      }
+      if (i < 170) {
+        return {
+          time: i + 1,
+          high: 85,
+          low: 75,
+          close: 80,
+          RSI: 50,
+          date: `${i + 1}/1/2024`,
+        };
+      }
+      return {
+        time: i + 1,
+        high: 75,
+        low: 65,
+        close: 70,
+        RSI: 50,
+        date: `${i + 1}/1/2024`,
+      };
+    });
+    const smaValues = Array(200).fill(90);
+    smaValues[170] = 80;
+    const atrValues = Array(200).fill(5);
+    const config: BacktestConfig = {
+      smaPeriod: 20,
+      longLeverage: 2,
+      shortLeverage: 2,
+      startingCapital: 1000,
+      feeRate: 0.1,
+      atr: {
+        period: 14,
+        multiplier: 2,
+        closePercent: 50,
+      },
+    };
+
+    const result = runBacktest(csvData, smaValues, config, atrValues);
+
+    const partialCloseDay = result.days.find(d => d.action === 'ATR_PARTIAL_CLOSE');
+    const transitionDay = result.days.find(d => d.action === 'TRANSITION_LONG_TO_SHORT');
+
+    if (partialCloseDay && transitionDay) {
+      expect(partialCloseDay.sidelineValue).toBeGreaterThan(0);
+    }
+  });
+
+  test('should_increment_trade_count_on_partial_close', () => {
+    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
+      if (i < 165) {
+        return {
+          time: i + 1,
+          high: 105,
+          low: 95,
+          close: 100,
+          RSI: 50,
+          date: `${i + 1}/1/2024`,
+        };
+      }
+      return {
+        time: i + 1,
+        high: 85,
+        low: 75,
+        close: 80,
+        RSI: 50,
+        date: `${i + 1}/1/2024`,
+      };
+    });
+    const smaValues = Array(200).fill(90);
+    const atrValues = Array(200).fill(5);
+    const config: BacktestConfig = {
+      smaPeriod: 20,
+      longLeverage: 2,
+      shortLeverage: 2,
+      startingCapital: 1000,
+      feeRate: 0.1,
+      atr: {
+        period: 14,
+        multiplier: 2,
+        closePercent: 50,
+      },
+    };
+
+    const result = runBacktest(csvData, smaValues, config, atrValues);
+
+    expect(result.totalTrades).toBeGreaterThan(0);
+  });
+
+  test('should_not_trigger_when_atr_is_nan', () => {
+    const csvData: CsvRow[] = Array.from({ length: 165 }, (_, i) => ({
+      time: i + 1,
+      high: 105,
+      low: 95,
+      close: 100,
+      RSI: 50,
+      date: `${i + 1}/1/2024`,
+    }));
+    const smaValues = Array(165).fill(90);
+    const atrValues = Array(165).fill(NaN);
+    const config: BacktestConfig = {
+      smaPeriod: 20,
+      longLeverage: 2,
+      shortLeverage: 2,
+      startingCapital: 1000,
+      feeRate: 0.1,
+      atr: {
+        period: 14,
+        multiplier: 2,
+        closePercent: 50,
+      },
+    };
+
+    const result = runBacktest(csvData, smaValues, config, atrValues);
+
+    const partialCloseDays = result.days.filter(d => d.action === 'ATR_PARTIAL_CLOSE');
+    expect(partialCloseDays.length).toBe(0);
+  });
+
+  test('should_handle_10_percent_close', () => {
+    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
+      if (i < 165) {
+        return {
+          time: i + 1,
+          high: 105,
+          low: 95,
+          close: 100,
+          RSI: 50,
+          date: `${i + 1}/1/2024`,
+        };
+      }
+      return {
+        time: i + 1,
+        high: 85,
+        low: 75,
+        close: 80,
+        RSI: 50,
+        date: `${i + 1}/1/2024`,
+      };
+    });
+    const smaValues = Array(200).fill(90);
+    const atrValues = Array(200).fill(5);
+    const config: BacktestConfig = {
+      smaPeriod: 20,
+      longLeverage: 2,
+      shortLeverage: 2,
+      startingCapital: 1000,
+      feeRate: 0.1,
+      atr: {
+        period: 14,
+        multiplier: 2,
+        closePercent: 10,
+      },
+    };
+
+    const result = runBacktest(csvData, smaValues, config, atrValues);
+
+    const partialCloseDay = result.days.find(d => d.action === 'ATR_PARTIAL_CLOSE');
+    const openDay = result.days.find(d => d.action === 'OPEN_LONG');
+
+    if (partialCloseDay && openDay) {
+      const originalValue = openDay.position!.entryValue;
+      const newValue = partialCloseDay.position!.entryValue;
+
+      expect(newValue).toBe(originalValue * 0.9);
+    }
+  });
+
+  test('should_handle_25_percent_close', () => {
+    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
+      if (i < 165) {
+        return {
+          time: i + 1,
+          high: 105,
+          low: 95,
+          close: 100,
+          RSI: 50,
+          date: `${i + 1}/1/2024`,
+        };
+      }
+      return {
+        time: i + 1,
+        high: 85,
+        low: 75,
+        close: 80,
+        RSI: 50,
+        date: `${i + 1}/1/2024`,
+      };
+    });
+    const smaValues = Array(200).fill(90);
+    const atrValues = Array(200).fill(5);
+    const config: BacktestConfig = {
+      smaPeriod: 20,
+      longLeverage: 2,
+      shortLeverage: 2,
+      startingCapital: 1000,
+      feeRate: 0.1,
+      atr: {
+        period: 14,
+        multiplier: 2,
+        closePercent: 25,
+      },
+    };
+
+    const result = runBacktest(csvData, smaValues, config, atrValues);
+
+    const partialCloseDay = result.days.find(d => d.action === 'ATR_PARTIAL_CLOSE');
+    const openDay = result.days.find(d => d.action === 'OPEN_LONG');
+
+    if (partialCloseDay && openDay) {
+      const originalValue = openDay.position!.entryValue;
+      const newValue = partialCloseDay.position!.entryValue;
+
+      expect(newValue).toBe(originalValue * 0.75);
+    }
+  });
+
+  test('should_handle_100_percent_close', () => {
+    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
+      if (i < 165) {
+        return {
+          time: i + 1,
+          high: 105,
+          low: 95,
+          close: 100,
+          RSI: 50,
+          date: `${i + 1}/1/2024`,
+        };
+      }
+      return {
+        time: i + 1,
+        high: 85,
+        low: 75,
+        close: 80,
+        RSI: 50,
+        date: `${i + 1}/1/2024`,
+      };
+    });
+    const smaValues = Array(200).fill(90);
+    const atrValues = Array(200).fill(5);
+    const config: BacktestConfig = {
+      smaPeriod: 20,
+      longLeverage: 2,
+      shortLeverage: 2,
+      startingCapital: 1000,
+      feeRate: 0.1,
+      atr: {
+        period: 14,
+        multiplier: 2,
+        closePercent: 100,
+      },
+    };
+
+    const result = runBacktest(csvData, smaValues, config, atrValues);
+
+    const partialCloseDay = result.days.find(d => d.action === 'ATR_PARTIAL_CLOSE');
+
+    if (partialCloseDay) {
+      expect(partialCloseDay.position!.entryValue).toBe(0);
+    }
+  });
+
+  test('should_work_without_atr_config', () => {
+    const csvData = generateCsvDataWithVolatility(200);
+    const smaValues = Array(200).fill(90);
+    const config: BacktestConfig = {
+      smaPeriod: 20,
+      longLeverage: 2,
+      shortLeverage: 2,
+      startingCapital: 1000,
+      feeRate: 0.1,
+    };
+
+    const result = runBacktest(csvData, smaValues, config, null);
+
+    const partialCloseDays = result.days.filter(d => d.action === 'ATR_PARTIAL_CLOSE');
+    expect(partialCloseDays.length).toBe(0);
+  });
+
+  test('should_not_trigger_without_atr_values', () => {
+    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
+      if (i < 165) {
+        return {
+          time: i + 1,
+          high: 105,
+          low: 95,
+          close: 100,
+          RSI: 50,
+          date: `${i + 1}/1/2024`,
+        };
+      }
+      return {
+        time: i + 1,
+        high: 85,
+        low: 75,
+        close: 80,
+        RSI: 50,
+        date: `${i + 1}/1/2024`,
+      };
+    });
+    const smaValues = Array(200).fill(90);
+    const config: BacktestConfig = {
+      smaPeriod: 20,
+      longLeverage: 2,
+      shortLeverage: 2,
+      startingCapital: 1000,
+      feeRate: 0.1,
+      atr: {
+        period: 14,
+        multiplier: 2,
+        closePercent: 50,
+      },
+    };
+
+    const result = runBacktest(csvData, smaValues, config, null);
+
+    const partialCloseDays = result.days.filter(d => d.action === 'ATR_PARTIAL_CLOSE');
+    expect(partialCloseDays.length).toBe(0);
+  });
+
+  test('should_record_pnl_and_fees_on_partial_close', () => {
+    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
+      if (i < 165) {
+        return {
+          time: i + 1,
+          high: 105,
+          low: 95,
+          close: 100,
+          RSI: 50,
+          date: `${i + 1}/1/2024`,
+        };
+      }
+      return {
+        time: i + 1,
+        high: 85,
+        low: 75,
+        close: 80,
+        RSI: 50,
+        date: `${i + 1}/1/2024`,
+      };
+    });
+    const smaValues = Array(200).fill(90);
+    const atrValues = Array(200).fill(5);
+    const config: BacktestConfig = {
+      smaPeriod: 20,
+      longLeverage: 2,
+      shortLeverage: 2,
+      startingCapital: 1000,
+      feeRate: 0.1,
+      atr: {
+        period: 14,
+        multiplier: 2,
+        closePercent: 50,
+      },
+    };
+
+    const result = runBacktest(csvData, smaValues, config, atrValues);
+
+    const partialCloseDay = result.days.find(d => d.action === 'ATR_PARTIAL_CLOSE');
+
+    expect(partialCloseDay?.pnl).toBeDefined();
+    expect(partialCloseDay?.fees).toBeDefined();
+    expect(partialCloseDay?.fees).toBeGreaterThan(0);
+  });
+
+  test('should_include_sideline_in_final_balance', () => {
+    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
+      if (i < 165) {
+        return {
+          time: i + 1,
+          high: 105,
+          low: 95,
+          close: 100,
+          RSI: 50,
+          date: `${i + 1}/1/2024`,
+        };
+      }
+      return {
+        time: i + 1,
+        high: 85,
+        low: 75,
+        close: 80,
+        RSI: 50,
+        date: `${i + 1}/1/2024`,
+      };
+    });
+    const smaValues = Array(200).fill(90);
+    const atrValues = Array(200).fill(5);
+    const config: BacktestConfig = {
+      smaPeriod: 20,
+      longLeverage: 2,
+      shortLeverage: 2,
+      startingCapital: 1000,
+      feeRate: 0.1,
+      atr: {
+        period: 14,
+        multiplier: 2,
+        closePercent: 50,
+      },
+    };
+
+    const result = runBacktest(csvData, smaValues, config, atrValues);
+
+    const partialCloseDay = result.days.find(d => d.action === 'ATR_PARTIAL_CLOSE');
+    if (partialCloseDay) {
+      expect(result.finalBalance).toBeGreaterThan(partialCloseDay.balance);
+    }
+  });
+
+  test('should_use_different_multipliers', () => {
+    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => ({
+      time: i + 1,
+      high: 105,
+      low: 95,
+      close: 100,
+      RSI: 50,
+      date: `${i + 1}/1/2024`,
+    }));
+    const smaValues = Array(200).fill(90);
+    const atrValues = Array(200).fill(5);
+
+    const multipliers = [2, 2.5, 3, 3.5, 4] as const;
+
+    for (const multiplier of multipliers) {
+      const config: BacktestConfig = {
+        smaPeriod: 20,
+        longLeverage: 2,
+        shortLeverage: 2,
+        startingCapital: 1000,
+        feeRate: 0.1,
+        atr: {
+          period: 14,
+          multiplier,
+          closePercent: 50,
+        },
+      };
+
+      const result = runBacktest(csvData, smaValues, config, atrValues);
+
+      expect(result).toBeDefined();
+      expect(result.config.atr?.multiplier).toBe(multiplier);
+    }
+  });
+
+  test('should_use_different_atr_periods', () => {
+    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => ({
+      time: i + 1,
+      high: 105,
+      low: 95,
+      close: 100,
+      RSI: 50,
+      date: `${i + 1}/1/2024`,
+    }));
+    const smaValues = Array(200).fill(90);
+
+    const periods = [10, 14, 20] as const;
+
+    for (const period of periods) {
+      const atrValues = Array(200).fill(5);
+      const config: BacktestConfig = {
+        smaPeriod: 20,
+        longLeverage: 2,
+        shortLeverage: 2,
+        startingCapital: 1000,
+        feeRate: 0.1,
+        atr: {
+          period,
+          multiplier: 2,
+          closePercent: 50,
+        },
+      };
+
+      const result = runBacktest(csvData, smaValues, config, atrValues);
+
+      expect(result).toBeDefined();
+      expect(result.config.atr?.period).toBe(period);
+    }
+  });
+});

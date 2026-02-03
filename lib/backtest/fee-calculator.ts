@@ -1,6 +1,6 @@
 import type { PositionAction } from './types';
 
-const PERCENTAGE_DIVISOR = 100;
+import { PERCENTAGE_DIVISOR } from './constants';
 
 export function calculateTradeFee(
   balance: number,
@@ -35,6 +35,7 @@ export function calculateTransitionFees(
       );
 
     case 'HOLD':
+    case 'ATR_PARTIAL_CLOSE':
       return 0;
 
     default:

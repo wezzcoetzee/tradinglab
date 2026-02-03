@@ -9,13 +9,20 @@ export type PositionAction =
   | 'CLOSE_SHORT'
   | 'TRANSITION_LONG_TO_SHORT'
   | 'TRANSITION_SHORT_TO_LONG'
-  | 'HOLD';
+  | 'HOLD'
+  | 'ATR_PARTIAL_CLOSE';
+
+export interface TrailingStopState {
+  extremePrice: number;
+  triggered: boolean;
+}
 
 export interface Position {
   type: PositionType;
   entryPrice: number;
   entryValue: number;
   leverage: number;
+  trailingStop?: TrailingStopState;
 }
 
 export interface DayResult {
@@ -29,6 +36,13 @@ export interface DayResult {
   pnl: number;
   fees: number;
   isLiquidated: boolean;
+  sidelineValue?: number;
+}
+
+export interface AtrConfig {
+  period: 10 | 14 | 20;
+  multiplier: 2 | 2.5 | 3 | 3.5 | 4;
+  closePercent: 10 | 25 | 50 | 100;
 }
 
 export interface BacktestConfig {
@@ -37,6 +51,7 @@ export interface BacktestConfig {
   shortLeverage: number;
   startingCapital: number;
   feeRate: number;
+  atr?: AtrConfig;
 }
 
 export interface BacktestResult {
