@@ -1,5 +1,5 @@
 import type { CsvRow } from '../types';
-import type { BacktestConfig, BacktestResult, BuyAndHoldBaseline } from './types';
+import type { BacktestConfig, BacktestResultSummary, BuyAndHoldBaseline } from './types';
 
 export interface OptimizationProgress {
   status: 'idle' | 'preparing' | 'running' | 'complete' | 'error';
@@ -22,5 +22,5 @@ export interface WorkerInput {
 
 export type WorkerMessage =
   | { type: 'progress'; current: number; total: number; elapsedMs: number }
-  | { type: 'complete'; results: BacktestResult[]; totalTimeMs: number; baseline: BuyAndHoldBaseline | null }
+  | { type: 'complete'; results: BacktestResultSummary[]; totalTimeMs: number; baseline: BuyAndHoldBaseline | null }
   | { type: 'error'; error: string };

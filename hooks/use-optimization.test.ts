@@ -668,7 +668,6 @@ describe('useOptimization', () => {
           results: [
             {
               config: { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 },
-              days: [],
               finalBalance: 1100,
               totalReturn: 10,
               totalFees: 10,

@@ -1,5 +1,5 @@
 import type { WorkerInput, WorkerMessage } from './optimization-types';
-import type { BacktestResult } from './types';
+import type { BacktestResult, BacktestResultSummary } from './types';
 
 import { calculateBuyAndHoldBaseline } from './baseline-calculator';
 import { runBacktest } from './backtest-runner';
@@ -43,9 +43,13 @@ self.onmessage = (event: MessageEvent<WorkerInput>) => {
     const baseline = calculateBuyAndHoldBaseline(csvData, startingCapital);
     const totalTimeMs = performance.now() - startTime;
 
+    const summaries: BacktestResultSummary[] = results.map(
+      ({ days: _days, ...summary }) => summary
+    );
+
     const completeMessage: WorkerMessage = {
       type: 'complete',
-      results,
+      results: summaries,
       totalTimeMs,
       baseline,
     };

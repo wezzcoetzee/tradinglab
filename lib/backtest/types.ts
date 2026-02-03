@@ -66,6 +66,8 @@ export interface BacktestResult {
   liquidationDate?: string;
 }
 
+export type BacktestResultSummary = Omit<BacktestResult, 'days'>;
+
 export interface BacktestBatchInput {
   csvData: CsvRow[];
   strategyConfig: StrategyConfig;

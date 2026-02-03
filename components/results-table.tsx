@@ -8,6 +8,8 @@ import { BaselineCard } from '@/components/baseline-card';
 import { MetricsCards, type Metrics } from '@/components/metrics-cards';
 import { OptimalStrategyCard } from '@/components/optimal-strategy-card';
 import { DayByDayTable } from '@/components/day-by-day-table';
+import { TablePagination } from '@/components/table-pagination';
+import { usePagination } from '@/hooks/use-pagination';
 import {
   formatCurrency,
   formatPercent,
@@ -16,15 +18,16 @@ import {
   formatAtrConfig,
   calculateVsHold,
 } from '@/lib/format';
-import type { BacktestResult, BuyAndHoldBaseline } from '@/lib/backtest/types';
+import type { BacktestResult, BacktestResultSummary, BuyAndHoldBaseline } from '@/lib/backtest/types';
 
 interface ResultsTableProps {
-  results: BacktestResult[];
+  results: BacktestResultSummary[];
   baseline: BuyAndHoldBaseline | null;
+  bestResultWithDays?: BacktestResult | null;
 }
 
 interface VsHoldCellProps {
-  result: BacktestResult;
+  result: BacktestResultSummary;
   baseline: BuyAndHoldBaseline;
 }
 
@@ -33,7 +36,7 @@ function VsHoldCell({ result, baseline }: VsHoldCellProps) {
   return <span className={getVsHoldColorClass(vsHold)}>{formatPercent(vsHold)}</span>;
 }
 
-export function ResultsTable({ results, baseline }: ResultsTableProps) {
+export function ResultsTable({ results, baseline, bestResultWithDays }: ResultsTableProps) {
   const sortedResults = useMemo(() => {
     return [...results].sort((a, b) => {
       if (a.isLiquidated !== b.isLiquidated) {
@@ -42,6 +45,8 @@ export function ResultsTable({ results, baseline }: ResultsTableProps) {
       return b.totalReturn - a.totalReturn;
     });
   }, [results]);
+
+  const pagination = usePagination(sortedResults);
 
   const metrics: Metrics = useMemo(() => {
     const total = results.length;
@@ -72,9 +77,9 @@ export function ResultsTable({ results, baseline }: ResultsTableProps) {
           <OptimalStrategyCard result={sortedResults[0]} baseline={baseline} />
         )}
 
-        {baseline && sortedResults.length > 0 && !sortedResults[0].isLiquidated && (
+        {baseline && bestResultWithDays && !bestResultWithDays.isLiquidated && (
           <DayByDayTable
-            result={sortedResults[0]}
+            result={bestResultWithDays}
             purchasePrice={baseline.purchasePrice}
             startingCapital={baseline.startingCapital}
           />
@@ -96,7 +101,7 @@ export function ResultsTable({ results, baseline }: ResultsTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedResults.map((result, index) => (
+            {pagination.paginatedData.map((result, index) => (
               <TableRow
                 key={index}
                 className={result.isLiquidated ? 'bg-destructive/10' : undefined}
@@ -131,6 +136,17 @@ export function ResultsTable({ results, baseline }: ResultsTableProps) {
             ))}
           </TableBody>
         </Table>
+
+        <TablePagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          startIndex={pagination.startIndex}
+          endIndex={pagination.endIndex}
+          totalItems={pagination.totalItems}
+          onPageChange={pagination.goToPage}
+          canGoNext={pagination.canGoNext}
+          canGoPrev={pagination.canGoPrev}
+        />
       </CardContent>
     </Card>
   );

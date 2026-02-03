@@ -4,7 +4,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { CsvRow, StrategyConfig } from '@/lib/types';
 import type { OptimizationProgress, WorkerInput, WorkerMessage } from '@/lib/backtest/optimization-types';
-import type { BacktestResult, BuyAndHoldBaseline } from '@/lib/backtest/types';
+import type { BacktestResult, BacktestResultSummary, BuyAndHoldBaseline } from '@/lib/backtest/types';
+
+import { runBacktest } from '@/lib/backtest/backtest-runner';
 
 import { calculateAllATRs } from '@/lib/backtest/atr-calculator';
 import { generateBacktestConfigs } from '@/lib/backtest/leverage-config';
@@ -12,8 +14,9 @@ import { calculateAllSMAs, extractClosePrices } from '@/lib/backtest/sma-calcula
 
 interface OptimizationState {
   progress: OptimizationProgress;
-  results: BacktestResult[] | null;
+  results: BacktestResultSummary[] | null;
   baseline: BuyAndHoldBaseline | null;
+  bestResultWithDays: BacktestResult | null;
 }
 
 const INITIAL_PROGRESS: OptimizationProgress = {
@@ -44,9 +47,15 @@ export function useOptimization() {
     progress: INITIAL_PROGRESS,
     results: null,
     baseline: null,
+    bestResultWithDays: null,
   });
 
   const workerRef = useRef<Worker | null>(null);
+  const dataRef = useRef<{
+    csvData: CsvRow[];
+    allSMAs: Map<number, number[]>;
+    allATRs: Map<10 | 14 | 20, number[]> | null;
+  } | null>(null);
 
   const terminateWorker = useCallback(() => {
     if (workerRef.current) {
@@ -69,11 +78,14 @@ export function useOptimization() {
         progress: { ...INITIAL_PROGRESS, status: 'preparing' },
         results: null,
         baseline: null,
+        bestResultWithDays: null,
       });
 
       const closePrices = extractClosePrices(csvData);
       const allSMAs = calculateAllSMAs(closePrices);
       const allATRs = strategyConfig.atrEnabled ? calculateAllATRs(csvData) : null;
+
+      dataRef.current = { csvData, allSMAs, allATRs };
 
       const configs = generateBacktestConfigs(
         strategyConfig.startingCapital,
@@ -131,6 +143,24 @@ export function useOptimization() {
             message.totalTimeMs
           );
 
+          const sortedResults = [...message.results].sort((a, b) => {
+            if (a.isLiquidated !== b.isLiquidated) return a.isLiquidated ? 1 : -1;
+            return b.totalReturn - a.totalReturn;
+          });
+          const bestSummary = sortedResults.find(r => !r.isLiquidated);
+
+          let bestResultWithDays: BacktestResult | null = null;
+          if (bestSummary && dataRef.current) {
+            const { csvData, allSMAs, allATRs } = dataRef.current;
+            const smaValues = allSMAs.get(bestSummary.config.smaPeriod);
+            const atrValues = bestSummary.config.atr && allATRs
+              ? allATRs.get(bestSummary.config.atr.period) ?? null
+              : null;
+            if (smaValues) {
+              bestResultWithDays = runBacktest(csvData, smaValues, bestSummary.config, atrValues);
+            }
+          }
+
           setState({
             progress: {
               status: 'complete',
@@ -143,6 +173,7 @@ export function useOptimization() {
             },
             results: message.results,
             baseline: message.baseline,
+            bestResultWithDays,
           });
           terminateWorker();
         } else if (message.type === 'error') {
@@ -191,6 +222,7 @@ export function useOptimization() {
     progress: state.progress,
     results: state.results,
     baseline: state.baseline,
+    bestResultWithDays: state.bestResultWithDays,
     startOptimization,
     cancelOptimization,
   };

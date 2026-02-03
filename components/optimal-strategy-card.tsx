@@ -10,10 +10,10 @@ import {
   formatAtrConfig,
   calculateVsHold,
 } from '@/lib/format';
-import type { BacktestResult, BuyAndHoldBaseline } from '@/lib/backtest/types';
+import type { BacktestResultSummary, BuyAndHoldBaseline } from '@/lib/backtest/types';
 
 interface OptimalStrategyCardProps {
-  result: BacktestResult;
+  result: BacktestResultSummary;
   baseline: BuyAndHoldBaseline;
 }
 

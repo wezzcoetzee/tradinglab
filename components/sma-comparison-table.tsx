@@ -5,7 +5,8 @@ import { ChevronDown, ChevronUp, ChevronsUpDown } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { TablePagination } from '@/components/table-pagination';
+import { usePagination } from '@/hooks/use-pagination';
 import {
   formatCurrency,
   formatPercent,
@@ -14,10 +15,10 @@ import {
   getVsHoldBackgroundClass,
   calculateVsHold,
 } from '@/lib/format';
-import type { BacktestResult, BuyAndHoldBaseline } from '@/lib/backtest/types';
+import type { BacktestResultSummary, BuyAndHoldBaseline } from '@/lib/backtest/types';
 
 interface SmaComparisonTableProps {
-  results: BacktestResult[];
+  results: BacktestResultSummary[];
   baseline: BuyAndHoldBaseline | null;
 }
 
@@ -30,7 +31,7 @@ interface SortConfig {
 
 interface SmaBestResult {
   smaPeriod: number;
-  result: BacktestResult;
+  result: BacktestResultSummary;
   vsHold: number;
 }
 
@@ -42,7 +43,7 @@ interface SortableHeaderProps {
   className?: string;
 }
 
-function shouldReplace(existing: BacktestResult, current: BacktestResult): boolean {
+function shouldReplace(existing: BacktestResultSummary, current: BacktestResultSummary): boolean {
   if (existing.isLiquidated && !current.isLiquidated) {
     return true;
   }
@@ -75,12 +76,11 @@ function SortableHeader({ field, label, sortConfig, onSort, className }: Sortabl
 }
 
 interface StatusCellProps {
-  result: BacktestResult;
+  result: BacktestResultSummary;
 }
 
-const DEFAULT_VISIBLE_ROWS = 50;
 
-function getRowClassName(result: BacktestResult, vsHold: number): string {
+function getRowClassName(result: BacktestResultSummary, vsHold: number): string {
   if (result.isLiquidated) {
     return 'bg-destructive/10 border-l-4 border-destructive';
   }
@@ -101,10 +101,9 @@ function StatusCell({ result }: StatusCellProps) {
 
 export function SmaComparisonTable({ results, baseline }: SmaComparisonTableProps) {
   const [sortConfig, setSortConfig] = useState<SortConfig>({ field: 'finalBalance', direction: 'desc' });
-  const [showAll, setShowAll] = useState(false);
 
   const bestBySma = useMemo(() => {
-    const map = new Map<number, BacktestResult>();
+    const map = new Map<number, BacktestResultSummary>();
 
     for (const result of results) {
       const { smaPeriod } = result.config;
@@ -152,8 +151,7 @@ export function SmaComparisonTable({ results, baseline }: SmaComparisonTableProp
     return sorted;
   }, [bestBySma, sortConfig]);
 
-  const displayedResults = showAll ? sortedResults : sortedResults.slice(0, DEFAULT_VISIBLE_ROWS);
-  const hasMore = sortedResults.length > DEFAULT_VISIBLE_ROWS;
+  const pagination = usePagination(sortedResults);
 
   const handleSort = (field: SortField) => {
     setSortConfig(prev => ({
@@ -186,7 +184,7 @@ export function SmaComparisonTable({ results, baseline }: SmaComparisonTableProp
             </TableRow>
           </TableHeader>
           <TableBody>
-            {displayedResults.map(({ smaPeriod, result, vsHold }) => (
+            {pagination.paginatedData.map(({ smaPeriod, result, vsHold }) => (
               <TableRow key={smaPeriod} className={getRowClassName(result, vsHold)}>
                 <TableCell>{smaPeriod} days</TableCell>
                 <TableCell className="text-right font-mono">
@@ -206,13 +204,16 @@ export function SmaComparisonTable({ results, baseline }: SmaComparisonTableProp
           </TableBody>
         </Table>
 
-        {hasMore && (
-          <div className="flex justify-center">
-            <Button variant="outline" onClick={() => setShowAll(!showAll)}>
-              {showAll ? `Show Top ${DEFAULT_VISIBLE_ROWS}` : `Show All ${sortedResults.length}`}
-            </Button>
-          </div>
-        )}
+        <TablePagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          startIndex={pagination.startIndex}
+          endIndex={pagination.endIndex}
+          totalItems={pagination.totalItems}
+          onPageChange={pagination.goToPage}
+          canGoNext={pagination.canGoNext}
+          canGoPrev={pagination.canGoPrev}
+        />
       </CardContent>
     </Card>
   );

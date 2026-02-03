@@ -359,77 +359,62 @@ describe('SmaComparisonTable', () => {
     });
   });
 
-  describe('show all button', () => {
-    test('should_not_show_button_when_50_or_fewer_results', () => {
-      const results = Array.from({ length: 50 }, (_, i) =>
+  describe('pagination', () => {
+    test('should_not_show_pagination_when_25_or_fewer_results', () => {
+      const results = Array.from({ length: 25 }, (_, i) =>
         createMockResult({ config: { smaPeriod: 20 + i, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 } })
       );
       render(<SmaComparisonTable results={results} baseline={null} />);
 
-      expect(screen.queryByText(/Show All/)).toBeNull();
+      expect(screen.queryByLabelText('Next page')).toBeNull();
     });
 
-    test('should_show_button_when_more_than_50_results', () => {
-      const results = Array.from({ length: 51 }, (_, i) =>
+    test('should_show_pagination_when_more_than_25_results', () => {
+      const results = Array.from({ length: 30 }, (_, i) =>
         createMockResult({ config: { smaPeriod: 20 + i, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 } })
       );
       render(<SmaComparisonTable results={results} baseline={null} />);
 
-      expect(screen.getByText('Show All 51')).toBeDefined();
+      expect(screen.getByLabelText('Next page')).toBeDefined();
     });
 
-    test('should_display_top_50_by_default', () => {
+    test('should_display_25_rows_per_page', () => {
       const results = Array.from({ length: 75 }, (_, i) =>
         createMockResult({ config: { smaPeriod: 20 + i, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 } })
       );
       render(<SmaComparisonTable results={results} baseline={null} />);
 
       const rows = screen.getAllByRole('row');
-      expect(rows.length).toBe(51);
+      expect(rows.length).toBe(26);
     });
 
-    test('should_expand_to_show_all_results_when_clicked', async () => {
+    test('should_navigate_to_next_page', async () => {
       const user = userEvent.setup();
       const results = Array.from({ length: 75 }, (_, i) =>
         createMockResult({ config: { smaPeriod: 20 + i, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 } })
       );
       render(<SmaComparisonTable results={results} baseline={null} />);
 
-      const button = screen.getByText('Show All 75');
-      await user.click(button);
+      const nextButton = screen.getByLabelText('Next page');
+      await user.click(nextButton);
 
-      const rows = screen.getAllByRole('row');
-      expect(rows.length).toBe(76);
+      expect(screen.getByText('26-50 of 75')).toBeDefined();
     });
 
-    test('should_toggle_button_text_when_clicked', async () => {
+    test('should_navigate_to_previous_page', async () => {
       const user = userEvent.setup();
       const results = Array.from({ length: 75 }, (_, i) =>
         createMockResult({ config: { smaPeriod: 20 + i, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 } })
       );
       render(<SmaComparisonTable results={results} baseline={null} />);
 
-      const button = screen.getByText('Show All 75');
-      await user.click(button);
+      const nextButton = screen.getByLabelText('Next page');
+      await user.click(nextButton);
 
-      expect(screen.getByText('Show Top 50')).toBeDefined();
-    });
+      const prevButton = screen.getByLabelText('Previous page');
+      await user.click(prevButton);
 
-    test('should_collapse_to_top_50_when_clicked_again', async () => {
-      const user = userEvent.setup();
-      const results = Array.from({ length: 75 }, (_, i) =>
-        createMockResult({ config: { smaPeriod: 20 + i, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 } })
-      );
-      render(<SmaComparisonTable results={results} baseline={null} />);
-
-      const showAllButton = screen.getByText('Show All 75');
-      await user.click(showAllButton);
-
-      const showTop50Button = screen.getByText('Show Top 50');
-      await user.click(showTop50Button);
-
-      const rows = screen.getAllByRole('row');
-      expect(rows.length).toBe(51);
+      expect(screen.getByText('1-25 of 75')).toBeDefined();
     });
   });
 
