@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { BaselineCard } from '@/components/baseline-card';
 import { MetricsCards, type Metrics } from '@/components/metrics-cards';
 import { OptimalStrategyCard } from '@/components/optimal-strategy-card';
+import { DayByDayTable } from '@/components/day-by-day-table';
 import {
   formatCurrency,
   formatPercent,
@@ -69,6 +70,14 @@ export function ResultsTable({ results, baseline }: ResultsTableProps) {
 
         {baseline && sortedResults.length > 0 && !sortedResults[0].isLiquidated && (
           <OptimalStrategyCard result={sortedResults[0]} baseline={baseline} />
+        )}
+
+        {baseline && sortedResults.length > 0 && !sortedResults[0].isLiquidated && (
+          <DayByDayTable
+            result={sortedResults[0]}
+            purchasePrice={baseline.purchasePrice}
+            startingCapital={baseline.startingCapital}
+          />
         )}
 
         <Table>
