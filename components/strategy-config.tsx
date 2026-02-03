@@ -43,37 +43,25 @@ export function StrategyConfig() {
   };
 
   const handleAtrEnabledChange = (checked: boolean) => {
-    if (checked) {
-      setConfig({
-        ...config,
-        atrEnabled: true,
-        atrPeriod: 14,
-        atrMultiplier: 3,
-        atrClosePercent: 100,
-      });
-    } else {
-      setConfig({
-        ...config,
-        atrEnabled: false,
-        atrPeriod: undefined,
-        atrMultiplier: undefined,
-        atrClosePercent: undefined,
-      });
-    }
+    const newConfig: StrategyConfig = checked
+      ? {
+          ...config,
+          atrEnabled: true,
+          atrPeriod: 14,
+          atrMultiplier: 3,
+          atrClosePercent: 100,
+        }
+      : {
+          ...config,
+          atrEnabled: false,
+          atrPeriod: undefined,
+          atrMultiplier: undefined,
+          atrClosePercent: undefined,
+        };
+
+    setConfig(newConfig);
     setTouched({ ...touched, atrEnabled: true });
-    setValidation(validateStrategyConfig(checked ? {
-      ...config,
-      atrEnabled: true,
-      atrPeriod: 14,
-      atrMultiplier: 3,
-      atrClosePercent: 100,
-    } : {
-      ...config,
-      atrEnabled: false,
-      atrPeriod: undefined,
-      atrMultiplier: undefined,
-      atrClosePercent: undefined,
-    }));
+    setValidation(validateStrategyConfig(newConfig));
   };
 
   const handleAtrPeriodChange = (value: string) => {

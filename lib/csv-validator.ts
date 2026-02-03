@@ -1,7 +1,7 @@
 import type { CsvRow, ValidationResult } from './types';
 import { MIN_DATA_ROWS, REQUIRED_HEADERS } from './types';
 
-const DATE_REGEX = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
+const DATE_PATTERN = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
 
 export function validateCsv(parsedData: unknown[]): ValidationResult {
   if (!Array.isArray(parsedData) || parsedData.length === 0) {
@@ -47,7 +47,7 @@ export function validateCsv(parsedData: unknown[]): ValidationResult {
       }
 
       if (header === 'date') {
-        if (typeof value !== 'string' || !DATE_REGEX.test(value)) {
+        if (typeof value !== 'string' || !DATE_PATTERN.test(value)) {
           return {
             valid: false,
             error: `Invalid date format at row ${rowNum}. Expected DD/MM/YYYY, got: ${value}`

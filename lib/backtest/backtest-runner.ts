@@ -58,6 +58,7 @@ export function runBacktest(
   let totalTrades = 0;
   let isLiquidated = false;
   let liquidationDay: number | undefined;
+  let liquidationDate: string | undefined;
   let sidelineValue = 0;
 
   const days: DayResult[] = [];
@@ -151,6 +152,7 @@ export function runBacktest(
     if (balance <= MIN_BALANCE_THRESHOLD) {
       isLiquidated = true;
       liquidationDay = i;
+      liquidationDate = row.date;
       balance = MIN_BALANCE_THRESHOLD;
       currentPosition = null;
 
@@ -174,11 +176,15 @@ export function runBacktest(
       const capitalForPosition = balance + sidelineValue;
       sidelineValue = 0;
 
+      if (newLeverage === undefined) {
+        throw new Error('newLeverage is required for opening position');
+      }
+
       currentPosition = openPosition(
         newPositionType,
         price,
         capitalForPosition,
-        newLeverage!
+        newLeverage
       );
 
       if (config.atr && atrValues) {
@@ -226,5 +232,6 @@ export function runBacktest(
     totalTrades,
     isLiquidated,
     liquidationDay,
+    liquidationDate,
   };
 }

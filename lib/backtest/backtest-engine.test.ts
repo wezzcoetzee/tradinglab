@@ -252,6 +252,63 @@ describe('runAllBacktests - result properties', () => {
     expect(liquidated.length).toBeGreaterThan(0);
   });
 
+  test('should_set_liquidation_date_when_liquidated', () => {
+    const csvData: CsvRow[] = [
+      ...Array(161).fill(null).map((_, i) => ({
+        time: i + 1,
+        high: 22,
+        low: 18,
+        close: 20,
+        RSI: 50,
+        date: `2024-01-${String(i + 1).padStart(2, '0')}`,
+      })),
+      { time: 162, high: 102, low: 98, close: 100, RSI: 50, date: '2024-06-10' },
+      { time: 163, high: 202, low: 198, close: 200, RSI: 50, date: '2024-06-11' },
+    ];
+    const strategyConfig: StrategyConfig = {
+      startingCapital: 10,
+      tradingFee: 20.0,
+      atrEnabled: false,
+    };
+
+    const input: BacktestBatchInput = {
+      csvData,
+      strategyConfig,
+    };
+
+    const result = runAllBacktests(input);
+
+    const liquidated = result.results.filter(r => r.isLiquidated);
+    expect(liquidated.length).toBeGreaterThan(0);
+    liquidated.forEach(r => {
+      expect(r.liquidationDate).toBeDefined();
+      expect(typeof r.liquidationDate).toBe('string');
+      expect(r.liquidationDate?.length).toBeGreaterThan(0);
+    });
+  });
+
+  test('should_not_set_liquidation_date_when_not_liquidated', () => {
+    const csvData = generateCsvData(200);
+    const strategyConfig: StrategyConfig = {
+      startingCapital: 10000,
+      tradingFee: 0.1,
+      atrEnabled: false,
+    };
+
+    const input: BacktestBatchInput = {
+      csvData,
+      strategyConfig,
+    };
+
+    const result = runAllBacktests(input);
+
+    const nonLiquidated = result.results.filter(r => !r.isLiquidated);
+    expect(nonLiquidated.length).toBeGreaterThan(0);
+    nonLiquidated.forEach(r => {
+      expect(r.liquidationDate).toBeUndefined();
+    });
+  });
+
   test('should_include_days_array_in_each_result', () => {
     const csvData = generateCsvData(200);
     const strategyConfig: StrategyConfig = {

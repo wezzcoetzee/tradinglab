@@ -63,6 +63,7 @@ export interface BacktestResult {
   totalTrades: number;
   isLiquidated: boolean;
   liquidationDay?: number;
+  liquidationDate?: string;
 }
 
 export interface BacktestBatchInput {

@@ -29,8 +29,15 @@ export interface StrategyConfigValidation {
   data?: StrategyConfig;
 }
 
+import {
+  ATR_CLOSE_PERCENTS,
+  ATR_MULTIPLIERS,
+  ATR_PERIODS,
+  WARMUP_DAYS,
+} from './backtest/constants';
+
 export const REQUIRED_HEADERS = ['time', 'high', 'low', 'close', 'RSI', 'date'] as const;
-export const MIN_DATA_ROWS = 160;
+export const MIN_DATA_ROWS = WARMUP_DAYS;
 
 export const DEFAULT_STRATEGY_CONFIG: StrategyConfig = {
   startingCapital: 10000,
@@ -38,6 +45,6 @@ export const DEFAULT_STRATEGY_CONFIG: StrategyConfig = {
   atrEnabled: false,
 };
 
-export const ATR_PERIOD_OPTIONS = [10, 14, 20] as const;
-export const ATR_MULTIPLIER_OPTIONS = [2, 2.5, 3, 3.5, 4] as const;
-export const ATR_CLOSE_PERCENT_OPTIONS = [10, 25, 50, 100] as const;
+export const ATR_PERIOD_OPTIONS = ATR_PERIODS;
+export const ATR_MULTIPLIER_OPTIONS = ATR_MULTIPLIERS;
+export const ATR_CLOSE_PERCENT_OPTIONS = ATR_CLOSE_PERCENTS;
