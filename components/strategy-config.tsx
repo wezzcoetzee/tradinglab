@@ -98,113 +98,108 @@ export function StrategyConfigForm({ onConfigChange }: StrategyConfigProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="startingCapital">Starting Capital ($)</Label>
-              <Input
-                id="startingCapital"
-                type="number"
-                min="0"
-                step="100"
-                value={config.startingCapital}
-                onChange={handleStartingCapitalChange}
-                onBlur={handleStartingCapitalBlur}
-                autoComplete="off"
-              />
-            </div>
+        <div className="grid grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="startingCapital">Starting Capital ($)</Label>
+            <Input
+              id="startingCapital"
+              type="number"
+              min="0"
+              step="100"
+              value={config.startingCapital}
+              onChange={handleStartingCapitalChange}
+              onBlur={handleStartingCapitalBlur}
+              autoComplete="off"
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="tradingFee">Trading Fee (%)</Label>
-              <Input
-                id="tradingFee"
-                type="number"
-                min="0"
-                max="100"
-                step="0.01"
-                value={config.tradingFee}
-                onChange={handleTradingFeeChange}
-                onBlur={handleTradingFeeBlur}
-                autoComplete="off"
+          <div className="space-y-2">
+            <Label className="invisible">Toggle</Label>
+            <div className="flex items-center space-x-2 h-9">
+              <Switch
+                id="atrEnabled"
+                checked={config.atrEnabled}
+                onCheckedChange={handleAtrEnabledChange}
               />
+              <Label htmlFor="atrEnabled" className="cursor-pointer text-sm font-medium whitespace-nowrap">
+                ATR Stop Loss
+              </Label>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-3">
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="atrEnabled"
-                  checked={config.atrEnabled}
-                  onCheckedChange={handleAtrEnabledChange}
-                />
-                <Label htmlFor="atrEnabled" className="cursor-pointer text-sm font-medium">
-                  ATR Stop Loss
-                </Label>
-              </div>
+          <div className={`space-y-2 ${atrDisabledClass}`}>
+            <Label htmlFor="atrMultiplier">Multiplier</Label>
+            <Select
+              value={(config.atrMultiplier ?? 3).toString()}
+              onValueChange={handleAtrMultiplierChange}
+              disabled={!config.atrEnabled}
+            >
+              <SelectTrigger id="atrMultiplier" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ATR_MULTIPLIER_OPTIONS.map((multiplier) => (
+                  <SelectItem key={multiplier} value={multiplier.toString()}>
+                    {multiplier}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-              <div className={`space-y-1 ${atrDisabledClass}`}>
-                <Label htmlFor="atrPeriod" className="text-xs text-muted-foreground">Period</Label>
-                <Select
-                  value={(config.atrPeriod ?? 14).toString()}
-                  onValueChange={handleAtrPeriodChange}
-                  disabled={!config.atrEnabled}
-                >
-                  <SelectTrigger id="atrPeriod" className="h-9">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ATR_PERIOD_OPTIONS.map((period) => (
-                      <SelectItem key={period} value={period.toString()}>
-                        {period}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="tradingFee">Trading Fee (%)</Label>
+            <Input
+              id="tradingFee"
+              type="number"
+              min="0"
+              max="100"
+              step="0.01"
+              value={config.tradingFee}
+              onChange={handleTradingFeeChange}
+              onBlur={handleTradingFeeBlur}
+              autoComplete="off"
+            />
+          </div>
 
-            <div className={`space-y-3 ${atrDisabledClass}`}>
-              <div className="space-y-1">
-                <Label htmlFor="atrMultiplier" className="text-xs text-muted-foreground">Multiplier</Label>
-                <Select
-                  value={(config.atrMultiplier ?? 3).toString()}
-                  onValueChange={handleAtrMultiplierChange}
-                  disabled={!config.atrEnabled}
-                >
-                  <SelectTrigger id="atrMultiplier" className="h-9">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ATR_MULTIPLIER_OPTIONS.map((multiplier) => (
-                      <SelectItem key={multiplier} value={multiplier.toString()}>
-                        {multiplier}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+          <div className={`space-y-2 ${atrDisabledClass}`}>
+            <Label htmlFor="atrPeriod">Period</Label>
+            <Select
+              value={(config.atrPeriod ?? 14).toString()}
+              onValueChange={handleAtrPeriodChange}
+              disabled={!config.atrEnabled}
+            >
+              <SelectTrigger id="atrPeriod" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ATR_PERIOD_OPTIONS.map((period) => (
+                  <SelectItem key={period} value={period.toString()}>
+                    {period}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-              <div className="space-y-1">
-                <Label htmlFor="atrClosePercent" className="text-xs text-muted-foreground">Close %</Label>
-                <Select
-                  value={(config.atrClosePercent ?? 100).toString()}
-                  onValueChange={handleAtrClosePercentChange}
-                  disabled={!config.atrEnabled}
-                >
-                  <SelectTrigger id="atrClosePercent" className="h-9">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ATR_CLOSE_PERCENT_OPTIONS.map((percent) => (
-                      <SelectItem key={percent} value={percent.toString()}>
-                        {percent}%
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+          <div className={`space-y-2 ${atrDisabledClass}`}>
+            <Label htmlFor="atrClosePercent">Close %</Label>
+            <Select
+              value={(config.atrClosePercent ?? 100).toString()}
+              onValueChange={handleAtrClosePercentChange}
+              disabled={!config.atrEnabled}
+            >
+              <SelectTrigger id="atrClosePercent" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ATR_CLOSE_PERCENT_OPTIONS.map((percent) => (
+                  <SelectItem key={percent} value={percent.toString()}>
+                    {percent}%
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
