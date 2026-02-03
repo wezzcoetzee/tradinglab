@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { runAllBacktests, findBestResult } from './backtest-engine';
 import type { BacktestBatchInput, BacktestResult } from './types';
 import type { CsvRow, StrategyConfig } from '../types';
+import { WARMUP_DAYS } from './constants';
 
 function generateCsvData(days: number, startPrice: number = 100): CsvRow[] {
   return Array.from({ length: days }, (_, i) => ({
@@ -581,6 +582,101 @@ describe('runAllBacktests - performance', () => {
 
     expect(result.results.length).toBe(11421);
     expect(result.executionTimeMs).toBeGreaterThan(0);
+  });
+});
+
+describe('runAllBacktests - buy and hold baseline', () => {
+  test('should_include_baseline_in_result', () => {
+    // #given
+    const csvData = generateCsvData(200);
+    const strategyConfig: StrategyConfig = {
+      startingCapital: 1000,
+      tradingFee: 0.1,
+      atrEnabled: false,
+    };
+    const input: BacktestBatchInput = { csvData, strategyConfig };
+
+    // #when
+    const result = runAllBacktests(input);
+
+    // #then
+    expect(result.buyAndHoldBaseline).toBeDefined();
+    expect(result.buyAndHoldBaseline!.startingCapital).toBe(1000);
+  });
+
+  test('should_use_correct_purchase_date', () => {
+    // #given
+    const csvData = generateCsvData(200);
+    const strategyConfig: StrategyConfig = {
+      startingCapital: 1000,
+      tradingFee: 0.1,
+      atrEnabled: false,
+    };
+    const input: BacktestBatchInput = { csvData, strategyConfig };
+
+    // #when
+    const result = runAllBacktests(input);
+
+    // #then
+    expect(result.buyAndHoldBaseline!.purchaseDate).toBe(csvData[WARMUP_DAYS - 1].date);
+    expect(result.buyAndHoldBaseline!.purchasePrice).toBe(csvData[WARMUP_DAYS - 1].close);
+  });
+
+  test('should_use_correct_final_date', () => {
+    // #given
+    const csvData = generateCsvData(200);
+    const strategyConfig: StrategyConfig = {
+      startingCapital: 1000,
+      tradingFee: 0.1,
+      atrEnabled: false,
+    };
+    const input: BacktestBatchInput = { csvData, strategyConfig };
+
+    // #when
+    const result = runAllBacktests(input);
+
+    // #then
+    const lastIndex = csvData.length - 1;
+    expect(result.buyAndHoldBaseline!.finalDate).toBe(csvData[lastIndex].date);
+    expect(result.buyAndHoldBaseline!.finalPrice).toBe(csvData[lastIndex].close);
+  });
+
+  test('should_calculate_percent_gain', () => {
+    // #given
+    const csvData = generateCsvData(200, 100);
+    const strategyConfig: StrategyConfig = {
+      startingCapital: 1000,
+      tradingFee: 0.1,
+      atrEnabled: false,
+    };
+    const input: BacktestBatchInput = { csvData, strategyConfig };
+
+    // #when
+    const result = runAllBacktests(input);
+
+    // #then
+    expect(typeof result.buyAndHoldBaseline!.percentGain).toBe('number');
+    expect(result.buyAndHoldBaseline!.percentGain).toBeGreaterThan(0);
+  });
+
+  test('should_calculate_final_value', () => {
+    // #given
+    const csvData = generateCsvData(200, 100);
+    const startingCapital = 1000;
+    const strategyConfig: StrategyConfig = {
+      startingCapital,
+      tradingFee: 0.1,
+      atrEnabled: false,
+    };
+    const input: BacktestBatchInput = { csvData, strategyConfig };
+
+    // #when
+    const result = runAllBacktests(input);
+
+    // #then
+    const { purchasePrice, finalPrice } = result.buyAndHoldBaseline!;
+    const expectedFinalValue = (startingCapital / purchasePrice) * finalPrice;
+    expect(result.buyAndHoldBaseline!.finalValue).toBeCloseTo(expectedFinalValue, 6);
   });
 });
 

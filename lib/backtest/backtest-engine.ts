@@ -1,6 +1,7 @@
 import type { BacktestBatchInput, BacktestBatchResult, BacktestResult } from './types';
 
 import { calculateAllATRs } from './atr-calculator';
+import { calculateBuyAndHoldBaseline } from './baseline-calculator';
 import { runBacktest } from './backtest-runner';
 import { generateBacktestConfigs } from './leverage-config';
 import { calculateAllSMAs, extractClosePrices } from './sma-calculator';
@@ -35,12 +36,18 @@ export function runAllBacktests(input: BacktestBatchInput): BacktestBatchResult 
     results.push(result);
   }
 
+  const buyAndHoldBaseline = calculateBuyAndHoldBaseline(
+    input.csvData,
+    input.strategyConfig.startingCapital
+  );
+
   const executionTimeMs = performance.now() - startTime;
 
   return {
     results,
     totalConfigurations: configs.length,
     executionTimeMs,
+    buyAndHoldBaseline,
   };
 }
 

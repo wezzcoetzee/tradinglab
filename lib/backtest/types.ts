@@ -71,8 +71,19 @@ export interface BacktestBatchInput {
   strategyConfig: StrategyConfig;
 }
 
+export interface BuyAndHoldBaseline {
+  purchasePrice: number;
+  purchaseDate: string;
+  finalPrice: number;
+  finalDate: string;
+  finalValue: number;
+  percentGain: number;
+  startingCapital: number;
+}
+
 export interface BacktestBatchResult {
   results: BacktestResult[];
   totalConfigurations: number;
   executionTimeMs: number;
+  buyAndHoldBaseline: BuyAndHoldBaseline | null;
 }

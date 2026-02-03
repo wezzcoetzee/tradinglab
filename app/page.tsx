@@ -10,7 +10,7 @@ export default function Home() {
           <CsvUpload />
           <StrategyConfig />
         </div>
-        <ResultsTable results={[]} />
+        <ResultsTable results={[]} baseline={null} />
       </div>
     </div>
   );

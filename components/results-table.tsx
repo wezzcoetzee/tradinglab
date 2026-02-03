@@ -4,17 +4,13 @@ import { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import type { BacktestResult } from '@/lib/backtest/types';
+import { BaselineCard } from '@/components/baseline-card';
+import { MetricsCards, type Metrics } from '@/components/metrics-cards';
+import type { BacktestResult, BuyAndHoldBaseline } from '@/lib/backtest/types';
 
 interface ResultsTableProps {
   results: BacktestResult[];
-}
-
-interface Metrics {
-  total: number;
-  profitable: number;
-  liquidated: number;
-  liquidationRate: number;
+  baseline: BuyAndHoldBaseline | null;
 }
 
 function formatCurrency(value: number): string {
@@ -36,7 +32,21 @@ function formatAtrConfig(result: BacktestResult): string {
   return `${atr.period}/${atr.multiplier}/${atr.closePercent}%`;
 }
 
-export function ResultsTable({ results }: ResultsTableProps) {
+function calculateVsHold(finalBalance: number, baselineFinalValue: number): number {
+  return ((finalBalance - baselineFinalValue) / baselineFinalValue) * 100;
+}
+
+function getReturnColorClass(returnPercent: number): string {
+  return returnPercent >= 0 ? 'text-green-600' : 'text-destructive';
+}
+
+function getVsHoldClass(vsHold: number): string {
+  if (vsHold > 5) return 'text-green-600';
+  if (vsHold < -5) return 'text-destructive';
+  return 'text-yellow-600';
+}
+
+export function ResultsTable({ results, baseline }: ResultsTableProps) {
   const sortedResults = useMemo(() => {
     return [...results].sort((a, b) => {
       if (a.isLiquidated !== b.isLiquidated) {
@@ -67,24 +77,9 @@ export function ResultsTable({ results }: ResultsTableProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="text-center p-3 rounded-lg bg-muted">
-            <div className="text-2xl font-bold">{metrics.total}</div>
-            <div className="text-sm text-muted-foreground">Total Configs</div>
-          </div>
-          <div className="text-center p-3 rounded-lg bg-muted">
-            <div className="text-2xl font-bold text-green-600">{metrics.profitable}</div>
-            <div className="text-sm text-muted-foreground">Profitable</div>
-          </div>
-          <div className="text-center p-3 rounded-lg bg-muted">
-            <div className="text-2xl font-bold text-destructive">{metrics.liquidated}</div>
-            <div className="text-sm text-muted-foreground">Liquidated</div>
-          </div>
-          <div className="text-center p-3 rounded-lg bg-muted">
-            <div className="text-2xl font-bold text-destructive">{metrics.liquidationRate.toFixed(1)}%</div>
-            <div className="text-sm text-muted-foreground">Liquidation Rate</div>
-          </div>
-        </div>
+        {baseline && <BaselineCard baseline={baseline} />}
+
+        <MetricsCards metrics={metrics} />
 
         <Table>
           <TableHeader>
@@ -95,6 +90,7 @@ export function ResultsTable({ results }: ResultsTableProps) {
               <TableHead>ATR Config</TableHead>
               <TableHead className="text-right">Final Balance</TableHead>
               <TableHead className="text-right">Return</TableHead>
+              <TableHead className="text-right">vs Hold</TableHead>
               <TableHead className="text-right">Trades</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Liquidation Date</TableHead>
@@ -113,8 +109,16 @@ export function ResultsTable({ results }: ResultsTableProps) {
                 <TableCell className="text-right font-mono">
                   {formatCurrency(result.finalBalance)}
                 </TableCell>
-                <TableCell className={`text-right font-mono ${result.totalReturn >= 0 ? 'text-green-600' : 'text-destructive'}`}>
+                <TableCell className={`text-right font-mono ${getReturnColorClass(result.totalReturn)}`}>
                   {formatPercent(result.totalReturn)}
+                </TableCell>
+                <TableCell className="text-right font-mono">
+                  {baseline ? (
+                    (() => {
+                      const vsHold = calculateVsHold(result.finalBalance, baseline.finalValue);
+                      return <span className={getVsHoldClass(vsHold)}>{formatPercent(vsHold)}</span>;
+                    })()
+                  ) : '-'}
                 </TableCell>
                 <TableCell className="text-right">{result.totalTrades}</TableCell>
                 <TableCell>
