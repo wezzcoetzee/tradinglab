@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Settings, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -17,7 +17,11 @@ import {
 } from '@/lib/types';
 import type { StrategyConfig, StrategyConfigValidation } from '@/lib/types';
 
-export function StrategyConfig() {
+interface StrategyConfigProps {
+  onConfigChange?: (config: StrategyConfig | null) => void;
+}
+
+export function StrategyConfigForm({ onConfigChange }: StrategyConfigProps) {
   const [config, setConfig] = useState<StrategyConfig>(DEFAULT_STRATEGY_CONFIG);
   const [validation, setValidation] = useState<StrategyConfigValidation | null>(null);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -77,6 +81,11 @@ export function StrategyConfig() {
   };
 
   const shouldShowError = validation && !validation.valid && Object.keys(touched).length > 0;
+
+  useEffect(() => {
+    const result = validateStrategyConfig(config);
+    onConfigChange?.(result.valid ? config : null);
+  }, [config, onConfigChange]);
 
   return (
     <Card className="w-full max-w-2xl">

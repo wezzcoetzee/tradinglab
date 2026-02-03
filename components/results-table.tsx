@@ -6,24 +6,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { BaselineCard } from '@/components/baseline-card';
 import { MetricsCards, type Metrics } from '@/components/metrics-cards';
+import {
+  formatCurrency,
+  formatPercent,
+  getReturnColorClass,
+  getVsHoldColorClass,
+} from '@/lib/format';
 import type { BacktestResult, BuyAndHoldBaseline } from '@/lib/backtest/types';
 
 interface ResultsTableProps {
   results: BacktestResult[];
   baseline: BuyAndHoldBaseline | null;
-}
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
-}
-
-function formatPercent(value: number): string {
-  return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
 }
 
 function formatAtrConfig(result: BacktestResult): string {
@@ -34,16 +27,6 @@ function formatAtrConfig(result: BacktestResult): string {
 
 function calculateVsHold(finalBalance: number, baselineFinalValue: number): number {
   return ((finalBalance - baselineFinalValue) / baselineFinalValue) * 100;
-}
-
-function getReturnColorClass(returnPercent: number): string {
-  return returnPercent >= 0 ? 'text-green-600' : 'text-destructive';
-}
-
-function getVsHoldClass(vsHold: number): string {
-  if (vsHold > 5) return 'text-green-600';
-  if (vsHold < -5) return 'text-destructive';
-  return 'text-yellow-600';
 }
 
 export function ResultsTable({ results, baseline }: ResultsTableProps) {
@@ -116,7 +99,7 @@ export function ResultsTable({ results, baseline }: ResultsTableProps) {
                   {baseline ? (
                     (() => {
                       const vsHold = calculateVsHold(result.finalBalance, baseline.finalValue);
-                      return <span className={getVsHoldClass(vsHold)}>{formatPercent(vsHold)}</span>;
+                      return <span className={getVsHoldColorClass(vsHold)}>{formatPercent(vsHold)}</span>;
                     })()
                   ) : '-'}
                 </TableCell>

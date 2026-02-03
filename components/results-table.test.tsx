@@ -1,7 +1,11 @@
-import { describe, expect, test } from 'bun:test';
-import { render, screen } from '@testing-library/react';
+import { describe, expect, test, afterEach } from 'bun:test';
+import { render, screen, cleanup } from '@testing-library/react';
 import { ResultsTable } from './results-table';
 import type { BacktestResult, BuyAndHoldBaseline } from '@/lib/backtest/types';
+
+afterEach(() => {
+  cleanup();
+});
 
 function createMockBaseline(overrides: Partial<BuyAndHoldBaseline> = {}): BuyAndHoldBaseline {
   return {

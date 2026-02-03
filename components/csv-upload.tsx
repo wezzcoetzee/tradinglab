@@ -7,9 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { validateCsv } from '@/lib/csv-validator';
-import type { ValidationResult } from '@/lib/types';
+import type { CsvRow, ValidationResult } from '@/lib/types';
 
-export function CsvUpload() {
+interface CsvUploadProps {
+  onDataLoaded?: (data: CsvRow[]) => void;
+}
+
+export function CsvUpload({ onDataLoaded }: CsvUploadProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<ValidationResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -36,6 +40,9 @@ export function CsvUpload() {
         const validation = validateCsv(results.data);
         setResult(validation);
         setIsLoading(false);
+        if (validation.valid && validation.data) {
+          onDataLoaded?.(validation.data);
+        }
       },
       error: (error) => {
         setResult({

@@ -8,3 +8,5 @@ export const ATR_MULTIPLIERS = [2, 2.5, 3, 3.5, 4] as const;
 export const ATR_CLOSE_PERCENTS = [10, 25, 50, 100] as const;
 
 export const WARMUP_DAYS = 160;
+
+export const WORKER_PROGRESS_INTERVAL = 100;
