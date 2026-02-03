@@ -27,7 +27,7 @@ export function OptimalStrategyCard({ result, baseline }: OptimalStrategyCardPro
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="text-center">
-          <div className="text-5xl font-bold font-mono tracking-tight">
+          <div className="text-5xl font-bold font-mono tabular-nums tracking-tight">
             {formatCurrency(result.finalBalance)}
           </div>
           <div className="mt-2 flex justify-center gap-2">
@@ -49,23 +49,23 @@ export function OptimalStrategyCard({ result, baseline }: OptimalStrategyCardPro
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 pt-4 border-t">
           <div>
             <div className="text-xs text-muted-foreground">SMA Period</div>
-            <div className="font-mono font-medium">{result.config.smaPeriod}</div>
+            <div className="font-mono font-medium tabular-nums">{result.config.smaPeriod}</div>
           </div>
           <div>
             <div className="text-xs text-muted-foreground">Long Leverage</div>
-            <div className="font-mono font-medium">{result.config.longLeverage}x</div>
+            <div className="font-mono font-medium tabular-nums">{result.config.longLeverage}x</div>
           </div>
           <div>
             <div className="text-xs text-muted-foreground">Short Leverage</div>
-            <div className="font-mono font-medium">{result.config.shortLeverage}x</div>
+            <div className="font-mono font-medium tabular-nums">{result.config.shortLeverage}x</div>
           </div>
           <div>
             <div className="text-xs text-muted-foreground">ATR Config</div>
-            <div className="font-mono font-medium">{formatAtrConfig(result.config.atr, 'None')}</div>
+            <div className="font-mono font-medium tabular-nums">{formatAtrConfig(result.config.atr, 'None')}</div>
           </div>
           <div>
             <div className="text-xs text-muted-foreground">Total Trades</div>
-            <div className="font-mono font-medium">{result.totalTrades}</div>
+            <div className="font-mono font-medium tabular-nums">{result.totalTrades}</div>
           </div>
         </div>
       </CardContent>

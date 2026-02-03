@@ -70,7 +70,7 @@ export function OptimizationProgressCard({ progress, onCancel }: OptimizationPro
           <>
             <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
               <div
-                className="h-full bg-primary transition-all duration-300"
+                className="h-full bg-primary motion-safe:transition-all motion-safe:duration-300"
                 style={{ width: `${progress.percentComplete}%` }}
               />
             </div>
@@ -78,7 +78,7 @@ export function OptimizationProgressCard({ progress, onCancel }: OptimizationPro
             <div className="grid grid-cols-3 gap-4 text-sm">
               <div>
                 <div className="text-muted-foreground">Elapsed</div>
-                <div className="font-mono">{formatTime(progress.elapsedMs)}</div>
+                <div className="font-mono tabular-nums">{formatTime(progress.elapsedMs)}</div>
               </div>
               <div>
                 <div className="text-muted-foreground">Remaining</div>

@@ -58,14 +58,17 @@ function SortableHeader({ field, label, sortConfig, onSort, className }: Sortabl
     ? sortConfig.direction === 'asc' ? ChevronUp : ChevronDown
     : ChevronsUpDown;
 
+  const sortDirection = isSorted ? (sortConfig.direction === 'asc' ? 'descending' : 'ascending') : 'descending';
+
   return (
     <TableHead
       className={`cursor-pointer select-none hover:bg-muted/50 ${className ?? ''}`}
       onClick={() => onSort(field)}
+      aria-label={`Sort by ${label} ${sortDirection}`}
     >
       <div className="flex items-center gap-1">
         {label}
-        <Icon className="h-4 w-4" />
+        <Icon className="h-4 w-4" aria-hidden="true" />
       </div>
     </TableHead>
   );

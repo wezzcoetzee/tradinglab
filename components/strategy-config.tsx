@@ -91,7 +91,7 @@ export function StrategyConfigForm({ onConfigChange }: StrategyConfigProps) {
     <Card className="w-full max-w-2xl">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Settings className="h-5 w-5" />
+          <Settings className="h-5 w-5" aria-hidden="true" />
           Strategy Configuration
         </CardTitle>
         <CardDescription>
@@ -110,6 +110,7 @@ export function StrategyConfigForm({ onConfigChange }: StrategyConfigProps) {
               value={config.startingCapital}
               onChange={handleStartingCapitalChange}
               onBlur={handleStartingCapitalBlur}
+              autoComplete="off"
             />
           </div>
 
@@ -124,6 +125,7 @@ export function StrategyConfigForm({ onConfigChange }: StrategyConfigProps) {
               value={config.tradingFee}
               onChange={handleTradingFeeChange}
               onBlur={handleTradingFeeBlur}
+              autoComplete="off"
             />
           </div>
         </div>

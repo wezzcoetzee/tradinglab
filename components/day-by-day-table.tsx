@@ -49,10 +49,23 @@ function CollapsibleHeader({
 }) {
   const ChevronIcon = isExpanded ? ChevronDown : ChevronRight;
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onToggle();
+    }
+  };
+
   return (
-    <CardHeader className="cursor-pointer select-none" onClick={onToggle}>
+    <CardHeader
+      className="cursor-pointer select-none"
+      onClick={onToggle}
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={0}
+    >
       <div className="flex items-center gap-2">
-        <ChevronIcon className="h-5 w-5" />
+        <ChevronIcon className="h-5 w-5" aria-hidden="true" />
         <CardTitle>Day-by-Day Performance</CardTitle>
         <span className="text-muted-foreground text-sm">
           ({tradingDaysCount} trading days)

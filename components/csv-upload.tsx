@@ -66,7 +66,7 @@ export function CsvUpload({ onDataLoaded }: CsvUploadProps) {
     <Card className="w-full max-w-2xl">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <FileText className="h-5 w-5" />
+          <FileText className="h-5 w-5" aria-hidden="true" />
           CSV Upload
         </CardTitle>
         <CardDescription>
@@ -80,6 +80,7 @@ export function CsvUpload({ onDataLoaded }: CsvUploadProps) {
           accept=".csv"
           onChange={handleFileSelect}
           className="hidden"
+          aria-label="Upload CSV file"
         />
 
         <Button
