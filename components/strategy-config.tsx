@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { validateStrategyConfig } from '@/lib/strategy-validator';
 import {
@@ -51,16 +51,13 @@ export function StrategyConfigForm({ onConfigChange }: StrategyConfigProps) {
       ? {
           ...config,
           atrEnabled: true,
-          atrPeriod: 14,
-          atrMultiplier: 3,
-          atrClosePercent: 100,
+          atrPeriod: config.atrPeriod ?? 14,
+          atrMultiplier: config.atrMultiplier ?? 3,
+          atrClosePercent: config.atrClosePercent ?? 100,
         }
       : {
           ...config,
           atrEnabled: false,
-          atrPeriod: undefined,
-          atrMultiplier: undefined,
-          atrClosePercent: undefined,
         };
 
     setConfig(newConfig);
@@ -87,71 +84,74 @@ export function StrategyConfigForm({ onConfigChange }: StrategyConfigProps) {
     onConfigChange?.(result.valid ? config : null);
   }, [config, onConfigChange]);
 
+  const atrDisabledClass = config.atrEnabled ? '' : 'opacity-40 pointer-events-none';
+
   return (
-    <Card className="w-full max-w-2xl">
+    <Card className="w-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Settings className="h-5 w-5" aria-hidden="true" />
           Strategy Configuration
         </CardTitle>
         <CardDescription>
-          Configure starting capital, fees, and optional ATR trailing stop loss
+          Configure starting capital, fees, and ATR trailing stop loss
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="startingCapital">Starting Capital ($)</Label>
-            <Input
-              id="startingCapital"
-              type="number"
-              min="0"
-              step="100"
-              value={config.startingCapital}
-              onChange={handleStartingCapitalChange}
-              onBlur={handleStartingCapitalBlur}
-              autoComplete="off"
-            />
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="startingCapital">Starting Capital ($)</Label>
+              <Input
+                id="startingCapital"
+                type="number"
+                min="0"
+                step="100"
+                value={config.startingCapital}
+                onChange={handleStartingCapitalChange}
+                onBlur={handleStartingCapitalBlur}
+                autoComplete="off"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="tradingFee">Trading Fee (%)</Label>
+              <Input
+                id="tradingFee"
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                value={config.tradingFee}
+                onChange={handleTradingFeeChange}
+                onBlur={handleTradingFeeBlur}
+                autoComplete="off"
+              />
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="tradingFee">Trading Fee (%)</Label>
-            <Input
-              id="tradingFee"
-              type="number"
-              min="0"
-              max="100"
-              step="0.01"
-              value={config.tradingFee}
-              onChange={handleTradingFeeChange}
-              onBlur={handleTradingFeeBlur}
-              autoComplete="off"
-            />
-          </div>
-        </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="atrEnabled"
+                  checked={config.atrEnabled}
+                  onCheckedChange={handleAtrEnabledChange}
+                />
+                <Label htmlFor="atrEnabled" className="cursor-pointer text-sm font-medium">
+                  ATR Stop Loss
+                </Label>
+              </div>
 
-        <div className="space-y-4 border-t pt-4">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="atrEnabled"
-              checked={config.atrEnabled}
-              onCheckedChange={handleAtrEnabledChange}
-            />
-            <Label htmlFor="atrEnabled" className="cursor-pointer">
-              Enable ATR Trailing Stop Loss
-            </Label>
-          </div>
-
-          {config.atrEnabled && (
-            <div className="space-y-4 pl-6">
-              <div className="space-y-2">
-                <Label htmlFor="atrPeriod">ATR Period</Label>
+              <div className={`space-y-1 ${atrDisabledClass}`}>
+                <Label htmlFor="atrPeriod" className="text-xs text-muted-foreground">Period</Label>
                 <Select
-                  value={config.atrPeriod?.toString()}
+                  value={(config.atrPeriod ?? 14).toString()}
                   onValueChange={handleAtrPeriodChange}
+                  disabled={!config.atrEnabled}
                 >
-                  <SelectTrigger id="atrPeriod">
-                    <SelectValue placeholder="Select period" />
+                  <SelectTrigger id="atrPeriod" className="h-9">
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {ATR_PERIOD_OPTIONS.map((period) => (
@@ -162,15 +162,18 @@ export function StrategyConfigForm({ onConfigChange }: StrategyConfigProps) {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="atrMultiplier">ATR Multiplier</Label>
+            <div className={`space-y-3 ${atrDisabledClass}`}>
+              <div className="space-y-1">
+                <Label htmlFor="atrMultiplier" className="text-xs text-muted-foreground">Multiplier</Label>
                 <Select
-                  value={config.atrMultiplier?.toString()}
+                  value={(config.atrMultiplier ?? 3).toString()}
                   onValueChange={handleAtrMultiplierChange}
+                  disabled={!config.atrEnabled}
                 >
-                  <SelectTrigger id="atrMultiplier">
-                    <SelectValue placeholder="Select multiplier" />
+                  <SelectTrigger id="atrMultiplier" className="h-9">
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {ATR_MULTIPLIER_OPTIONS.map((multiplier) => (
@@ -182,14 +185,15 @@ export function StrategyConfigForm({ onConfigChange }: StrategyConfigProps) {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="atrClosePercent">ATR Close Position (%)</Label>
+              <div className="space-y-1">
+                <Label htmlFor="atrClosePercent" className="text-xs text-muted-foreground">Close %</Label>
                 <Select
-                  value={config.atrClosePercent?.toString()}
+                  value={(config.atrClosePercent ?? 100).toString()}
                   onValueChange={handleAtrClosePercentChange}
+                  disabled={!config.atrEnabled}
                 >
-                  <SelectTrigger id="atrClosePercent">
-                    <SelectValue placeholder="Select close %" />
+                  <SelectTrigger id="atrClosePercent" className="h-9">
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {ATR_CLOSE_PERCENT_OPTIONS.map((percent) => (
@@ -201,7 +205,7 @@ export function StrategyConfigForm({ onConfigChange }: StrategyConfigProps) {
                 </Select>
               </div>
             </div>
-          )}
+          </div>
         </div>
 
         {shouldShowError && (

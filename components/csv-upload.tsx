@@ -11,9 +11,10 @@ import type { CsvRow, ValidationResult } from '@/lib/types';
 
 interface CsvUploadProps {
   onDataLoaded?: (data: CsvRow[]) => void;
+  actionButton?: React.ReactNode;
 }
 
-export function CsvUpload({ onDataLoaded }: CsvUploadProps) {
+export function CsvUpload({ onDataLoaded, actionButton }: CsvUploadProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<ValidationResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -63,7 +64,7 @@ export function CsvUpload({ onDataLoaded }: CsvUploadProps) {
   };
 
   return (
-    <Card className="w-full max-w-2xl">
+    <Card className="w-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5" aria-hidden="true" />
@@ -83,22 +84,26 @@ export function CsvUpload({ onDataLoaded }: CsvUploadProps) {
           aria-label="Upload CSV file"
         />
 
-        <Button
-          onClick={handleButtonClick}
-          disabled={isLoading}
-          className="w-full"
-          size="lg"
-        >
-          <Upload className="mr-2 h-4 w-4" />
-          {isLoading ? 'Processing...' : 'Select CSV File'}
-        </Button>
+        <div className="flex gap-3">
+          <Button
+            onClick={handleButtonClick}
+            disabled={isLoading}
+            variant="outline"
+            size="lg"
+            className="flex-1"
+          >
+            <Upload className="mr-2 h-4 w-4" />
+            {isLoading ? 'Processing…' : 'Select CSV File'}
+          </Button>
+          {actionButton}
+        </div>
 
         {result && result.valid && (
           <Alert>
             <CheckCircle2 className="h-4 w-4" />
-            <AlertTitle>Success!</AlertTitle>
+            <AlertTitle>Success</AlertTitle>
             <AlertDescription>
-              CSV validated successfully. {result.rowCount} rows loaded.
+              CSV validated. {result.rowCount} rows loaded.
             </AlertDescription>
           </Alert>
         )}

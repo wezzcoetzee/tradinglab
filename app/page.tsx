@@ -35,22 +35,23 @@ export default function Home() {
   const canRunOptimization = csvData !== null && strategyConfig !== null && !isRunning;
   const showProgress = progress.status !== 'idle';
 
+  const runButton = (
+    <Button
+      size="lg"
+      onClick={handleRunOptimization}
+      disabled={!canRunOptimization}
+      className="flex-1"
+    >
+      Run Optimization
+    </Button>
+  );
+
   return (
     <div className="flex min-h-screen items-start justify-center p-8">
       <div className="flex flex-col gap-8 w-full max-w-7xl">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <CsvUpload onDataLoaded={handleDataLoaded} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <CsvUpload onDataLoaded={handleDataLoaded} actionButton={runButton} />
           <StrategyConfigForm onConfigChange={handleConfigChange} />
-        </div>
-
-        <div className="flex justify-center">
-          <Button
-            size="lg"
-            onClick={handleRunOptimization}
-            disabled={!canRunOptimization}
-          >
-            Run Optimization
-          </Button>
         </div>
 
         {showProgress && (
