@@ -50,7 +50,8 @@ export function runBacktest(
   csvData: CsvRow[],
   smaValues: number[],
   config: BacktestConfig,
-  atrValues: number[] | null = null
+  atrValues: number[] | null = null,
+  summaryOnly: boolean = false
 ): BacktestResult {
   let balance = config.startingCapital;
   let currentPosition: Position | null = null;
@@ -89,19 +90,21 @@ export function runBacktest(
         totalFees += result.fees;
         totalTrades++;
 
-        days.push({
-          dayIndex: i,
-          date: row.date,
-          price,
-          sma,
-          action: 'ATR_PARTIAL_CLOSE',
-          position: currentPosition,
-          balance,
-          pnl: result.pnl,
-          fees: result.fees,
-          isLiquidated: false,
-          sidelineValue,
-        });
+        if (!summaryOnly) {
+          days.push({
+            dayIndex: i,
+            date: row.date,
+            price,
+            sma,
+            action: 'ATR_PARTIAL_CLOSE',
+            position: currentPosition,
+            balance,
+            pnl: result.pnl,
+            fees: result.fees,
+            isLiquidated: false,
+            sidelineValue,
+          });
+        }
         continue;
       }
     }
@@ -110,18 +113,20 @@ export function runBacktest(
     const action = determineAction(currentPosition, targetType);
 
     if (action === 'HOLD') {
-      days.push({
-        dayIndex: i,
-        date: row.date,
-        price,
-        sma,
-        action,
-        position: currentPosition,
-        balance,
-        pnl: 0,
-        fees: 0,
-        isLiquidated: false,
-      });
+      if (!summaryOnly) {
+        days.push({
+          dayIndex: i,
+          date: row.date,
+          price,
+          sma,
+          action,
+          position: currentPosition,
+          balance,
+          pnl: 0,
+          fees: 0,
+          isLiquidated: false,
+        });
+      }
       continue;
     }
 
@@ -156,18 +161,20 @@ export function runBacktest(
       balance = MIN_BALANCE_THRESHOLD;
       currentPosition = null;
 
-      days.push({
-        dayIndex: i,
-        date: row.date,
-        price,
-        sma,
-        action,
-        position: null,
-        balance: MIN_BALANCE_THRESHOLD,
-        pnl,
-        fees,
-        isLiquidated: true,
-      });
+      if (!summaryOnly) {
+        days.push({
+          dayIndex: i,
+          date: row.date,
+          price,
+          sma,
+          action,
+          position: null,
+          balance: MIN_BALANCE_THRESHOLD,
+          pnl,
+          fees,
+          isLiquidated: true,
+        });
+      }
       break;
     }
 
@@ -199,18 +206,20 @@ export function runBacktest(
       currentPosition = null;
     }
 
-    days.push({
-      dayIndex: i,
-      date: row.date,
-      price,
-      sma,
-      action,
-      position: currentPosition,
-      balance,
-      pnl,
-      fees,
-      isLiquidated: false,
-    });
+    if (!summaryOnly) {
+      days.push({
+        dayIndex: i,
+        date: row.date,
+        price,
+        sma,
+        action,
+        position: currentPosition,
+        balance,
+        pnl,
+        fees,
+        isLiquidated: false,
+      });
+    }
   }
 
   if (currentPosition && !isLiquidated) {
