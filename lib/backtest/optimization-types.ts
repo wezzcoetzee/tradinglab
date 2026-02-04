@@ -22,5 +22,5 @@ export interface WorkerInput {
 
 export type WorkerMessage =
   | { type: 'progress'; current: number; total: number; elapsedMs: number }
-  | { type: 'complete'; results: BacktestResultSummary[]; totalTimeMs: number; baseline: BuyAndHoldBaseline | null }
+  | { type: 'complete'; results: BacktestResultSummary[]; totalConfigs: number; totalTimeMs: number; baseline: BuyAndHoldBaseline | null }
   | { type: 'error'; error: string };

@@ -1,9 +1,9 @@
 import type { WorkerInput, WorkerMessage } from './optimization-types';
-import type { BacktestResult, BacktestResultSummary } from './types';
 
 import { calculateBuyAndHoldBaseline } from './baseline-calculator';
 import { runBacktest } from './backtest-runner';
 import { WORKER_PROGRESS_INTERVAL } from './constants';
+import { TopKHeap } from './top-k-heap';
 
 self.onmessage = (event: MessageEvent<WorkerInput>) => {
   const { csvData, allSMAs, allATRs, configs, startingCapital } = event.data;
@@ -12,7 +12,7 @@ self.onmessage = (event: MessageEvent<WorkerInput>) => {
   const smaMap = new Map(allSMAs);
   const atrMap = allATRs ? new Map(allATRs) : null;
 
-  const results: BacktestResult[] = [];
+  const topK = new TopKHeap(100);
   const total = configs.length;
 
   try {
@@ -26,8 +26,9 @@ self.onmessage = (event: MessageEvent<WorkerInput>) => {
 
       const atrValues = config.atr && atrMap ? atrMap.get(config.atr.period) ?? null : null;
 
-      const result = runBacktest(csvData, smaValues, config, atrValues);
-      results.push(result);
+      const result = runBacktest(csvData, smaValues, config, atrValues, true);
+      const { days: _days, ...summary } = result;
+      topK.insert(summary);
 
       if ((i + 1) % WORKER_PROGRESS_INTERVAL === 0 || i === configs.length - 1) {
         const message: WorkerMessage = {
@@ -43,13 +44,10 @@ self.onmessage = (event: MessageEvent<WorkerInput>) => {
     const baseline = calculateBuyAndHoldBaseline(csvData, startingCapital);
     const totalTimeMs = performance.now() - startTime;
 
-    const summaries: BacktestResultSummary[] = results.map(
-      ({ days: _days, ...summary }) => summary
-    );
-
     const completeMessage: WorkerMessage = {
       type: 'complete',
-      results: summaries,
+      results: topK.getResults(),
+      totalConfigs: total,
       totalTimeMs,
       baseline,
     };

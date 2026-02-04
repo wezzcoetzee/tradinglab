@@ -139,7 +139,7 @@ export function useOptimization() {
           }));
         } else if (message.type === 'complete') {
           const configsPerSecond = calculateConfigsPerSecond(
-            message.results.length,
+            message.totalConfigs,
             message.totalTimeMs
           );
 
@@ -164,8 +164,8 @@ export function useOptimization() {
           setState({
             progress: {
               status: 'complete',
-              current: message.results.length,
-              total: message.results.length,
+              current: message.totalConfigs,
+              total: message.totalConfigs,
               percentComplete: 100,
               elapsedMs: message.totalTimeMs,
               estimatedRemainingMs: 0,
