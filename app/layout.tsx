@@ -15,9 +15,62 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
+const siteUrl = 'https://simplythebest.wezzcoetzee.com';
+const siteName = 'Simply The Best';
+const siteDescription =
+  'Crypto trading strategy backtester with exhaustive parameter optimization. Test SMA crossover strategies with leverage and ATR-based trailing stops.';
+
 export const metadata: Metadata = {
-  title: 'Simply The Best',
-  description: 'Crypto trading strategy backtester with exhaustive parameter optimization',
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: siteName,
+    template: `%s | ${siteName}`,
+  },
+  description: siteDescription,
+  keywords: [
+    'crypto backtester',
+    'trading strategy',
+    'SMA crossover',
+    'parameter optimization',
+    'leverage trading',
+    'ATR trailing stop',
+    'cryptocurrency',
+    'backtest',
+  ],
+  authors: [{ name: 'Wesley Coetzee' }],
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: siteUrl,
+    siteName,
+    title: siteName,
+    description: siteDescription,
+    images: [{ url: '/icon-512.png', width: 512, height: 512, alt: siteName }],
+  },
+  twitter: {
+    card: 'summary',
+    title: siteName,
+    description: siteDescription,
+    images: ['/icon-512.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  icons: {
+    icon: '/icon-192.png',
+    apple: '/apple-touch-icon.png',
+  },
+};
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: siteName,
+  description: siteDescription,
+  url: siteUrl,
+  applicationCategory: 'FinanceApplication',
+  operatingSystem: 'Web',
 };
 
 export default function RootLayout({
@@ -27,6 +80,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
