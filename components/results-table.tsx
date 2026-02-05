@@ -69,7 +69,7 @@ export function ResultsTable({ results, baseline, bestResultWithDays, isTruncate
           {metrics.total} configurations tested
           {isTruncated && (
             <span className="text-amber-600 dark:text-amber-400">
-              {' '}(showing top 100 results)
+              {' '}(showing top 1000 results)
             </span>
           )}
         </CardDescription>

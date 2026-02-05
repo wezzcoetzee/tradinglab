@@ -13,7 +13,7 @@ self.onmessage = (event: MessageEvent<WorkerInput>) => {
   const smaMap = new Map(allSMAs);
   const atrMap = allATRs ? new Map(allATRs) : null;
 
-  const topK = atrEnabled ? new TopKHeap(100) : null;
+  const topK = atrEnabled ? new TopKHeap(1000) : null;
   const allResults: BacktestResultSummary[] = [];
   const total = configs.length;
 
