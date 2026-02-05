@@ -149,25 +149,23 @@ export function StrategyConfigForm({ onConfigChange }: StrategyConfigProps) {
           </div>
 
           <div className="space-y-2">
-            <Label className="invisible">Toggle</Label>
-            <div className="flex items-center gap-2 h-9">
+            <Label htmlFor="atrEnabled">ATR Stop Loss</Label>
+            <div className="flex items-center h-9">
               <Switch
                 id="atrEnabled"
                 checked={config.atrEnabled}
                 onCheckedChange={handleAtrEnabledChange}
               />
-              <Label htmlFor="atrEnabled" className="cursor-pointer text-sm font-medium whitespace-nowrap">
-                ATR Stop Loss
-              </Label>
-              {config.atrEnabled && (
-                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Info className="h-3 w-3 shrink-0" />
-                  Tests 60 ATR configurations: periods (10, 14, 20) × multipliers (2, 2.5, 3, 3.5, 4) × close % (10, 25, 50, 100)
-                </span>
-              )}
             </div>
           </div>
         </div>
+
+        {config.atrEnabled && (
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Info className="h-3 w-3 shrink-0" />
+            Tests 60 ATR configurations: periods (10, 14, 20) × multipliers (2, 2.5, 3, 3.5, 4) × close % (10, 25, 50, 100)
+          </div>
+        )}
 
         {shouldShowError && (
           <Alert variant="destructive">
