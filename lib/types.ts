@@ -37,6 +37,6 @@ export const DEFAULT_STRATEGY_CONFIG: StrategyConfig = {
   startingCapital: 1000,
   tradingFee: 0.05,
   atrEnabled: false,
-  smaMin: 20,
-  smaMax: 160,
+  smaMin: 2,
+  smaMax: 200,
 };

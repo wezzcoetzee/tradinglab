@@ -98,10 +98,6 @@ export function BacktestSetup({ onDataLoaded, actionButton }: BacktestSetupProps
           {actionButton}
         </div>
 
-        <p className="text-xs text-muted-foreground">
-          Tests SMA periods 20–160 with leverage 1×, 1.25×, 1.5×, 1.75×, 2×, 2.25×, 2.5×, 2.75×, 3×
-        </p>
-
         {result && result.valid && (
           <Alert>
             <CheckCircle2 className="h-4 w-4" />
