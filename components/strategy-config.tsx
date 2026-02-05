@@ -47,6 +47,26 @@ export function StrategyConfigForm({ onConfigChange }: StrategyConfigProps) {
     setValidation(validateStrategyConfig(newConfig));
   };
 
+  const handleSmaMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value, 10);
+    setConfig({ ...config, smaMin: isNaN(value) ? 0 : value });
+  };
+
+  const handleSmaMinBlur = () => {
+    setTouched({ ...touched, smaMin: true });
+    setValidation(validateStrategyConfig(config));
+  };
+
+  const handleSmaMaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value, 10);
+    setConfig({ ...config, smaMax: isNaN(value) ? 0 : value });
+  };
+
+  const handleSmaMaxBlur = () => {
+    setTouched({ ...touched, smaMax: true });
+    setValidation(validateStrategyConfig(config));
+  };
+
   const shouldShowError = validation && !validation.valid && Object.keys(touched).length > 0;
 
   useEffect(() => {
@@ -66,7 +86,7 @@ export function StrategyConfigForm({ onConfigChange }: StrategyConfigProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-3 gap-4">
+        <div className="flex flex-wrap gap-4">
           <div className="space-y-2">
             <Label htmlFor="startingCapital">Starting Capital ($)</Label>
             <Input
@@ -78,6 +98,7 @@ export function StrategyConfigForm({ onConfigChange }: StrategyConfigProps) {
               onChange={handleStartingCapitalChange}
               onBlur={handleStartingCapitalBlur}
               autoComplete="off"
+              className="w-32"
             />
           </div>
 
@@ -93,12 +114,43 @@ export function StrategyConfigForm({ onConfigChange }: StrategyConfigProps) {
               onChange={handleTradingFeeChange}
               onBlur={handleTradingFeeBlur}
               autoComplete="off"
+              className="w-24"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="smaMin">SMA Min</Label>
+            <Input
+              id="smaMin"
+              type="number"
+              min="2"
+              step="1"
+              value={config.smaMin}
+              onChange={handleSmaMinChange}
+              onBlur={handleSmaMinBlur}
+              autoComplete="off"
+              className="w-20"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="smaMax">SMA Max</Label>
+            <Input
+              id="smaMax"
+              type="number"
+              min="3"
+              step="1"
+              value={config.smaMax}
+              onChange={handleSmaMaxChange}
+              onBlur={handleSmaMaxBlur}
+              autoComplete="off"
+              className="w-20"
             />
           </div>
 
           <div className="space-y-2">
             <Label className="invisible">Toggle</Label>
-            <div className="flex items-center space-x-2 h-9">
+            <div className="flex items-center gap-2 h-9">
               <Switch
                 id="atrEnabled"
                 checked={config.atrEnabled}
@@ -107,18 +159,15 @@ export function StrategyConfigForm({ onConfigChange }: StrategyConfigProps) {
               <Label htmlFor="atrEnabled" className="cursor-pointer text-sm font-medium whitespace-nowrap">
                 ATR Stop Loss
               </Label>
+              {config.atrEnabled && (
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Info className="h-3 w-3 shrink-0" />
+                  Tests 60 ATR configurations: periods (10, 14, 20) × multipliers (2, 2.5, 3, 3.5, 4) × close % (10, 25, 50, 100)
+                </span>
+              )}
             </div>
           </div>
         </div>
-
-        {config.atrEnabled && (
-          <div className="flex items-start gap-2 text-sm text-muted-foreground bg-muted/50 rounded-md p-3">
-            <Info className="h-4 w-4 mt-0.5 shrink-0" />
-            <span>
-              Optimization tests 60 ATR configurations: periods (10, 14, 20) × multipliers (2, 2.5, 3, 3.5, 4) × close % (10, 25, 50, 100)
-            </span>
-          </div>
-        )}
 
         {shouldShowError && (
           <Alert variant="destructive">

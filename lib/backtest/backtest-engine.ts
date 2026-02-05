@@ -10,7 +10,11 @@ export function runAllBacktests(input: BacktestBatchInput): BacktestBatchResult 
   const startTime = performance.now();
 
   const closePrices = extractClosePrices(input.csvData);
-  const allSMAs = calculateAllSMAs(closePrices);
+  const allSMAs = calculateAllSMAs(
+    closePrices,
+    input.strategyConfig.smaMin,
+    input.strategyConfig.smaMax
+  );
 
   const allATRs = input.strategyConfig.atrEnabled
     ? calculateAllATRs(input.csvData)
@@ -19,7 +23,9 @@ export function runAllBacktests(input: BacktestBatchInput): BacktestBatchResult 
   const configs = generateBacktestConfigs(
     input.strategyConfig.startingCapital,
     input.strategyConfig.tradingFee,
-    input.strategyConfig.atrEnabled
+    input.strategyConfig.atrEnabled,
+    input.strategyConfig.smaMin,
+    input.strategyConfig.smaMax
   );
 
   const results: BacktestResult[] = [];

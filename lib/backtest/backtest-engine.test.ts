@@ -22,6 +22,8 @@ describe('runAllBacktests - integration', () => {
       startingCapital: 1000,
       tradingFee: 0.1,
       atrEnabled: false,
+      smaMin: 20,
+      smaMax: 160,
     };
 
     const input: BacktestBatchInput = {
@@ -41,6 +43,8 @@ describe('runAllBacktests - integration', () => {
       startingCapital: 1000,
       tradingFee: 0.1,
       atrEnabled: false,
+      smaMin: 20,
+      smaMax: 160,
     };
 
     const input: BacktestBatchInput = {
@@ -60,6 +64,8 @@ describe('runAllBacktests - integration', () => {
       startingCapital: 1000,
       tradingFee: 0.1,
       atrEnabled: false,
+      smaMin: 20,
+      smaMax: 160,
     };
 
     const input: BacktestBatchInput = {
@@ -79,6 +85,8 @@ describe('runAllBacktests - integration', () => {
       startingCapital: 1000,
       tradingFee: 0.1,
       atrEnabled: false,
+      smaMin: 20,
+      smaMax: 160,
     };
 
     const input: BacktestBatchInput = {
@@ -101,6 +109,8 @@ describe('runAllBacktests - integration', () => {
       startingCapital: 1000,
       tradingFee: 0.1,
       atrEnabled: false,
+      smaMin: 20,
+      smaMax: 160,
     };
 
     const input: BacktestBatchInput = {
@@ -123,6 +133,8 @@ describe('runAllBacktests - integration', () => {
       startingCapital: 5000,
       tradingFee: 0.05,
       atrEnabled: false,
+      smaMin: 20,
+      smaMax: 160,
     };
 
     const input: BacktestBatchInput = {
@@ -145,6 +157,8 @@ describe('runAllBacktests - integration', () => {
       startingCapital: 1000,
       tradingFee: 0.1,
       atrEnabled: false,
+      smaMin: 20,
+      smaMax: 160,
     };
 
     const input: BacktestBatchInput = {
@@ -166,6 +180,8 @@ describe('runAllBacktests - result properties', () => {
       startingCapital: 1000,
       tradingFee: 0.1,
       atrEnabled: false,
+      smaMin: 20,
+      smaMax: 160,
     };
 
     const input: BacktestBatchInput = {
@@ -188,6 +204,8 @@ describe('runAllBacktests - result properties', () => {
       startingCapital: 1000,
       tradingFee: 0.1,
       atrEnabled: false,
+      smaMin: 20,
+      smaMax: 160,
     };
 
     const input: BacktestBatchInput = {
@@ -209,6 +227,8 @@ describe('runAllBacktests - result properties', () => {
       startingCapital: 1000,
       tradingFee: 0.1,
       atrEnabled: false,
+      smaMin: 20,
+      smaMax: 160,
     };
 
     const input: BacktestBatchInput = {
@@ -240,6 +260,8 @@ describe('runAllBacktests - result properties', () => {
       startingCapital: 10,
       tradingFee: 50.0, // Higher fee to trigger liquidation (fee = capital * leverage * feeRate / 100)
       atrEnabled: false,
+      smaMin: 20,
+      smaMax: 160,
     };
 
     const input: BacktestBatchInput = {
@@ -270,6 +292,8 @@ describe('runAllBacktests - result properties', () => {
       startingCapital: 10,
       tradingFee: 50.0, // Higher fee to trigger liquidation (fee = capital * leverage * feeRate / 100)
       atrEnabled: false,
+      smaMin: 20,
+      smaMax: 160,
     };
 
     const input: BacktestBatchInput = {
@@ -294,6 +318,8 @@ describe('runAllBacktests - result properties', () => {
       startingCapital: 10000,
       tradingFee: 0.1,
       atrEnabled: false,
+      smaMin: 20,
+      smaMax: 160,
     };
 
     const input: BacktestBatchInput = {
@@ -316,6 +342,8 @@ describe('runAllBacktests - result properties', () => {
       startingCapital: 1000,
       tradingFee: 0.1,
       atrEnabled: false,
+      smaMin: 20,
+      smaMax: 160,
     };
 
     const input: BacktestBatchInput = {
@@ -548,6 +576,8 @@ describe('runAllBacktests - performance', () => {
       startingCapital: 1000,
       tradingFee: 0.1,
       atrEnabled: false,
+      smaMin: 20,
+      smaMax: 160,
     };
 
     const input: BacktestBatchInput = {
@@ -571,6 +601,8 @@ describe('runAllBacktests - performance', () => {
       startingCapital: 1000,
       tradingFee: 0.1,
       atrEnabled: false,
+      smaMin: 20,
+      smaMax: 160,
     };
 
     const input: BacktestBatchInput = {
@@ -593,6 +625,8 @@ describe('runAllBacktests - buy and hold baseline', () => {
       startingCapital: 1000,
       tradingFee: 0.1,
       atrEnabled: false,
+      smaMin: 20,
+      smaMax: 160,
     };
     const input: BacktestBatchInput = { csvData, strategyConfig };
 
@@ -611,6 +645,8 @@ describe('runAllBacktests - buy and hold baseline', () => {
       startingCapital: 1000,
       tradingFee: 0.1,
       atrEnabled: false,
+      smaMin: 20,
+      smaMax: 160,
     };
     const input: BacktestBatchInput = { csvData, strategyConfig };
 
@@ -629,6 +665,8 @@ describe('runAllBacktests - buy and hold baseline', () => {
       startingCapital: 1000,
       tradingFee: 0.1,
       atrEnabled: false,
+      smaMin: 20,
+      smaMax: 160,
     };
     const input: BacktestBatchInput = { csvData, strategyConfig };
 
@@ -648,6 +686,8 @@ describe('runAllBacktests - buy and hold baseline', () => {
       startingCapital: 1000,
       tradingFee: 0.1,
       atrEnabled: false,
+      smaMin: 20,
+      smaMax: 160,
     };
     const input: BacktestBatchInput = { csvData, strategyConfig };
 
@@ -667,6 +707,8 @@ describe('runAllBacktests - buy and hold baseline', () => {
       startingCapital,
       tradingFee: 0.1,
       atrEnabled: false,
+      smaMin: 20,
+      smaMax: 160,
     };
     const input: BacktestBatchInput = { csvData, strategyConfig };
 
@@ -687,6 +729,8 @@ describe('runAllBacktests - edge cases', () => {
       startingCapital: 1000,
       tradingFee: 0.1,
       atrEnabled: false,
+      smaMin: 20,
+      smaMax: 160,
     };
 
     const input: BacktestBatchInput = {
@@ -705,6 +749,8 @@ describe('runAllBacktests - edge cases', () => {
       startingCapital: 1000,
       tradingFee: 0,
       atrEnabled: false,
+      smaMin: 20,
+      smaMax: 160,
     };
 
     const input: BacktestBatchInput = {
@@ -724,6 +770,8 @@ describe('runAllBacktests - edge cases', () => {
       startingCapital: 10000,
       tradingFee: 5.0,
       atrEnabled: false,
+      smaMin: 20,
+      smaMax: 160,
     };
 
     const input: BacktestBatchInput = {
@@ -742,6 +790,8 @@ describe('runAllBacktests - edge cases', () => {
       startingCapital: 1000,
       tradingFee: 0.1,
       atrEnabled: false,
+      smaMin: 20,
+      smaMax: 160,
     };
 
     const input: BacktestBatchInput = {

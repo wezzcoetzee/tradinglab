@@ -6,7 +6,7 @@ describe('generateBacktestConfigs', () => {
     const startingCapital = 1000;
     const feeRate = 0.1;
 
-    const result = generateBacktestConfigs(startingCapital, feeRate);
+    const result = generateBacktestConfigs(startingCapital, feeRate, false, 20, 160);
 
     // 141 SMA periods (20-160) × 9 long leverages × 9 short leverages = 11,421
     expect(result.length).toBe(11421);
@@ -16,7 +16,7 @@ describe('generateBacktestConfigs', () => {
     const startingCapital = 1000;
     const feeRate = 0.1;
 
-    const result = generateBacktestConfigs(startingCapital, feeRate);
+    const result = generateBacktestConfigs(startingCapital, feeRate, false, 20, 160);
 
     const smaPeriods = new Set(result.map(c => c.smaPeriod));
 
@@ -35,7 +35,7 @@ describe('generateBacktestConfigs', () => {
     const startingCapital = 1000;
     const feeRate = 0.1;
 
-    const result = generateBacktestConfigs(startingCapital, feeRate);
+    const result = generateBacktestConfigs(startingCapital, feeRate, false, 20, 160);
 
     const longLeverages = new Set(result.map(c => c.longLeverage));
     const shortLeverages = new Set(result.map(c => c.shortLeverage));
@@ -55,7 +55,7 @@ describe('generateBacktestConfigs', () => {
     const startingCapital = 1000;
     const feeRate = 0.1;
 
-    const result = generateBacktestConfigs(startingCapital, feeRate);
+    const result = generateBacktestConfigs(startingCapital, feeRate, false, 20, 160);
 
     const configsPerPeriod = result.filter(c => c.smaPeriod === 20);
 
@@ -66,7 +66,7 @@ describe('generateBacktestConfigs', () => {
     const startingCapital = 1000;
     const feeRate = 0.1;
 
-    const result = generateBacktestConfigs(startingCapital, feeRate);
+    const result = generateBacktestConfigs(startingCapital, feeRate, false, 20, 160);
 
     const period20Configs = result.filter(c => c.smaPeriod === 20);
     const combinations = new Set(
@@ -85,7 +85,7 @@ describe('generateBacktestConfigs', () => {
     const startingCapital = 5000;
     const feeRate = 0.1;
 
-    const result = generateBacktestConfigs(startingCapital, feeRate);
+    const result = generateBacktestConfigs(startingCapital, feeRate, false, 20, 160);
 
     const allHaveCorrectCapital = result.every(c => c.startingCapital === 5000);
 
@@ -96,7 +96,7 @@ describe('generateBacktestConfigs', () => {
     const startingCapital = 1000;
     const feeRate = 0.05;
 
-    const result = generateBacktestConfigs(startingCapital, feeRate);
+    const result = generateBacktestConfigs(startingCapital, feeRate, false, 20, 160);
 
     const allHaveCorrectFeeRate = result.every(c => c.feeRate === 0.05);
 
@@ -107,7 +107,7 @@ describe('generateBacktestConfigs', () => {
     const startingCapital = 1000;
     const feeRate = 0.1;
 
-    const result = generateBacktestConfigs(startingCapital, feeRate);
+    const result = generateBacktestConfigs(startingCapital, feeRate, false, 20, 160);
 
     const firstConfig = result[0];
 
@@ -128,7 +128,7 @@ describe('generateBacktestConfigs', () => {
     const startingCapital = 1000;
     const feeRate = 0;
 
-    const result = generateBacktestConfigs(startingCapital, feeRate);
+    const result = generateBacktestConfigs(startingCapital, feeRate, false, 20, 160);
 
     expect(result.length).toBe(11421);
     expect(result[0].feeRate).toBe(0);
@@ -138,7 +138,7 @@ describe('generateBacktestConfigs', () => {
     const startingCapital = 1000;
     const feeRate = 1.0;
 
-    const result = generateBacktestConfigs(startingCapital, feeRate);
+    const result = generateBacktestConfigs(startingCapital, feeRate, false, 20, 160);
 
     expect(result.length).toBe(11421);
     expect(result[0].feeRate).toBe(1.0);
@@ -148,7 +148,7 @@ describe('generateBacktestConfigs', () => {
     const startingCapital = 100;
     const feeRate = 0.1;
 
-    const result = generateBacktestConfigs(startingCapital, feeRate);
+    const result = generateBacktestConfigs(startingCapital, feeRate, false, 20, 160);
 
     expect(result.length).toBe(11421);
     expect(result[0].startingCapital).toBe(100);
@@ -158,7 +158,7 @@ describe('generateBacktestConfigs', () => {
     const startingCapital = 1000000;
     const feeRate = 0.1;
 
-    const result = generateBacktestConfigs(startingCapital, feeRate);
+    const result = generateBacktestConfigs(startingCapital, feeRate, false, 20, 160);
 
     expect(result.length).toBe(11421);
     expect(result[0].startingCapital).toBe(1000000);
@@ -168,7 +168,7 @@ describe('generateBacktestConfigs', () => {
     const startingCapital = 1000;
     const feeRate = 0.1;
 
-    const result = generateBacktestConfigs(startingCapital, feeRate);
+    const result = generateBacktestConfigs(startingCapital, feeRate, false, 20, 160);
 
     const configStrings = result.map(
       c => `${c.smaPeriod}-${c.longLeverage}-${c.shortLeverage}`
@@ -182,7 +182,7 @@ describe('generateBacktestConfigs', () => {
     const startingCapital = 1000;
     const feeRate = 0.1;
 
-    const result = generateBacktestConfigs(startingCapital, feeRate);
+    const result = generateBacktestConfigs(startingCapital, feeRate, false, 20, 160);
 
     const sma20Configs = result.filter(c => c.smaPeriod === 20);
     const sma160Configs = result.filter(c => c.smaPeriod === 160);
@@ -207,7 +207,7 @@ describe('generateBacktestConfigs', () => {
     const startingCapital = 1000;
     const feeRate = 0.1;
 
-    const result = generateBacktestConfigs(startingCapital, feeRate);
+    const result = generateBacktestConfigs(startingCapital, feeRate, false, 20, 160);
 
     const firstConfig = result[0];
 
@@ -220,7 +220,7 @@ describe('generateBacktestConfigs', () => {
     const startingCapital = 1000;
     const feeRate = 0.1;
 
-    const result = generateBacktestConfigs(startingCapital, feeRate);
+    const result = generateBacktestConfigs(startingCapital, feeRate, false, 20, 160);
 
     const lastConfig = result[result.length - 1];
 
@@ -233,7 +233,7 @@ describe('generateBacktestConfigs', () => {
     const startingCapital = 1000;
     const feeRate = 0.1;
 
-    const result = generateBacktestConfigs(startingCapital, feeRate);
+    const result = generateBacktestConfigs(startingCapital, feeRate, false, 20, 160);
 
     const smaPeriods = 160 - 20 + 1; // 141
     const leverageValues = 9;
@@ -248,8 +248,8 @@ describe('generateBacktestConfigs', () => {
       const startingCapital = 1000;
       const feeRate = 0.1;
 
-      const withoutAtr = generateBacktestConfigs(startingCapital, feeRate, false);
-      const withAtr = generateBacktestConfigs(startingCapital, feeRate, true);
+      const withoutAtr = generateBacktestConfigs(startingCapital, feeRate, false, 20, 160);
+      const withAtr = generateBacktestConfigs(startingCapital, feeRate, true, 20, 160);
 
       expect(withAtr.length).toBe(withoutAtr.length * 60);
       expect(withAtr.length).toBe(685260);
@@ -259,7 +259,7 @@ describe('generateBacktestConfigs', () => {
       const startingCapital = 1000;
       const feeRate = 0.1;
 
-      const result = generateBacktestConfigs(startingCapital, feeRate, true);
+      const result = generateBacktestConfigs(startingCapital, feeRate, true, 20, 160);
 
       const atrPeriods = new Set(result.filter(c => c.atr).map(c => c.atr!.period));
 
@@ -273,7 +273,7 @@ describe('generateBacktestConfigs', () => {
       const startingCapital = 1000;
       const feeRate = 0.1;
 
-      const result = generateBacktestConfigs(startingCapital, feeRate, true);
+      const result = generateBacktestConfigs(startingCapital, feeRate, true, 20, 160);
 
       const multipliers = new Set(result.filter(c => c.atr).map(c => c.atr!.multiplier));
 
@@ -289,7 +289,7 @@ describe('generateBacktestConfigs', () => {
       const startingCapital = 1000;
       const feeRate = 0.1;
 
-      const result = generateBacktestConfigs(startingCapital, feeRate, true);
+      const result = generateBacktestConfigs(startingCapital, feeRate, true, 20, 160);
 
       const closePercents = new Set(result.filter(c => c.atr).map(c => c.atr!.closePercent));
 
@@ -304,7 +304,7 @@ describe('generateBacktestConfigs', () => {
       const startingCapital = 1000;
       const feeRate = 0.1;
 
-      const result = generateBacktestConfigs(startingCapital, feeRate, true);
+      const result = generateBacktestConfigs(startingCapital, feeRate, true, 20, 160);
 
       const atrConfigs = result
         .filter(c => c.atr && c.smaPeriod === 20 && c.longLeverage === 1 && c.shortLeverage === 1)
@@ -321,7 +321,7 @@ describe('generateBacktestConfigs', () => {
       const startingCapital = 1000;
       const feeRate = 0.1;
 
-      const result = generateBacktestConfigs(startingCapital, feeRate, true);
+      const result = generateBacktestConfigs(startingCapital, feeRate, true, 20, 160);
 
       const allHaveAtr = result.every(c => c.atr !== undefined);
 
@@ -332,7 +332,7 @@ describe('generateBacktestConfigs', () => {
       const startingCapital = 1000;
       const feeRate = 0.1;
 
-      const result = generateBacktestConfigs(startingCapital, feeRate, false);
+      const result = generateBacktestConfigs(startingCapital, feeRate, false, 20, 160);
 
       const noneHaveAtr = result.every(c => c.atr === undefined);
 
@@ -343,7 +343,7 @@ describe('generateBacktestConfigs', () => {
       const startingCapital = 1000;
       const feeRate = 0.1;
 
-      const result = generateBacktestConfigs(startingCapital, feeRate);
+      const result = generateBacktestConfigs(startingCapital, feeRate, false, 20, 160);
 
       const noneHaveAtr = result.every(c => c.atr === undefined);
 
@@ -354,7 +354,7 @@ describe('generateBacktestConfigs', () => {
       const startingCapital = 1000;
       const feeRate = 0.1;
 
-      const result = generateBacktestConfigs(startingCapital, feeRate, true);
+      const result = generateBacktestConfigs(startingCapital, feeRate, true, 20, 160);
 
       const smaPeriods = 141;
       const leverageValues = 9;
@@ -373,7 +373,7 @@ describe('generateBacktestConfigs', () => {
       const startingCapital = 1000;
       const feeRate = 0.1;
 
-      const result = generateBacktestConfigs(startingCapital, feeRate, true);
+      const result = generateBacktestConfigs(startingCapital, feeRate, true, 20, 160);
 
       const configStrings = result.map(
         c =>
@@ -388,7 +388,7 @@ describe('generateBacktestConfigs', () => {
       const startingCapital = 5000;
       const feeRate = 0.2;
 
-      const result = generateBacktestConfigs(startingCapital, feeRate, true);
+      const result = generateBacktestConfigs(startingCapital, feeRate, true, 20, 160);
 
       const allHaveCorrectCapital = result.every(c => c.startingCapital === 5000);
       const allHaveCorrectFeeRate = result.every(c => c.feeRate === 0.2);
@@ -401,7 +401,7 @@ describe('generateBacktestConfigs', () => {
       const startingCapital = 1000;
       const feeRate = 0.1;
 
-      const result = generateBacktestConfigs(startingCapital, feeRate, true);
+      const result = generateBacktestConfigs(startingCapital, feeRate, true, 20, 160);
 
       const specificConfig = result.find(
         c =>
@@ -420,7 +420,7 @@ describe('generateBacktestConfigs', () => {
       const startingCapital = 1000;
       const feeRate = 0.1;
 
-      const result = generateBacktestConfigs(startingCapital, feeRate, true);
+      const result = generateBacktestConfigs(startingCapital, feeRate, true, 20, 160);
 
       const firstConfig = result[0];
 

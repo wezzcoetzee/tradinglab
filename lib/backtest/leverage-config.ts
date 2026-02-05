@@ -4,8 +4,6 @@ import {
   ATR_CLOSE_PERCENTS,
   ATR_MULTIPLIERS,
   ATR_PERIODS,
-  MAX_SMA_PERIOD,
-  MIN_SMA_PERIOD,
 } from './constants';
 
 const LEVERAGE_VALUES = [1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0] as const;
@@ -27,12 +25,14 @@ function generateAtrConfigs(): AtrConfig[] {
 export function generateBacktestConfigs(
   startingCapital: number,
   feeRate: number,
-  atrEnabled: boolean = false
+  atrEnabled: boolean,
+  smaMin: number,
+  smaMax: number
 ): BacktestConfig[] {
   const configs: BacktestConfig[] = [];
   const atrConfigs: (AtrConfig | undefined)[] = atrEnabled ? generateAtrConfigs() : [undefined];
 
-  for (let smaPeriod = MIN_SMA_PERIOD; smaPeriod <= MAX_SMA_PERIOD; smaPeriod++) {
+  for (let smaPeriod = smaMin; smaPeriod <= smaMax; smaPeriod++) {
     for (const longLeverage of LEVERAGE_VALUES) {
       for (const shortLeverage of LEVERAGE_VALUES) {
         for (const atr of atrConfigs) {

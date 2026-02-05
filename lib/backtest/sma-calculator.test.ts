@@ -152,7 +152,7 @@ describe('calculateAllSMAs', () => {
   test('should_generate_smas_for_all_periods_20_to_160', () => {
     const prices = Array.from({ length: 200 }, (_, i) => 100 + i);
 
-    const result = calculateAllSMAs(prices);
+    const result = calculateAllSMAs(prices, 20, 160);
 
     expect(result.size).toBe(141); // 20 to 160 inclusive
     expect(result.has(20)).toBe(true);
@@ -164,7 +164,7 @@ describe('calculateAllSMAs', () => {
   test('should_correctly_calculate_sma_for_each_period', () => {
     const prices = Array.from({ length: 200 }, (_, i) => 100 + i);
 
-    const result = calculateAllSMAs(prices);
+    const result = calculateAllSMAs(prices, 20, 160);
 
     const sma20 = result.get(20)!;
     const sma160 = result.get(160)!;
@@ -176,7 +176,7 @@ describe('calculateAllSMAs', () => {
   test('should_memoize_all_smas_in_single_pass', () => {
     const prices = Array.from({ length: 200 }, (_, i) => 100 + i);
 
-    const result = calculateAllSMAs(prices);
+    const result = calculateAllSMAs(prices, 20, 160);
 
     for (let period = 20; period <= 160; period++) {
       expect(result.has(period)).toBe(true);
@@ -187,7 +187,7 @@ describe('calculateAllSMAs', () => {
   test('should_handle_insufficient_data_for_larger_periods', () => {
     const prices = Array.from({ length: 50 }, (_, i) => 100 + i);
 
-    const result = calculateAllSMAs(prices);
+    const result = calculateAllSMAs(prices, 20, 160);
 
     const sma20 = result.get(20)!;
     const sma160 = result.get(160)!;
@@ -213,7 +213,7 @@ describe('calculateAllSMAs', () => {
   test('should_handle_edge_case_with_exactly_160_prices', () => {
     const prices = Array.from({ length: 160 }, (_, i) => 100 + i);
 
-    const result = calculateAllSMAs(prices);
+    const result = calculateAllSMAs(prices, 20, 160);
 
     const sma160 = result.get(160)!;
 

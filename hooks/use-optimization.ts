@@ -85,7 +85,7 @@ export function useOptimization() {
       });
 
       const closePrices = extractClosePrices(csvData);
-      const allSMAs = calculateAllSMAs(closePrices);
+      const allSMAs = calculateAllSMAs(closePrices, strategyConfig.smaMin, strategyConfig.smaMax);
       const allATRs = strategyConfig.atrEnabled ? calculateAllATRs(csvData) : null;
 
       dataRef.current = { csvData, allSMAs, allATRs };
@@ -93,7 +93,9 @@ export function useOptimization() {
       const configs = generateBacktestConfigs(
         strategyConfig.startingCapital,
         strategyConfig.tradingFee,
-        strategyConfig.atrEnabled
+        strategyConfig.atrEnabled,
+        strategyConfig.smaMin,
+        strategyConfig.smaMax
       );
 
       const workerInput: WorkerInput = {
