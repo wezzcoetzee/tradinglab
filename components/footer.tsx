@@ -2,7 +2,7 @@ export function Footer() {
   return (
     <footer className="border-t border-border/40 bg-background/95 backdrop-blur py-6">
       <div className="mx-auto max-w-7xl px-8">
-        <p className="text-sm text-muted-foreground text-right">
+        <p className="text-sm text-muted-foreground text-center">
           © {new Date().getFullYear()}{" "}
           <a
             href="https://wezzcoetzee.com"
