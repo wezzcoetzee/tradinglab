@@ -6,7 +6,7 @@ import type { WorkerMessage } from '@/lib/backtest/optimization-types';
 
 const mockCsvData: CsvRow[] = [
   { time: 1, high: 102, low: 98, close: 100, RSI: 50, date: '1/1/2024' },
-  { time: 2, high: 103, low: 99, close: 101, RSI: 51, date: '2/1/2024' },
+  { time: 2, high: 103, low: 99, close: 101,  date: '2/1/2024' },
 ];
 
 const mockStrategyConfig: StrategyConfig = {
@@ -703,8 +703,7 @@ describe('useOptimization', () => {
         high: 100 + i,
         low: 98 + i,
         close: 99 + i,
-        RSI: 50,
-        date: `${i}/1/2024`,
+                date: `${i}/1/2024`,
       }));
 
       act(() => {

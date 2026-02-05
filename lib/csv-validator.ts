@@ -69,7 +69,6 @@ export function validateCsv(parsedData: unknown[]): ValidationResult {
       high: Number(row.high),
       low: Number(row.low),
       close: Number(row.close),
-      RSI: Number(row.RSI),
       date: row.date as string,
     });
   }

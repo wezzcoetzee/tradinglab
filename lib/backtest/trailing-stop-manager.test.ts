@@ -16,8 +16,7 @@ describe('initTrailingStop', () => {
       high: 105,
       low: 95,
       close: 102,
-      RSI: 1000,
-    };
+          };
 
     const result = initTrailingStop(row, 'LONG');
 
@@ -32,8 +31,7 @@ describe('initTrailingStop', () => {
       high: 105,
       low: 95,
       close: 102,
-      RSI: 1000,
-    };
+          };
 
     const result = initTrailingStop(row, 'SHORT');
 
@@ -48,8 +46,7 @@ describe('initTrailingStop', () => {
       high: 110,
       low: 90,
       close: 105,
-      RSI: 1000,
-    };
+          };
 
     const longResult = initTrailingStop(row, 'LONG');
     const shortResult = initTrailingStop(row, 'SHORT');
@@ -65,8 +62,7 @@ describe('initTrailingStop', () => {
       high: 100,
       low: 100,
       close: 100,
-      RSI: 1000,
-    };
+          };
 
     const longResult = initTrailingStop(row, 'LONG');
     const shortResult = initTrailingStop(row, 'SHORT');
@@ -82,8 +78,7 @@ describe('initTrailingStop', () => {
       high: 200,
       low: 50,
       close: 150,
-      RSI: 1000,
-    };
+          };
 
     const longResult = initTrailingStop(row, 'LONG');
     const shortResult = initTrailingStop(row, 'SHORT');
@@ -99,8 +94,7 @@ describe('initTrailingStop', () => {
       high: 105.75,
       low: 95.25,
       close: 102.5,
-      RSI: 1000,
-    };
+          };
 
     const longResult = initTrailingStop(row, 'LONG');
     const shortResult = initTrailingStop(row, 'SHORT');
@@ -123,8 +117,7 @@ describe('updateExtremePrice', () => {
         high: 110,
         low: 95,
         close: 105,
-        RSI: 1000,
-      };
+              };
 
       const result = updateExtremePrice(state, row, 'LONG');
 
@@ -143,8 +136,7 @@ describe('updateExtremePrice', () => {
         high: 98,
         low: 90,
         close: 95,
-        RSI: 1000,
-      };
+              };
 
       const result = updateExtremePrice(state, row, 'LONG');
 
@@ -163,8 +155,7 @@ describe('updateExtremePrice', () => {
         high: 100,
         low: 95,
         close: 99,
-        RSI: 1000,
-      };
+              };
 
       const result = updateExtremePrice(state, row, 'LONG');
 
@@ -183,8 +174,7 @@ describe('updateExtremePrice', () => {
         high: 120,
         low: 105,
         close: 115,
-        RSI: 1000,
-      };
+              };
 
       const result = updateExtremePrice(state, row, 'LONG');
 
@@ -204,8 +194,7 @@ describe('updateExtremePrice', () => {
         high: 105,
         low: 95,
         close: 102,
-        RSI: 1000,
-      };
+              };
 
       const result = updateExtremePrice(state, row, 'LONG');
 
@@ -226,8 +215,7 @@ describe('updateExtremePrice', () => {
         high: 105,
         low: 90,
         close: 92,
-        RSI: 1000,
-      };
+              };
 
       const result = updateExtremePrice(state, row, 'SHORT');
 
@@ -246,8 +234,7 @@ describe('updateExtremePrice', () => {
         high: 110,
         low: 102,
         close: 108,
-        RSI: 1000,
-      };
+              };
 
       const result = updateExtremePrice(state, row, 'SHORT');
 
@@ -266,8 +253,7 @@ describe('updateExtremePrice', () => {
         high: 105,
         low: 100,
         close: 103,
-        RSI: 1000,
-      };
+              };
 
       const result = updateExtremePrice(state, row, 'SHORT');
 
@@ -286,8 +272,7 @@ describe('updateExtremePrice', () => {
         high: 95,
         low: 85,
         close: 88,
-        RSI: 1000,
-      };
+              };
 
       const result = updateExtremePrice(state, row, 'SHORT');
 
@@ -307,8 +292,7 @@ describe('updateExtremePrice', () => {
         high: 105,
         low: 95,
         close: 97,
-        RSI: 1000,
-      };
+              };
 
       const result = updateExtremePrice(state, row, 'SHORT');
 
@@ -328,8 +312,7 @@ describe('updateExtremePrice', () => {
       high: 250,
       low: 50,
       close: 150,
-      RSI: 1000,
-    };
+          };
 
     const longResult = updateExtremePrice(state, row, 'LONG');
     const shortResult = updateExtremePrice(state, row, 'SHORT');
@@ -349,8 +332,7 @@ describe('updateExtremePrice', () => {
       high: 105.75,
       low: 95.25,
       close: 102,
-      RSI: 1000,
-    };
+          };
 
     const longResult = updateExtremePrice(state, row, 'LONG');
     const shortResult = updateExtremePrice(state, row, 'SHORT');

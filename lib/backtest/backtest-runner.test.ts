@@ -9,8 +9,7 @@ function generateCsvData(days: number, startPrice: number = 100): CsvRow[] {
     high: startPrice + i + 2,
     low: startPrice + i - 2,
     close: startPrice + i,
-    RSI: 50,
-    date: `${i + 1}/1/2024`,
+        date: `${i + 1}/1/2024`,
   }));
 }
 
@@ -113,8 +112,7 @@ describe('runBacktest - position logic', () => {
       high: 22,
       low: 18,
       close: 20,
-      RSI: 50,
-      date: `${i + 1}/1/2024`,
+            date: `${i + 1}/1/2024`,
     }));
     const smaValues = Array(200).fill(150);
     const config: BacktestConfig = {
@@ -137,8 +135,7 @@ describe('runBacktest - position logic', () => {
       high: 102,
       low: 98,
       close: 100,
-      RSI: 50,
-      date: `${i + 1}/1/2024`,
+            date: `${i + 1}/1/2024`,
     }));
     const smaValues = Array(200).fill(100);
     const config: BacktestConfig = {
@@ -163,8 +160,7 @@ describe('runBacktest - position logic', () => {
         high: 102,
         low: 98,
         close: 100,
-        RSI: 50,
-        date: `${i + 1}/1/2024`,
+                date: `${i + 1}/1/2024`,
       })),
       { time: 162, high: 52, low: 48, close: 50, RSI: 50, date: '162/1/2024' },
     ];
@@ -190,8 +186,7 @@ describe('runBacktest - position logic', () => {
         high: 102,
         low: 98,
         close: 100,
-        RSI: 50,
-        date: `${i + 1}/1/2024`,
+                date: `${i + 1}/1/2024`,
       })),
       { time: 162, high: 82, low: 78, close: 80, RSI: 50, date: '162/1/2024' },
     ];
@@ -220,8 +215,7 @@ describe('runBacktest - position logic', () => {
         high: 22,
         low: 18,
         close: 20,
-        RSI: 50,
-        date: `${i + 1}/1/2024`,
+                date: `${i + 1}/1/2024`,
       })),
       { time: 162, high: 52, low: 48, close: 50, RSI: 50, date: '162/1/2024' },
     ];
@@ -270,8 +264,7 @@ describe('runBacktest - liquidation', () => {
         high: 52,
         low: 48,
         close: 50,
-        RSI: 50,
-        date: `${i + 1}/1/2024`,
+                date: `${i + 1}/1/2024`,
       })),
       { time: 162, high: 102, low: 98, close: 100, RSI: 50, date: '162/1/2024' },
     ];
@@ -298,8 +291,7 @@ describe('runBacktest - liquidation', () => {
         high: 52,
         low: 48,
         close: 50,
-        RSI: 50,
-        date: `${i + 1}/1/2024`,
+                date: `${i + 1}/1/2024`,
       })),
       { time: 162, high: 102, low: 98, close: 100, RSI: 50, date: '162/1/2024' },
     ];
@@ -330,8 +322,7 @@ describe('runBacktest - liquidation', () => {
         high: 52,
         low: 48,
         close: 50,
-        RSI: 50,
-        date: `${i + 1}/1/2024`,
+                date: `${i + 1}/1/2024`,
       })),
       { time: 162, high: 102, low: 98, close: 100, RSI: 50, date: '162/1/2024' },
     ];
@@ -395,8 +386,7 @@ describe('runBacktest - fee deduction', () => {
         high: 102,
         low: 98,
         close: 100,
-        RSI: 50,
-        date: `${i + 1}/1/2024`,
+                date: `${i + 1}/1/2024`,
       })),
       { time: 162, high: 82, low: 78, close: 80, RSI: 50, date: '162/1/2024' },
     ];
@@ -442,8 +432,7 @@ describe('runBacktest - fee deduction', () => {
         high: 102,
         low: 98,
         close: 100,
-        RSI: 50,
-        date: `${i + 1}/1/2024`,
+                date: `${i + 1}/1/2024`,
       })),
       { time: 162, high: 22, low: 18, close: 20, RSI: 50, date: '162/1/2024' },
     ];
@@ -471,8 +460,7 @@ describe('runBacktest - profit calculation', () => {
         high: 102,
         low: 98,
         close: 100,
-        RSI: 50,
-        date: `${i + 1}/1/2024`,
+                date: `${i + 1}/1/2024`,
       })),
       { time: 161, high: 102, low: 98, close: 100, RSI: 50, date: '161/1/2024' },
       { time: 162, high: 112, low: 108, close: 110, RSI: 50, date: '162/1/2024' },
@@ -504,8 +492,7 @@ describe('runBacktest - profit calculation', () => {
         high: 102,
         low: 98,
         close: 100,
-        RSI: 50,
-        date: `${i + 1}/1/2024`,
+                date: `${i + 1}/1/2024`,
       })),
       { time: 161, high: 102, low: 98, close: 100, RSI: 50, date: '161/1/2024' },
       { time: 162, high: 92, low: 88, close: 90, RSI: 50, date: '162/1/2024' },
@@ -537,8 +524,7 @@ describe('runBacktest - profit calculation', () => {
         high: 102,
         low: 98,
         close: 100,
-        RSI: 50,
-        date: `${i + 1}/1/2024`,
+                date: `${i + 1}/1/2024`,
       })),
       { time: 161, high: 102, low: 98, close: 100, RSI: 50, date: '161/1/2024' },
       { time: 162, high: 92, low: 88, close: 90, RSI: 50, date: '162/1/2024' },
@@ -568,8 +554,7 @@ describe('runBacktest - profit calculation', () => {
         high: 102,
         low: 98,
         close: 100,
-        RSI: 50,
-        date: `${i + 1}/1/2024`,
+                date: `${i + 1}/1/2024`,
       })),
       { time: 161, high: 102, low: 98, close: 100, RSI: 50, date: '161/1/2024' },
       { time: 162, high: 122, low: 118, close: 120, RSI: 50, date: '162/1/2024' },
@@ -688,8 +673,7 @@ describe('runBacktest - edge cases', () => {
       high: 102,
       low: 98,
       close: i % 2 === 0 ? 100 : 50,
-      RSI: 50,
-      date: `${i + 1}/1/2024`,
+            date: `${i + 1}/1/2024`,
     }));
     const smaValues = Array(170).fill(75);
     const config: BacktestConfig = {
@@ -731,8 +715,7 @@ describe('runBacktest - edge cases', () => {
       high: 52,
       low: 48,
       close: 50,
-      RSI: 50,
-      date: `${i + 1}/1/2024`,
+            date: `${i + 1}/1/2024`,
     }));
     const smaValues = Array(200).fill(200);
     const config: BacktestConfig = {
@@ -756,8 +739,7 @@ describe('runBacktest - atr trailing stop', () => {
       high: startPrice + i * 0.5 + 5,
       low: startPrice + i * 0.5 - 5,
       close: startPrice + i * 0.5,
-      RSI: 50,
-      date: `${i + 1}/1/2024`,
+            date: `${i + 1}/1/2024`,
     }));
   }
 
@@ -793,8 +775,7 @@ describe('runBacktest - atr trailing stop', () => {
           high: 105,
           low: 95,
           close: 100,
-          RSI: 50,
-          date: `${i + 1}/1/2024`,
+                    date: `${i + 1}/1/2024`,
         };
       }
       return {
@@ -802,8 +783,7 @@ describe('runBacktest - atr trailing stop', () => {
         high: 85,
         low: 75,
         close: 80,
-        RSI: 50,
-        date: `${i + 1}/1/2024`,
+                date: `${i + 1}/1/2024`,
       };
     });
     const smaValues = Array(200).fill(90);
@@ -836,8 +816,7 @@ describe('runBacktest - atr trailing stop', () => {
           high: 95,
           low: 85,
           close: 90,
-          RSI: 50,
-          date: `${i + 1}/1/2024`,
+                    date: `${i + 1}/1/2024`,
         };
       }
       return {
@@ -845,8 +824,7 @@ describe('runBacktest - atr trailing stop', () => {
         high: 115,
         low: 105,
         close: 110,
-        RSI: 50,
-        date: `${i + 1}/1/2024`,
+                date: `${i + 1}/1/2024`,
       };
     });
     const smaValues = Array(200).fill(100);
@@ -878,8 +856,7 @@ describe('runBacktest - atr trailing stop', () => {
           high: 105,
           low: 95,
           close: 100,
-          RSI: 50,
-          date: `${i + 1}/1/2024`,
+                    date: `${i + 1}/1/2024`,
         };
       }
       return {
@@ -887,8 +864,7 @@ describe('runBacktest - atr trailing stop', () => {
         high: 85,
         low: 75,
         close: 80,
-        RSI: 50,
-        date: `${i + 1}/1/2024`,
+                date: `${i + 1}/1/2024`,
       };
     });
     const smaValues = Array(200).fill(90);
@@ -928,8 +904,7 @@ describe('runBacktest - atr trailing stop', () => {
           high: 105,
           low: 95,
           close: 100,
-          RSI: 50,
-          date: `${i + 1}/1/2024`,
+                    date: `${i + 1}/1/2024`,
         };
       }
       return {
@@ -937,8 +912,7 @@ describe('runBacktest - atr trailing stop', () => {
         high: 85,
         low: 75,
         close: 80,
-        RSI: 50,
-        date: `${i + 1}/1/2024`,
+                date: `${i + 1}/1/2024`,
       };
     });
     const smaValues = Array(200).fill(90);
@@ -970,8 +944,7 @@ describe('runBacktest - atr trailing stop', () => {
           high: 105,
           low: 95,
           close: 100,
-          RSI: 50,
-          date: `${i + 1}/1/2024`,
+                    date: `${i + 1}/1/2024`,
         };
       }
       return {
@@ -979,8 +952,7 @@ describe('runBacktest - atr trailing stop', () => {
         high: 85,
         low: 75,
         close: 80,
-        RSI: 50,
-        date: `${i + 1}/1/2024`,
+                date: `${i + 1}/1/2024`,
       };
     });
     const smaValues = Array(200).fill(90);
@@ -1010,8 +982,7 @@ describe('runBacktest - atr trailing stop', () => {
       high: 100 + i * 0.5,
       low: 90 + i * 0.5,
       close: 95 + i * 0.5,
-      RSI: 50,
-      date: `${i + 1}/1/2024`,
+            date: `${i + 1}/1/2024`,
     }));
     const smaValues = Array(200).fill(90);
     const atrValues = Array(200).fill(5);
@@ -1051,8 +1022,7 @@ describe('runBacktest - atr trailing stop', () => {
           high: 105,
           low: 95,
           close: 100,
-          RSI: 50,
-          date: `${i + 1}/1/2024`,
+                    date: `${i + 1}/1/2024`,
         };
       }
       if (i < 170) {
@@ -1061,8 +1031,7 @@ describe('runBacktest - atr trailing stop', () => {
           high: 85,
           low: 75,
           close: 80,
-          RSI: 50,
-          date: `${i + 1}/1/2024`,
+                    date: `${i + 1}/1/2024`,
         };
       }
       return {
@@ -1070,8 +1039,7 @@ describe('runBacktest - atr trailing stop', () => {
         high: 75,
         low: 65,
         close: 70,
-        RSI: 50,
-        date: `${i + 1}/1/2024`,
+                date: `${i + 1}/1/2024`,
       };
     });
     const smaValues = Array(200).fill(90);
@@ -1108,8 +1076,7 @@ describe('runBacktest - atr trailing stop', () => {
           high: 105,
           low: 95,
           close: 100,
-          RSI: 50,
-          date: `${i + 1}/1/2024`,
+                    date: `${i + 1}/1/2024`,
         };
       }
       return {
@@ -1117,8 +1084,7 @@ describe('runBacktest - atr trailing stop', () => {
         high: 85,
         low: 75,
         close: 80,
-        RSI: 50,
-        date: `${i + 1}/1/2024`,
+                date: `${i + 1}/1/2024`,
       };
     });
     const smaValues = Array(200).fill(90);
@@ -1147,8 +1113,7 @@ describe('runBacktest - atr trailing stop', () => {
       high: 105,
       low: 95,
       close: 100,
-      RSI: 50,
-      date: `${i + 1}/1/2024`,
+            date: `${i + 1}/1/2024`,
     }));
     const smaValues = Array(165).fill(90);
     const atrValues = Array(165).fill(NaN);
@@ -1179,8 +1144,7 @@ describe('runBacktest - atr trailing stop', () => {
           high: 105,
           low: 95,
           close: 100,
-          RSI: 50,
-          date: `${i + 1}/1/2024`,
+                    date: `${i + 1}/1/2024`,
         };
       }
       return {
@@ -1188,8 +1152,7 @@ describe('runBacktest - atr trailing stop', () => {
         high: 85,
         low: 75,
         close: 80,
-        RSI: 50,
-        date: `${i + 1}/1/2024`,
+                date: `${i + 1}/1/2024`,
       };
     });
     const smaValues = Array(200).fill(90);
@@ -1228,8 +1191,7 @@ describe('runBacktest - atr trailing stop', () => {
           high: 105,
           low: 95,
           close: 100,
-          RSI: 50,
-          date: `${i + 1}/1/2024`,
+                    date: `${i + 1}/1/2024`,
         };
       }
       return {
@@ -1237,8 +1199,7 @@ describe('runBacktest - atr trailing stop', () => {
         high: 85,
         low: 75,
         close: 80,
-        RSI: 50,
-        date: `${i + 1}/1/2024`,
+                date: `${i + 1}/1/2024`,
       };
     });
     const smaValues = Array(200).fill(90);
@@ -1277,8 +1238,7 @@ describe('runBacktest - atr trailing stop', () => {
           high: 105,
           low: 95,
           close: 100,
-          RSI: 50,
-          date: `${i + 1}/1/2024`,
+                    date: `${i + 1}/1/2024`,
         };
       }
       return {
@@ -1286,8 +1246,7 @@ describe('runBacktest - atr trailing stop', () => {
         high: 85,
         low: 75,
         close: 80,
-        RSI: 50,
-        date: `${i + 1}/1/2024`,
+                date: `${i + 1}/1/2024`,
       };
     });
     const smaValues = Array(200).fill(90);
@@ -1339,8 +1298,7 @@ describe('runBacktest - atr trailing stop', () => {
           high: 105,
           low: 95,
           close: 100,
-          RSI: 50,
-          date: `${i + 1}/1/2024`,
+                    date: `${i + 1}/1/2024`,
         };
       }
       return {
@@ -1348,8 +1306,7 @@ describe('runBacktest - atr trailing stop', () => {
         high: 85,
         low: 75,
         close: 80,
-        RSI: 50,
-        date: `${i + 1}/1/2024`,
+                date: `${i + 1}/1/2024`,
       };
     });
     const smaValues = Array(200).fill(90);
@@ -1380,8 +1337,7 @@ describe('runBacktest - atr trailing stop', () => {
           high: 105,
           low: 95,
           close: 100,
-          RSI: 50,
-          date: `${i + 1}/1/2024`,
+                    date: `${i + 1}/1/2024`,
         };
       }
       return {
@@ -1389,8 +1345,7 @@ describe('runBacktest - atr trailing stop', () => {
         high: 85,
         low: 75,
         close: 80,
-        RSI: 50,
-        date: `${i + 1}/1/2024`,
+                date: `${i + 1}/1/2024`,
       };
     });
     const smaValues = Array(200).fill(90);
@@ -1425,8 +1380,7 @@ describe('runBacktest - atr trailing stop', () => {
           high: 105,
           low: 95,
           close: 100,
-          RSI: 50,
-          date: `${i + 1}/1/2024`,
+                    date: `${i + 1}/1/2024`,
         };
       }
       return {
@@ -1434,8 +1388,7 @@ describe('runBacktest - atr trailing stop', () => {
         high: 85,
         low: 75,
         close: 80,
-        RSI: 50,
-        date: `${i + 1}/1/2024`,
+                date: `${i + 1}/1/2024`,
       };
     });
     const smaValues = Array(200).fill(90);
@@ -1467,8 +1420,7 @@ describe('runBacktest - atr trailing stop', () => {
       high: 105,
       low: 95,
       close: 100,
-      RSI: 50,
-      date: `${i + 1}/1/2024`,
+            date: `${i + 1}/1/2024`,
     }));
     const smaValues = Array(200).fill(90);
     const atrValues = Array(200).fill(5);
@@ -1502,8 +1454,7 @@ describe('runBacktest - atr trailing stop', () => {
       high: 105,
       low: 95,
       close: 100,
-      RSI: 50,
-      date: `${i + 1}/1/2024`,
+            date: `${i + 1}/1/2024`,
     }));
     const smaValues = Array(200).fill(90);
 
@@ -1540,8 +1491,7 @@ describe('runBacktest - atr trailing stop', () => {
           high: 105,
           low: 95,
           close: 100,
-          RSI: 50,
-          date: `${i + 1}/1/2024`,
+                    date: `${i + 1}/1/2024`,
         };
       }
       if (i < 175) {
@@ -1551,8 +1501,7 @@ describe('runBacktest - atr trailing stop', () => {
           high: 85,
           low: 75,
           close: 80,
-          RSI: 50,
-          date: `${i + 1}/1/2024`,
+                    date: `${i + 1}/1/2024`,
         };
       }
       // Price drops further to trigger transition to SHORT
@@ -1561,8 +1510,7 @@ describe('runBacktest - atr trailing stop', () => {
         high: 65,
         low: 55,
         close: 60,
-        RSI: 50,
-        date: `${i + 1}/1/2024`,
+                date: `${i + 1}/1/2024`,
       };
     });
     const smaValues = Array(200).fill(90);
@@ -1612,8 +1560,7 @@ describe('runBacktest - atr trailing stop', () => {
           high: 102,
           low: 98,
           close: 100, // Entry price
-          RSI: 50,
-          date: `${i + 1}/1/2024`,
+                    date: `${i + 1}/1/2024`,
         };
       }
       if (i < 175) {
@@ -1622,8 +1569,7 @@ describe('runBacktest - atr trailing stop', () => {
           high: 92,
           low: 88,
           close: 90, // -10% from entry, triggers ATR
-          RSI: 50,
-          date: `${i + 1}/1/2024`,
+                    date: `${i + 1}/1/2024`,
         };
       }
       return {
@@ -1631,8 +1577,7 @@ describe('runBacktest - atr trailing stop', () => {
         high: 82,
         low: 78,
         close: 80, // -20% from entry
-        RSI: 50,
-        date: `${i + 1}/1/2024`,
+                date: `${i + 1}/1/2024`,
       };
     });
     const smaValues = Array(200).fill(90);

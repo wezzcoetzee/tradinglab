@@ -3,7 +3,6 @@ export interface CsvRow {
   high: number;
   low: number;
   close: number;
-  RSI: number;
   date: string;
 }
 
@@ -30,7 +29,7 @@ export interface StrategyConfigValidation {
 
 import { WARMUP_DAYS } from './backtest/constants';
 
-export const REQUIRED_HEADERS = ['time', 'high', 'low', 'close', 'RSI', 'date'] as const;
+export const REQUIRED_HEADERS = ['high', 'low', 'close', 'date'] as const;
 export const MIN_DATA_ROWS = WARMUP_DAYS;
 
 export const DEFAULT_STRATEGY_CONFIG: StrategyConfig = {

@@ -18,7 +18,7 @@ Crypto trading strategy backtester with exhaustive parameter optimization.
 
 ### Data Flow
 
-1. **CSV Upload** → `lib/csv-validator.ts` validates OHLC data with RSI column
+1. **CSV Upload** → `lib/csv-validator.ts` validates OHLC data
 2. **Strategy Config** → `lib/strategy-validator.ts` validates user inputs (capital, fees, SMA range, ATR toggle)
 3. **Optimization** → `hooks/use-optimization.ts` orchestrates Web Worker execution
 4. **Worker** → `lib/backtest/optimization.worker.ts` runs all parameter combinations in background thread

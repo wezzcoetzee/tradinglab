@@ -10,8 +10,7 @@ function generateCsvData(days: number, startPrice: number = 100): CsvRow[] {
     high: startPrice + i + 2,
     low: startPrice + i - 2,
     close: startPrice + i,
-    RSI: 50,
-    date: `${i + 1}/1/2024`,
+        date: `${i + 1}/1/2024`,
   }));
 }
 
@@ -250,8 +249,7 @@ describe('runAllBacktests - result properties', () => {
         high: 22,
         low: 18,
         close: 20,
-        RSI: 50,
-        date: `${i + 1}/1/2024`,
+                date: `${i + 1}/1/2024`,
       })),
       { time: 162, high: 102, low: 98, close: 100, RSI: 50, date: '162/1/2024' },
       { time: 163, high: 202, low: 198, close: 200, RSI: 50, date: '163/1/2024' },
@@ -282,8 +280,7 @@ describe('runAllBacktests - result properties', () => {
         high: 22,
         low: 18,
         close: 20,
-        RSI: 50,
-        date: `2024-01-${String(i + 1).padStart(2, '0')}`,
+                date: `2024-01-${String(i + 1).padStart(2, '0')}`,
       })),
       { time: 162, high: 102, low: 98, close: 100, RSI: 50, date: '2024-06-10' },
       { time: 163, high: 202, low: 198, close: 200, RSI: 50, date: '2024-06-11' },

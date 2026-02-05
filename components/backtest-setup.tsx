@@ -71,7 +71,7 @@ export function BacktestSetup({ onDataLoaded, actionButton }: BacktestSetupProps
           Backtest Setup
         </CardTitle>
         <CardDescription>
-          Upload CSV with time, high, low, close, RSI, date columns
+          Upload CSV with high, low, close, date columns
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

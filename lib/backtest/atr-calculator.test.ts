@@ -276,8 +276,7 @@ describe('calculateAllATRs', () => {
       high: 105 + i,
       low: 95 + i,
       close: 102 + i,
-      RSI: 1000,
-    }));
+          }));
 
     const result = calculateAllATRs(csvData);
 
@@ -294,8 +293,7 @@ describe('calculateAllATRs', () => {
       high: 105 + i,
       low: 95 + i,
       close: 102 + i,
-      RSI: 1000,
-    }));
+          }));
 
     const result = calculateAllATRs(csvData);
 
@@ -311,8 +309,7 @@ describe('calculateAllATRs', () => {
       high: 105 + i,
       low: 95 + i,
       close: 102 + i,
-      RSI: 1000,
-    }));
+          }));
 
     const result = calculateAllATRs(csvData);
 
@@ -343,8 +340,7 @@ describe('calculateAllATRs', () => {
       high: 105,
       low: 95,
       close: 102,
-      RSI: 1000,
-    }));
+          }));
 
     const result = calculateAllATRs(csvData);
 
@@ -361,8 +357,7 @@ describe('calculateAllATRs', () => {
       high: 110 + (i % 2 === 0 ? 10 : -10),
       low: 90 + (i % 2 === 0 ? 10 : -10),
       close: 105 + (i % 2 === 0 ? 10 : -10),
-      RSI: 1000,
-    }));
+          }));
 
     const result = calculateAllATRs(csvData);
 
@@ -382,8 +377,7 @@ describe('calculateAllATRs', () => {
       high: 100.1,
       low: 99.9,
       close: 100,
-      RSI: 1000,
-    }));
+          }));
 
     const result = calculateAllATRs(csvData);
 
@@ -403,8 +397,7 @@ describe('calculateAllATRs', () => {
       high: 105,
       low: 95,
       close: 102,
-      RSI: 1000,
-    }];
+          }];
 
     const result = calculateAllATRs(csvData);
 
@@ -439,8 +432,7 @@ describe('calculateAllATRs', () => {
         high: 110 + variation,
         low: 90 + variation,
         close: 105 + variation,
-        RSI: 1000,
-      };
+              };
     });
 
     const result = calculateAllATRs(csvData);

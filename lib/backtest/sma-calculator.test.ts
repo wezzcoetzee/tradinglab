@@ -5,7 +5,7 @@ import type { CsvRow } from '../types';
 describe('extractClosePrices', () => {
   test('should_extract_close_prices_from_csv_data', () => {
     const csvData: CsvRow[] = [
-      { time: 1, high: 102, low: 98, close: 100, RSI: 50, date: '1/1/2024' },
+      { time: 1, high: 102, low: 98, close: 100,  date: '1/1/2024' },
       { time: 2, high: 103, low: 99, close: 101, RSI: 51, date: '2/1/2024' },
       { time: 3, high: 104, low: 100, close: 102, RSI: 52, date: '3/1/2024' },
     ];
@@ -23,7 +23,7 @@ describe('extractClosePrices', () => {
 
   test('should_handle_single_row', () => {
     const csvData: CsvRow[] = [
-      { time: 1, high: 102, low: 98, close: 100, RSI: 50, date: '1/1/2024' },
+      { time: 1, high: 102, low: 98, close: 100,  date: '1/1/2024' },
     ];
 
     const result = extractClosePrices(csvData);

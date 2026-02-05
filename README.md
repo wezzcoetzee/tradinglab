@@ -4,7 +4,7 @@ A crypto trading strategy backtester that exhaustively optimizes SMA crossover s
 
 ## Features
 
-- **CSV Data Import** - Upload historical OHLC data with RSI indicator
+- **CSV Data Import** - Upload historical OHLC data
 - **Exhaustive Optimization** - Tests all combinations of SMA periods (2-200), long/short leverage, and ATR configurations
 - **ATR Trailing Stops** - Optional trailing stop loss with configurable ATR period, multiplier, and partial close percentage
 - **Web Worker Execution** - Runs optimization in background thread to keep UI responsive
@@ -52,12 +52,10 @@ Your CSV file must contain these columns:
 
 | Column | Description |
 |--------|-------------|
-| `time` | Unix timestamp |
 | `high` | Period high price |
 | `low` | Period low price |
 | `close` | Period close price |
-| `RSI` | Relative Strength Index value |
-| `date` | Human-readable date string |
+| `date` | Human-readable date string (DD/MM/YYYY) |
 
 ### 2. Configure Strategy
 

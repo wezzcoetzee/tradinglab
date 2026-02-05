@@ -9,8 +9,7 @@ function generateCsvData(days: number, startPrice: number = 100): CsvRow[] {
     high: startPrice + i + 2,
     low: startPrice + i - 2,
     close: startPrice + i,
-    RSI: 50,
-    date: `2024-01-${String(i + 1).padStart(2, '0')}`,
+        date: `2024-01-${String(i + 1).padStart(2, '0')}`,
   }));
 }
 
@@ -92,8 +91,7 @@ describe('calculateBuyAndHoldBaseline', () => {
       high: 202 - i,
       low: 198 - i,
       close: 200 - i,
-      RSI: 50,
-      date: `2024-01-${String(i + 1).padStart(2, '0')}`,
+            date: `2024-01-${String(i + 1).padStart(2, '0')}`,
     }));
     const startingCapital = 1000;
 
@@ -112,8 +110,7 @@ describe('calculateBuyAndHoldBaseline', () => {
       high: 102,
       low: 98,
       close: 100,
-      RSI: 50,
-      date: `2024-01-${String(i + 1).padStart(2, '0')}`,
+            date: `2024-01-${String(i + 1).padStart(2, '0')}`,
     }));
     const startingCapital = 1000;
 
