@@ -70,7 +70,7 @@ export function OptimizationProgressCard({ progress, onCancel }: OptimizationPro
           <>
             <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
               <div
-                className="h-full bg-primary motion-safe:transition-all motion-safe:duration-300"
+                className="h-full bg-primary"
                 style={{ width: `${progress.percentComplete}%` }}
               />
             </div>

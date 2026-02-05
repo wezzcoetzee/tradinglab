@@ -124,6 +124,7 @@ export function useOptimization() {
             message.current,
             configsPerSecond
           );
+          const percentComplete = (message.current / message.total) * 100;
 
           setState(prev => ({
             ...prev,
@@ -131,7 +132,7 @@ export function useOptimization() {
               status: 'running',
               current: message.current,
               total: message.total,
-              percentComplete: (message.current / message.total) * 100,
+              percentComplete,
               elapsedMs: message.elapsedMs,
               estimatedRemainingMs,
               configsPerSecond,

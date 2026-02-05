@@ -374,6 +374,7 @@ describe('useOptimization', () => {
         mockWorkerInstance.simulateMessage({
           type: 'complete',
           results: mockResults,
+          totalConfigs: 100,
           totalTimeMs: 10000,
           baseline: null,
         });
