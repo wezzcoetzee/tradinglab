@@ -25,6 +25,7 @@ interface ResultsTableProps {
   baseline: BuyAndHoldBaseline | null;
   bestResultWithDays?: BacktestResult | null;
   isTruncated?: boolean;
+  totalConfigsTested?: number;
 }
 
 interface VsHoldCellProps {
@@ -37,7 +38,7 @@ function VsHoldCell({ result, baseline }: VsHoldCellProps) {
   return <span className={getVsHoldColorClass(vsHold)}>{formatPercent(vsHold)}</span>;
 }
 
-export function ResultsTable({ results, baseline, bestResultWithDays, isTruncated }: ResultsTableProps) {
+export function ResultsTable({ results, baseline, bestResultWithDays, isTruncated, totalConfigsTested }: ResultsTableProps) {
   const sortedResults = useMemo(() => {
     return [...results].sort((a, b) => {
       if (a.isLiquidated !== b.isLiquidated) {
@@ -50,12 +51,12 @@ export function ResultsTable({ results, baseline, bestResultWithDays, isTruncate
   const pagination = usePagination(sortedResults);
 
   const metrics: Metrics = useMemo(() => {
-    const total = results.length;
+    const total = totalConfigsTested || results.length;
     const liquidated = results.filter(r => r.isLiquidated).length;
     const profitable = results.filter(r => r.totalReturn > 0 && !r.isLiquidated).length;
     const liquidationRate = total > 0 ? (liquidated / total) * 100 : 0;
     return { total, profitable, liquidated, liquidationRate };
-  }, [results]);
+  }, [results, totalConfigsTested]);
 
   if (results.length === 0) {
     return null;

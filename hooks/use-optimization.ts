@@ -18,6 +18,7 @@ interface OptimizationState {
   baseline: BuyAndHoldBaseline | null;
   bestResultWithDays: BacktestResult | null;
   isTruncated: boolean;
+  totalConfigsTested: number;
 }
 
 const INITIAL_PROGRESS: OptimizationProgress = {
@@ -50,6 +51,7 @@ export function useOptimization() {
     baseline: null,
     bestResultWithDays: null,
     isTruncated: false,
+    totalConfigsTested: 0,
   });
 
   const workerRef = useRef<Worker | null>(null);
@@ -82,6 +84,7 @@ export function useOptimization() {
         baseline: null,
         bestResultWithDays: null,
         isTruncated: false,
+        totalConfigsTested: 0,
       });
 
       const closePrices = extractClosePrices(csvData);
@@ -182,6 +185,7 @@ export function useOptimization() {
             baseline: message.baseline,
             bestResultWithDays,
             isTruncated: message.isTruncated,
+            totalConfigsTested: message.totalConfigs,
           });
           terminateWorker();
         } else if (message.type === 'error') {
@@ -232,6 +236,7 @@ export function useOptimization() {
     baseline: state.baseline,
     bestResultWithDays: state.bestResultWithDays,
     isTruncated: state.isTruncated,
+    totalConfigsTested: state.totalConfigsTested,
     startOptimization,
     cancelOptimization,
   };
