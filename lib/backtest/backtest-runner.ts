@@ -57,6 +57,7 @@ export function runBacktest(
   let currentPosition: Position | null = null;
   let totalFees = 0;
   let totalTrades = 0;
+  let atrTriggerCount = 0;
   let isLiquidated = false;
   let liquidationDay: number | undefined;
   let liquidationDate: string | undefined;
@@ -84,6 +85,7 @@ export function runBacktest(
       const atr = atrValues[i];
       if (!updatedStop.triggered && shouldTriggerStop(updatedStop, price, atr, config.atr.multiplier, posWithUpdatedStop.type)) {
         const result = executePartialClose(posWithUpdatedStop, price, config.atr.closePercent, config.feeRate);
+        atrTriggerCount++;
 
         currentPosition = result.newPosition;
         sidelineValue += result.sidelineValue;
@@ -240,6 +242,7 @@ export function runBacktest(
     totalReturn,
     totalFees,
     totalTrades,
+    atrTriggerCount,
     isLiquidated,
     liquidationDay,
     liquidationDate,

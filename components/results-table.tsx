@@ -102,6 +102,7 @@ export function ResultsTable({ results, baseline, bestResultWithDays, isTruncate
               <TableHead className="text-right">Return</TableHead>
               <TableHead className="text-right">vs Hold</TableHead>
               <TableHead className="text-right">Trades</TableHead>
+              <TableHead className="text-right">ATR Triggers</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Liquidation Date</TableHead>
             </TableRow>
@@ -128,6 +129,7 @@ export function ResultsTable({ results, baseline, bestResultWithDays, isTruncate
                   ) : '-'}
                 </TableCell>
                 <TableCell className="text-right">{result.totalTrades}</TableCell>
+                <TableCell className="text-right">{result.atrTriggerCount}</TableCell>
                 <TableCell>
                   {result.isLiquidated ? (
                     <Badge variant="destructive">LIQUIDATED</Badge>

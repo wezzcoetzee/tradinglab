@@ -61,6 +61,7 @@ export interface BacktestResult {
   totalReturn: number;
   totalFees: number;
   totalTrades: number;
+  atrTriggerCount: number;
   isLiquidated: boolean;
   liquidationDay?: number;
   liquidationDate?: string;

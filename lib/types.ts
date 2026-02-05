@@ -40,8 +40,8 @@ export const REQUIRED_HEADERS = ['time', 'high', 'low', 'close', 'RSI', 'date'] 
 export const MIN_DATA_ROWS = WARMUP_DAYS;
 
 export const DEFAULT_STRATEGY_CONFIG: StrategyConfig = {
-  startingCapital: 10000,
-  tradingFee: 0.1,
+  startingCapital: 1000,
+  tradingFee: 0.05,
   atrEnabled: false,
 };
 
