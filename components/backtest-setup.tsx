@@ -2,10 +2,18 @@
 
 import { useState, useRef } from 'react';
 import Papa from 'papaparse';
-import { Upload, FileText, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Upload, FileText, AlertCircle, CheckCircle2, Info, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { validateCsv } from '@/lib/csv-validator';
 import type { CsvRow, ValidationResult } from '@/lib/types';
 
@@ -70,8 +78,39 @@ export function BacktestSetup({ onDataLoaded, actionButton }: BacktestSetupProps
           <FileText className="h-5 w-5" aria-hidden="true" />
           Backtest Setup
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="flex items-center gap-1.5">
           Upload CSV with high, low, close, date columns
+          <Dialog>
+            <DialogTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="CSV format info"
+              >
+                <Info className="h-4 w-4" />
+              </button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>CSV Format Requirements</DialogTitle>
+                <DialogDescription>
+                  Your CSV file must contain the following columns:
+                </DialogDescription>
+              </DialogHeader>
+              <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+                <li><strong>date</strong> - Date in YYYY-MM-DD format</li>
+                <li><strong>high</strong> - Daily high price</li>
+                <li><strong>low</strong> - Daily low price</li>
+                <li><strong>close</strong> - Daily close price</li>
+              </ul>
+              <Button asChild className="mt-2">
+                <a href="/BTC_example.csv" download>
+                  <Download className="mr-2 h-4 w-4" />
+                  Download Example CSV
+                </a>
+              </Button>
+            </DialogContent>
+          </Dialog>
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

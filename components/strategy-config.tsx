@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Settings, AlertCircle, Info } from 'lucide-react';
+import { Settings, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
@@ -161,12 +161,10 @@ export function StrategyConfigForm({ onConfigChange }: StrategyConfigProps) {
         </div>
 
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          <Info className="h-3 w-3 shrink-0" />
           Tests SMA periods with leverage 1×, 1.25×, 1.5×, 1.75×, 2×, 2.25×, 2.5×, 2.75×, 3×
         </div>
 
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          <Info className="h-3 w-3 shrink-0" />
           Tests 60 ATR configurations: periods (10, 14, 20) × multipliers (2, 2.5, 3, 3.5, 4) × close % (10, 25, 50, 100)
         </div>
 
