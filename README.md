@@ -1,36 +1,102 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Simply The Best
+
+A crypto trading strategy backtester that exhaustively optimizes SMA crossover strategies with configurable leverage and ATR-based trailing stops.
+
+## Features
+
+- **CSV Data Import** - Upload historical OHLC data with RSI indicator
+- **Exhaustive Optimization** - Tests all combinations of SMA periods (2-200), long/short leverage, and ATR configurations
+- **ATR Trailing Stops** - Optional trailing stop loss with configurable ATR period, multiplier, and partial close percentage
+- **Web Worker Execution** - Runs optimization in background thread to keep UI responsive
+- **Buy & Hold Baseline** - Compare strategy performance against simple buy and hold
+- **Day-by-Day Analysis** - Detailed trade log for the best performing strategy
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- [Bun](https://bun.sh/) runtime
+
+### Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
+bun install
+```
+
+### Development
+
+```bash
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Production Build
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+bun run build
+bun start
+```
 
-## Learn More
+### Testing
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+bun test
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Usage
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 1. Prepare CSV Data
 
-## Deploy on Vercel
+Your CSV file must contain these columns:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Column | Description |
+|--------|-------------|
+| `time` | Unix timestamp |
+| `high` | Period high price |
+| `low` | Period low price |
+| `close` | Period close price |
+| `RSI` | Relative Strength Index value |
+| `date` | Human-readable date string |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 2. Configure Strategy
+
+- **Starting Capital** - Initial portfolio value
+- **Trading Fee** - Fee percentage per trade (e.g., 0.05 for 0.05%)
+- **SMA Range** - Min/max SMA periods to test (2-200)
+- **ATR Trailing Stop** - Enable to test ATR-based stop loss configurations
+
+### 3. Run Optimization
+
+Click "Run Optimization" to test all parameter combinations. The optimizer will:
+
+1. Pre-compute SMA values for all periods
+2. Pre-compute ATR values (if enabled) for periods 10, 14, and 20
+3. Run backtests for each configuration combination
+4. Track and display the top performing strategies
+
+### 4. Analyze Results
+
+- **Results Table** - Top strategies sorted by total return
+- **SMA Comparison** - Performance grouped by SMA period
+- **Day-by-Day Table** - Detailed trade log for the best strategy
+
+## Strategy Logic
+
+The backtester implements a simple SMA crossover strategy:
+
+- **Long** when price > SMA
+- **Short** when price < SMA
+
+With ATR trailing stops enabled:
+- Stop triggers when price moves ATR × multiplier against position from extreme
+- Partial close (10%, 25%, 50%, or 100%) executed on trigger
+- Capital moved to sideline until next position opens
+
+## Tech Stack
+
+- [Next.js](https://nextjs.org/) 16 with App Router
+- [React](https://react.dev/) 19
+- [Tailwind CSS](https://tailwindcss.com/) 4
+- [Radix UI](https://www.radix-ui.com/) primitives
+- [Bun](https://bun.sh/) runtime and test runner
