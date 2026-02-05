@@ -15,7 +15,7 @@ export default function Home() {
   const [csvData, setCsvData] = useState<CsvRow[] | null>(null);
   const [strategyConfig, setStrategyConfig] = useState<StrategyConfig | null>(null);
 
-  const { progress, results, baseline, bestResultWithDays, startOptimization, cancelOptimization } = useOptimization();
+  const { progress, results, baseline, bestResultWithDays, isTruncated, startOptimization, cancelOptimization } = useOptimization();
 
   const handleDataLoaded = useCallback((data: CsvRow[]) => {
     setCsvData(data);
@@ -58,7 +58,7 @@ export default function Home() {
           <OptimizationProgressCard progress={progress} onCancel={cancelOptimization} />
         )}
 
-        <ResultsTable results={results ?? []} baseline={baseline} bestResultWithDays={bestResultWithDays} />
+        <ResultsTable results={results ?? []} baseline={baseline} bestResultWithDays={bestResultWithDays} isTruncated={isTruncated} />
 
         <SmaComparisonTable results={results ?? []} baseline={baseline} />
       </div>

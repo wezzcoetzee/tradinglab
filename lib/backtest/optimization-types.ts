@@ -18,9 +18,10 @@ export interface WorkerInput {
   allATRs: [10 | 14 | 20, number[]][] | null;
   configs: BacktestConfig[];
   startingCapital: number;
+  atrEnabled: boolean;
 }
 
 export type WorkerMessage =
   | { type: 'progress'; current: number; total: number; elapsedMs: number }
-  | { type: 'complete'; results: BacktestResultSummary[]; totalConfigs: number; totalTimeMs: number; baseline: BuyAndHoldBaseline | null }
+  | { type: 'complete'; results: BacktestResultSummary[]; totalConfigs: number; totalTimeMs: number; baseline: BuyAndHoldBaseline | null; isTruncated: boolean }
   | { type: 'error'; error: string };

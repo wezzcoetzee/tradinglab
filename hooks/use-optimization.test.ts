@@ -114,8 +114,8 @@ describe('useOptimization', () => {
         result.current.startOptimization(mockCsvData, mockStrategyConfig);
       });
 
-      const call = mockWorkerInstance.postMessage.mock.calls[0];
-      const input = call[0];
+      const call = mockWorkerInstance.postMessage.mock.calls[0] as unknown as [unknown];
+      const input = call[0] as Record<string, unknown>;
 
       expect(input.csvData).toEqual(mockCsvData);
       expect(input.startingCapital).toBe(1000);
@@ -133,8 +133,8 @@ describe('useOptimization', () => {
         });
       });
 
-      const call = mockWorkerInstance.postMessage.mock.calls[0];
-      const input = call[0];
+      const call = mockWorkerInstance.postMessage.mock.calls[0] as unknown as [unknown];
+      const input = call[0] as Record<string, unknown>;
 
       expect(input.allATRs).not.toBeNull();
     });
@@ -149,8 +149,8 @@ describe('useOptimization', () => {
         });
       });
 
-      const call = mockWorkerInstance.postMessage.mock.calls[0];
-      const input = call[0];
+      const call = mockWorkerInstance.postMessage.mock.calls[0] as unknown as [unknown];
+      const input = call[0] as Record<string, unknown>;
 
       expect(input.allATRs).toBeNull();
     });
@@ -284,8 +284,10 @@ describe('useOptimization', () => {
         mockWorkerInstance.simulateMessage({
           type: 'complete',
           results: [],
+          totalConfigs: 0,
           totalTimeMs: 10000,
           baseline: null,
+          isTruncated: false,
         });
       });
 
@@ -325,8 +327,10 @@ describe('useOptimization', () => {
         mockWorkerInstance.simulateMessage({
           type: 'complete',
           results: mockResults,
+          totalConfigs: mockResults.length,
           totalTimeMs: 10000,
           baseline: mockBaseline,
+          isTruncated: false,
         });
       });
 
@@ -345,8 +349,10 @@ describe('useOptimization', () => {
         mockWorkerInstance.simulateMessage({
           type: 'complete',
           results: [],
+          totalConfigs: 0,
           totalTimeMs: 10000,
           baseline: null,
+          isTruncated: false,
         });
       });
 
@@ -377,6 +383,7 @@ describe('useOptimization', () => {
           totalConfigs: 100,
           totalTimeMs: 10000,
           baseline: null,
+          isTruncated: false,
         });
       });
 
@@ -396,8 +403,10 @@ describe('useOptimization', () => {
         mockWorkerInstance.simulateMessage({
           type: 'complete',
           results: [],
+          totalConfigs: 0,
           totalTimeMs: 10000,
           baseline: null,
+          isTruncated: false,
         });
       });
 
@@ -676,8 +685,10 @@ describe('useOptimization', () => {
               isLiquidated: false,
             },
           ],
+          totalConfigs: 1,
           totalTimeMs: 0,
           baseline: null,
+          isTruncated: false,
         });
       });
 

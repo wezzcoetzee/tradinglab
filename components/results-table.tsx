@@ -24,6 +24,7 @@ interface ResultsTableProps {
   results: BacktestResultSummary[];
   baseline: BuyAndHoldBaseline | null;
   bestResultWithDays?: BacktestResult | null;
+  isTruncated?: boolean;
 }
 
 interface VsHoldCellProps {
@@ -36,7 +37,7 @@ function VsHoldCell({ result, baseline }: VsHoldCellProps) {
   return <span className={getVsHoldColorClass(vsHold)}>{formatPercent(vsHold)}</span>;
 }
 
-export function ResultsTable({ results, baseline, bestResultWithDays }: ResultsTableProps) {
+export function ResultsTable({ results, baseline, bestResultWithDays, isTruncated }: ResultsTableProps) {
   const sortedResults = useMemo(() => {
     return [...results].sort((a, b) => {
       if (a.isLiquidated !== b.isLiquidated) {
@@ -66,6 +67,11 @@ export function ResultsTable({ results, baseline, bestResultWithDays }: ResultsT
         <CardTitle>Backtest Results</CardTitle>
         <CardDescription>
           {metrics.total} configurations tested
+          {isTruncated && (
+            <span className="text-amber-600 dark:text-amber-400">
+              {' '}(showing top 100 results)
+            </span>
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">

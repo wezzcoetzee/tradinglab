@@ -1,3 +1,4 @@
+import type { BacktestResultSummary } from './types';
 import type { WorkerInput, WorkerMessage } from './optimization-types';
 
 import { calculateBuyAndHoldBaseline } from './baseline-calculator';
@@ -6,13 +7,14 @@ import { WORKER_PROGRESS_INTERVAL } from './constants';
 import { TopKHeap } from './top-k-heap';
 
 self.onmessage = (event: MessageEvent<WorkerInput>) => {
-  const { csvData, allSMAs, allATRs, configs, startingCapital } = event.data;
+  const { csvData, allSMAs, allATRs, configs, startingCapital, atrEnabled } = event.data;
   const startTime = performance.now();
 
   const smaMap = new Map(allSMAs);
   const atrMap = allATRs ? new Map(allATRs) : null;
 
-  const topK = new TopKHeap(100);
+  const topK = atrEnabled ? new TopKHeap(100) : null;
+  const allResults: BacktestResultSummary[] = [];
   const total = configs.length;
 
   try {
@@ -28,7 +30,12 @@ self.onmessage = (event: MessageEvent<WorkerInput>) => {
 
       const result = runBacktest(csvData, smaValues, config, atrValues, true);
       const { days: _days, ...summary } = result;
-      topK.insert(summary);
+
+      if (topK) {
+        topK.insert(summary);
+      } else {
+        allResults.push(summary);
+      }
 
       if ((i + 1) % WORKER_PROGRESS_INTERVAL === 0 || i === configs.length - 1) {
         const message: WorkerMessage = {
@@ -44,12 +51,21 @@ self.onmessage = (event: MessageEvent<WorkerInput>) => {
     const baseline = calculateBuyAndHoldBaseline(csvData, startingCapital);
     const totalTimeMs = performance.now() - startTime;
 
+    let results: BacktestResultSummary[];
+    if (topK) {
+      results = topK.getResults();
+    } else {
+      allResults.sort((a, b) => b.totalReturn - a.totalReturn);
+      results = allResults;
+    }
+
     const completeMessage: WorkerMessage = {
       type: 'complete',
-      results: topK.getResults(),
+      results,
       totalConfigs: total,
       totalTimeMs,
       baseline,
+      isTruncated: atrEnabled,
     };
     self.postMessage(completeMessage);
   } catch (error) {
