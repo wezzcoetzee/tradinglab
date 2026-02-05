@@ -24,7 +24,7 @@ const siteDescription =
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: siteName,
+    default: `Crypto Trading Backtester | ${siteName}`,
     template: `%s | ${siteName}`,
   },
   description: siteDescription,
@@ -44,15 +44,14 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: siteUrl,
     siteName,
-    title: siteName,
+    title: `Crypto Trading Backtester | ${siteName}`,
     description: siteDescription,
-    images: [{ url: '/icon-512.png', width: 512, height: 512, alt: siteName }],
   },
   twitter: {
-    card: 'summary',
-    title: siteName,
+    card: 'summary_large_image',
+    title: `Crypto Trading Backtester | ${siteName}`,
     description: siteDescription,
-    images: ['/icon-512.png'],
+    creator: '@wezzcoetzee',
   },
   robots: {
     index: true,
@@ -72,6 +71,17 @@ const jsonLd = {
   url: siteUrl,
   applicationCategory: 'FinanceApplication',
   operatingSystem: 'Web',
+  author: {
+    '@type': 'Person',
+    name: 'Wesley Coetzee',
+    url: 'https://wezzcoetzee.com',
+  },
+  datePublished: '2025-01-01',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+  },
 };
 
 export default function RootLayout({
