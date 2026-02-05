@@ -47,7 +47,7 @@ export default function Home() {
   );
 
   return (
-    <div className="flex min-h-screen items-start justify-center px-8 pb-8 pt-22">
+    <div className="flex items-start justify-center px-8 pb-8 pt-22">
       <div className="flex flex-col gap-8 w-full max-w-7xl">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <BacktestSetup onDataLoaded={handleDataLoaded} actionButton={runButton} />
