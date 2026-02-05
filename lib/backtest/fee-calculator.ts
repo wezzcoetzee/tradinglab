@@ -7,7 +7,7 @@ export function calculateTradeFee(
   leverage: number,
   feeRate: number
 ): number {
-  return (balance * leverage * leverage * feeRate) / PERCENTAGE_DIVISOR;
+  return (balance * leverage * feeRate) / PERCENTAGE_DIVISOR;
 }
 
 export function calculateTransitionFees(

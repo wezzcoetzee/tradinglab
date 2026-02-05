@@ -3,14 +3,14 @@ import { calculateTradeFee, calculateTransitionFees } from './fee-calculator';
 import type { PositionAction } from './types';
 
 describe('calculateTradeFee', () => {
-  test('should_calculate_fee_using_correct_formula', () => {
+  test('should_calculate_fee_on_notional_value', () => {
     const balance = 1000;
     const leverage = 2;
     const feeRate = 0.1;
 
     const result = calculateTradeFee(balance, leverage, feeRate);
 
-    expect(result).toBe(4); // 1000 * 2 * 2 * 0.1 / 100 = 4
+    expect(result).toBe(2); // 1000 * 2 * 0.1 / 100 = 2
   });
 
   test('should_calculate_fee_with_leverage_1', () => {
@@ -20,7 +20,7 @@ describe('calculateTradeFee', () => {
 
     const result = calculateTradeFee(balance, leverage, feeRate);
 
-    expect(result).toBe(1); // 1000 * 1 * 1 * 0.1 / 100 = 1
+    expect(result).toBe(1); // 1000 * 1 * 0.1 / 100 = 1
   });
 
   test('should_calculate_fee_with_max_leverage_3', () => {
@@ -30,7 +30,7 @@ describe('calculateTradeFee', () => {
 
     const result = calculateTradeFee(balance, leverage, feeRate);
 
-    expect(result).toBe(9); // 1000 * 3 * 3 * 0.1 / 100 = 9
+    expect(result).toBe(3); // 1000 * 3 * 0.1 / 100 = 3
   });
 
   test('should_calculate_fee_with_fractional_leverage', () => {
@@ -40,7 +40,7 @@ describe('calculateTradeFee', () => {
 
     const result = calculateTradeFee(balance, leverage, feeRate);
 
-    expect(result).toBe(2.25); // 1000 * 1.5 * 1.5 * 0.1 / 100 = 2.25
+    expect(result).toBe(1.5); // 1000 * 1.5 * 0.1 / 100 = 1.5
   });
 
   test('should_return_zero_when_balance_is_zero', () => {
@@ -70,7 +70,7 @@ describe('calculateTradeFee', () => {
 
     const result = calculateTradeFee(balance, leverage, feeRate);
 
-    expect(result).toBe(40); // 1000 * 2 * 2 * 1.0 / 100 = 40
+    expect(result).toBe(20); // 1000 * 2 * 1.0 / 100 = 20
   });
 
   test('should_calculate_fee_with_large_balance', () => {
@@ -80,7 +80,7 @@ describe('calculateTradeFee', () => {
 
     const result = calculateTradeFee(balance, leverage, feeRate);
 
-    expect(result).toBe(312.5); // 100000 * 2.5 * 2.5 * 0.05 / 100 = 312.5
+    expect(result).toBe(125); // 100000 * 2.5 * 0.05 / 100 = 125
   });
 
   test('should_calculate_fee_with_decimal_balance', () => {
@@ -90,7 +90,7 @@ describe('calculateTradeFee', () => {
 
     const result = calculateTradeFee(balance, leverage, feeRate);
 
-    expect(result).toBeCloseTo(1.929, 3);
+    expect(result).toBeCloseTo(1.5432, 4); // 1234.56 * 1.25 * 0.1 / 100
   });
 });
 
@@ -104,7 +104,7 @@ describe('calculateTransitionFees', () => {
 
       const result = calculateTransitionFees(action, balance, currentLeverage, feeRate);
 
-      expect(result).toBe(4);
+      expect(result).toBe(2); // 1000 * 2 * 0.1 / 100 = 2
     });
 
     test('should_calculate_fee_for_open_short', () => {
@@ -115,7 +115,7 @@ describe('calculateTransitionFees', () => {
 
       const result = calculateTransitionFees(action, balance, currentLeverage, feeRate);
 
-      expect(result).toBe(6.25);
+      expect(result).toBe(2.5); // 1000 * 2.5 * 0.1 / 100 = 2.5
     });
 
     test('should_calculate_fee_for_close_long', () => {
@@ -126,7 +126,7 @@ describe('calculateTransitionFees', () => {
 
       const result = calculateTransitionFees(action, balance, currentLeverage, feeRate);
 
-      expect(result).toBe(2.25);
+      expect(result).toBe(1.5); // 1000 * 1.5 * 0.1 / 100 = 1.5
     });
 
     test('should_calculate_fee_for_close_short', () => {
@@ -137,7 +137,7 @@ describe('calculateTransitionFees', () => {
 
       const result = calculateTransitionFees(action, balance, currentLeverage, feeRate);
 
-      expect(result).toBe(9);
+      expect(result).toBe(3); // 1000 * 3 * 0.1 / 100 = 3
     });
   });
 
@@ -157,10 +157,10 @@ describe('calculateTransitionFees', () => {
         newLeverage
       );
 
-      // Close LONG: 1000 * 2 * 2 * 0.1 / 100 = 4
-      // Open SHORT: 1000 * 2.5 * 2.5 * 0.1 / 100 = 6.25
-      // Total: 10.25
-      expect(result).toBe(10.25);
+      // Close LONG: 1000 * 2 * 0.1 / 100 = 2
+      // Open SHORT: 1000 * 2.5 * 0.1 / 100 = 2.5
+      // Total: 4.5
+      expect(result).toBe(4.5);
     });
 
     test('should_calculate_double_fee_for_short_to_long_transition', () => {
@@ -178,10 +178,10 @@ describe('calculateTransitionFees', () => {
         newLeverage
       );
 
-      // Close SHORT: 1000 * 3 * 3 * 0.1 / 100 = 9
-      // Open LONG: 1000 * 1.5 * 1.5 * 0.1 / 100 = 2.25
-      // Total: 11.25
-      expect(result).toBe(11.25);
+      // Close SHORT: 1000 * 3 * 0.1 / 100 = 3
+      // Open LONG: 1000 * 1.5 * 0.1 / 100 = 1.5
+      // Total: 4.5
+      expect(result).toBe(4.5);
     });
 
     test('should_throw_error_when_transition_missing_new_leverage', () => {
@@ -210,7 +210,7 @@ describe('calculateTransitionFees', () => {
         newLeverage
       );
 
-      expect(result).toBe(8); // 4 + 4
+      expect(result).toBe(4); // 2 + 2
     });
 
     test('should_calculate_transition_with_different_fee_rates', () => {
@@ -228,10 +228,10 @@ describe('calculateTransitionFees', () => {
         newLeverage
       );
 
-      // Close LONG: 1000 * 2 * 2 * 0.5 / 100 = 20
-      // Open SHORT: 1000 * 2.5 * 2.5 * 0.5 / 100 = 31.25
-      // Total: 51.25
-      expect(result).toBe(51.25);
+      // Close LONG: 1000 * 2 * 0.5 / 100 = 10
+      // Open SHORT: 1000 * 2.5 * 0.5 / 100 = 12.5
+      // Total: 22.5
+      expect(result).toBe(22.5);
     });
   });
 
@@ -293,7 +293,7 @@ describe('calculateTransitionFees', () => {
         newLeverage
       );
 
-      expect(result).toBe(18); // 9 + 9
+      expect(result).toBe(6); // 3 + 3
     });
 
     test('should_handle_fractional_leverage_in_transition', () => {
@@ -311,7 +311,7 @@ describe('calculateTransitionFees', () => {
         newLeverage
       );
 
-      expect(result).toBeCloseTo(8.125, 3);
+      expect(result).toBe(4); // 1.75 + 2.25 = 4
     });
   });
 });

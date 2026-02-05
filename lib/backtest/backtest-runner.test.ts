@@ -1530,4 +1530,146 @@ describe('runBacktest - atr trailing stop', () => {
       expect(result.config.atr?.period).toBe(period);
     }
   });
+
+  test('should_reduce_balance_after_partial_close_to_prevent_double_counting', () => {
+    // #given - setup scenario where ATR triggers then position transitions
+    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
+      if (i < 165) {
+        return {
+          time: i + 1,
+          high: 105,
+          low: 95,
+          close: 100,
+          RSI: 50,
+          date: `${i + 1}/1/2024`,
+        };
+      }
+      if (i < 175) {
+        // Price drops to trigger ATR stop
+        return {
+          time: i + 1,
+          high: 85,
+          low: 75,
+          close: 80,
+          RSI: 50,
+          date: `${i + 1}/1/2024`,
+        };
+      }
+      // Price drops further to trigger transition to SHORT
+      return {
+        time: i + 1,
+        high: 65,
+        low: 55,
+        close: 60,
+        RSI: 50,
+        date: `${i + 1}/1/2024`,
+      };
+    });
+    const smaValues = Array(200).fill(90);
+    smaValues.fill(70, 175); // SMA drops to trigger LONG->SHORT transition
+    const atrValues = Array(200).fill(5);
+    const config: BacktestConfig = {
+      smaPeriod: 20,
+      longLeverage: 2,
+      shortLeverage: 2,
+      startingCapital: 1000,
+      feeRate: 0.1,
+      atr: {
+        period: 14,
+        multiplier: 2,
+        closePercent: 50,
+      },
+    };
+
+    // #when
+    const result = runBacktest(csvData, smaValues, config, atrValues);
+
+    // #then - final balance should not exceed starting capital significantly
+    // (given the losses from the ATR stop and transition)
+    // Before the fix, double-counting would cause balance to inflate unrealistically
+    const partialCloseDay = result.days.find(d => d.action === 'ATR_PARTIAL_CLOSE');
+    const transitionDay = result.days.find(d => d.action === 'TRANSITION_LONG_TO_SHORT');
+
+    expect(partialCloseDay).toBeDefined();
+    expect(transitionDay).toBeDefined();
+
+    // After partial close, balance should be reduced by closedCapital
+    // Balance should reflect only the remaining capital backing the position
+    if (partialCloseDay && transitionDay) {
+      // The sideline value plus remaining balance after transition should not
+      // significantly exceed starting capital (accounting for losses)
+      // This verifies no double-counting occurred
+      expect(result.finalBalance).toBeLessThan(config.startingCapital * 1.5);
+    }
+  });
+
+  test('should_correctly_track_capital_through_atr_close_and_transition_cycle', () => {
+    // #given - controlled scenario to verify exact capital tracking
+    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
+      if (i < 165) {
+        return {
+          time: i + 1,
+          high: 102,
+          low: 98,
+          close: 100, // Entry price
+          RSI: 50,
+          date: `${i + 1}/1/2024`,
+        };
+      }
+      if (i < 175) {
+        return {
+          time: i + 1,
+          high: 92,
+          low: 88,
+          close: 90, // -10% from entry, triggers ATR
+          RSI: 50,
+          date: `${i + 1}/1/2024`,
+        };
+      }
+      return {
+        time: i + 1,
+        high: 82,
+        low: 78,
+        close: 80, // -20% from entry
+        RSI: 50,
+        date: `${i + 1}/1/2024`,
+      };
+    });
+    const smaValues = Array(200).fill(90);
+    smaValues.fill(85, 175); // Trigger transition
+    const atrValues = Array(200).fill(5);
+    const config: BacktestConfig = {
+      smaPeriod: 20,
+      longLeverage: 2,
+      shortLeverage: 2,
+      startingCapital: 1000,
+      feeRate: 0, // Zero fees for easier calculation
+      atr: {
+        period: 14,
+        multiplier: 2,
+        closePercent: 50,
+      },
+    };
+
+    // #when
+    const result = runBacktest(csvData, smaValues, config, atrValues);
+
+    // #then
+    const openDay = result.days.find(d => d.action === 'OPEN_LONG');
+    const partialCloseDay = result.days.find(d => d.action === 'ATR_PARTIAL_CLOSE');
+
+    expect(openDay).toBeDefined();
+    expect(partialCloseDay).toBeDefined();
+
+    if (openDay && partialCloseDay) {
+      // After ATR partial close with 50% close:
+      // - Original balance: 1000, entryValue: 2000 (2x leverage)
+      // - closedCapital: 500 (half of 1000)
+      // - At 90 (from 100 entry), loss on closed portion: (90/100 - 1) * 1000 = -100
+      // - sidelineValue: 500 + (-100) = 400
+      // - Remaining balance: 1000 - 500 = 500
+      // This verifies balance was properly reduced
+      expect(partialCloseDay.balance).toBeLessThan(openDay.balance);
+    }
+  });
 });

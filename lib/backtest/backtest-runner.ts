@@ -87,6 +87,7 @@ export function runBacktest(
 
         currentPosition = result.newPosition;
         sidelineValue += result.sidelineValue;
+        balance -= result.closedCapital;
         totalFees += result.fees;
         totalTrades++;
 

@@ -704,10 +704,12 @@ describe('executePartialClose', () => {
 
       const result = executePartialClose(position, price, closePercent, feeRate);
 
+      // closedCapital = 200 / 2 = 100, fees = 100 * 2 * 0.1 / 100 = 0.2
       expect(result.newPosition.entryValue).toBe(1800);
+      expect(result.closedCapital).toBe(100);
       expect(result.pnl).toBeCloseTo(20, 10);
-      expect(result.fees).toBeCloseTo(0.4, 10);
-      expect(result.sidelineValue).toBeCloseTo(119.6, 10);
+      expect(result.fees).toBeCloseTo(0.2, 10);
+      expect(result.sidelineValue).toBeCloseTo(119.8, 10);
       expect(result.newPosition.trailingStop?.triggered).toBe(true);
     });
 
@@ -724,10 +726,12 @@ describe('executePartialClose', () => {
 
       const result = executePartialClose(position, price, closePercent, feeRate);
 
+      // closedCapital = 500 / 2 = 250, fees = 250 * 2 * 0.1 / 100 = 0.5
       expect(result.newPosition.entryValue).toBe(1500);
+      expect(result.closedCapital).toBe(250);
       expect(result.pnl).toBeCloseTo(50, 10);
-      expect(result.fees).toBeCloseTo(1, 10);
-      expect(result.sidelineValue).toBeCloseTo(299, 10);
+      expect(result.fees).toBeCloseTo(0.5, 10);
+      expect(result.sidelineValue).toBeCloseTo(299.5, 10);
     });
 
     test('should_close_50_percent_with_profit', () => {
@@ -743,10 +747,12 @@ describe('executePartialClose', () => {
 
       const result = executePartialClose(position, price, closePercent, feeRate);
 
+      // closedCapital = 1000 / 2 = 500, fees = 500 * 2 * 0.1 / 100 = 1
       expect(result.newPosition.entryValue).toBe(1000);
+      expect(result.closedCapital).toBe(500);
       expect(result.pnl).toBeCloseTo(100, 10);
-      expect(result.fees).toBeCloseTo(2, 10);
-      expect(result.sidelineValue).toBeCloseTo(598, 10);
+      expect(result.fees).toBeCloseTo(1, 10);
+      expect(result.sidelineValue).toBeCloseTo(599, 10);
     });
 
     test('should_close_100_percent_with_profit', () => {
@@ -762,10 +768,12 @@ describe('executePartialClose', () => {
 
       const result = executePartialClose(position, price, closePercent, feeRate);
 
+      // closedCapital = 2000 / 2 = 1000, fees = 1000 * 2 * 0.1 / 100 = 2
       expect(result.newPosition.entryValue).toBe(0);
+      expect(result.closedCapital).toBe(1000);
       expect(result.pnl).toBeCloseTo(200, 10);
-      expect(result.fees).toBeCloseTo(4, 10);
-      expect(result.sidelineValue).toBeCloseTo(1196, 10);
+      expect(result.fees).toBeCloseTo(2, 10);
+      expect(result.sidelineValue).toBeCloseTo(1198, 10);
     });
 
     test('should_handle_loss_scenario', () => {
@@ -781,10 +789,12 @@ describe('executePartialClose', () => {
 
       const result = executePartialClose(position, price, closePercent, feeRate);
 
+      // closedCapital = 1000 / 2 = 500, fees = 500 * 2 * 0.1 / 100 = 1
       expect(result.newPosition.entryValue).toBe(1000);
+      expect(result.closedCapital).toBe(500);
       expect(result.pnl).toBeCloseTo(-50, 10);
-      expect(result.fees).toBeCloseTo(2, 10);
-      expect(result.sidelineValue).toBeCloseTo(448, 10);
+      expect(result.fees).toBeCloseTo(1, 10);
+      expect(result.sidelineValue).toBeCloseTo(449, 10);
     });
   });
 
@@ -803,10 +813,12 @@ describe('executePartialClose', () => {
 
       const result = executePartialClose(position, price, closePercent, feeRate);
 
+      // closedCapital = 200 / 2 = 100, fees = 100 * 2 * 0.1 / 100 = 0.2
       expect(result.newPosition.entryValue).toBe(1800);
+      expect(result.closedCapital).toBe(100);
       expect(result.pnl).toBeCloseTo(22.22, 2);
-      expect(result.fees).toBeCloseTo(0.4, 10);
-      expect(result.sidelineValue).toBeCloseTo(121.82, 2);
+      expect(result.fees).toBeCloseTo(0.2, 10);
+      expect(result.sidelineValue).toBeCloseTo(122.02, 2);
       expect(result.newPosition.trailingStop?.triggered).toBe(true);
     });
 
@@ -823,10 +835,12 @@ describe('executePartialClose', () => {
 
       const result = executePartialClose(position, price, closePercent, feeRate);
 
+      // closedCapital = 500 / 2 = 250, fees = 250 * 2 * 0.1 / 100 = 0.5
       expect(result.newPosition.entryValue).toBe(1500);
+      expect(result.closedCapital).toBe(250);
       expect(result.pnl).toBeCloseTo(55.56, 2);
-      expect(result.fees).toBeCloseTo(1, 10);
-      expect(result.sidelineValue).toBeCloseTo(304.56, 2);
+      expect(result.fees).toBeCloseTo(0.5, 10);
+      expect(result.sidelineValue).toBeCloseTo(305.06, 2);
     });
 
     test('should_close_50_percent_with_profit', () => {
@@ -842,10 +856,12 @@ describe('executePartialClose', () => {
 
       const result = executePartialClose(position, price, closePercent, feeRate);
 
+      // closedCapital = 1000 / 2 = 500, fees = 500 * 2 * 0.1 / 100 = 1
       expect(result.newPosition.entryValue).toBe(1000);
+      expect(result.closedCapital).toBe(500);
       expect(result.pnl).toBeCloseTo(111.11, 2);
-      expect(result.fees).toBeCloseTo(2, 10);
-      expect(result.sidelineValue).toBeCloseTo(609.11, 2);
+      expect(result.fees).toBeCloseTo(1, 10);
+      expect(result.sidelineValue).toBeCloseTo(610.11, 2);
     });
 
     test('should_close_100_percent_with_profit', () => {
@@ -861,10 +877,12 @@ describe('executePartialClose', () => {
 
       const result = executePartialClose(position, price, closePercent, feeRate);
 
+      // closedCapital = 2000 / 2 = 1000, fees = 1000 * 2 * 0.1 / 100 = 2
       expect(result.newPosition.entryValue).toBe(0);
+      expect(result.closedCapital).toBe(1000);
       expect(result.pnl).toBeCloseTo(222.22, 2);
-      expect(result.fees).toBeCloseTo(4, 10);
-      expect(result.sidelineValue).toBeCloseTo(1218.22, 2);
+      expect(result.fees).toBeCloseTo(2, 10);
+      expect(result.sidelineValue).toBeCloseTo(1220.22, 2);
     });
 
     test('should_handle_loss_scenario', () => {
@@ -880,10 +898,12 @@ describe('executePartialClose', () => {
 
       const result = executePartialClose(position, price, closePercent, feeRate);
 
+      // closedCapital = 1000 / 2 = 500, fees = 500 * 2 * 0.1 / 100 = 1
       expect(result.newPosition.entryValue).toBe(1000);
+      expect(result.closedCapital).toBe(500);
       expect(result.pnl).toBeCloseTo(-47.62, 2);
-      expect(result.fees).toBeCloseTo(2, 10);
-      expect(result.sidelineValue).toBeCloseTo(450.38, 2);
+      expect(result.fees).toBeCloseTo(1, 10);
+      expect(result.sidelineValue).toBeCloseTo(451.38, 2);
     });
   });
 
@@ -940,7 +960,7 @@ describe('executePartialClose', () => {
     expect(result.newPosition.trailingStop?.extremePrice).toBe(110);
   });
 
-  test('should_calculate_fees_with_leverage_squared', () => {
+  test('should_calculate_fees_on_notional_value', () => {
     const position: Position = {
       type: 'LONG',
       entryPrice: 100,
@@ -953,8 +973,11 @@ describe('executePartialClose', () => {
 
     const result = executePartialClose(position, price, closePercent, feeRate);
 
+    // closedCapital = 3000 / 3 = 1000
+    // fees = closedCapital * leverage * feeRate / 100 = 1000 * 3 * 0.1 / 100 = 3
     const closedCapital = 1000;
-    const expectedFees = (closedCapital * 3 * 3 * 0.1) / 100;
+    const expectedFees = (closedCapital * 3 * 0.1) / 100;
+    expect(result.closedCapital).toBe(closedCapital);
     expect(result.fees).toBeCloseTo(expectedFees, 10);
   });
 
@@ -1021,11 +1044,15 @@ describe('executePartialClose', () => {
 
     const result = executePartialClose(position, price, closePercent, feeRate);
 
+    // closedCapital = 1000 / 2 = 500
+    // pnl = (110/100 - 1) * 1000 = 100
+    // fees = 500 * 2 * 0.1 / 100 = 1
     const closedCapital = 500;
     const pnl = 100;
-    const fees = 2;
+    const fees = 1;
     const expectedSideline = closedCapital + pnl - fees;
 
+    expect(result.closedCapital).toBe(closedCapital);
     expect(result.sidelineValue).toBeCloseTo(expectedSideline, 10);
   });
 

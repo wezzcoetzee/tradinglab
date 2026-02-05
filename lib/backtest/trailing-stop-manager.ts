@@ -49,6 +49,7 @@ export function shouldTriggerStop(
 export interface PartialCloseResult {
   newPosition: Position;
   sidelineValue: number;
+  closedCapital: number;
   pnl: number;
   fees: number;
 }
@@ -71,7 +72,7 @@ export function executePartialClose(
       : calculateShortProfit(position.entryPrice, price, closingValue);
 
   const closedCapital = closingValue / position.leverage;
-  const fees = (closedCapital * position.leverage * position.leverage * feeRate) / PERCENTAGE_DIVISOR;
+  const fees = (closedCapital * position.leverage * feeRate) / PERCENTAGE_DIVISOR;
   const sidelineValue = closedCapital + pnl - fees;
 
   const newPosition: Position = {
@@ -83,5 +84,5 @@ export function executePartialClose(
     },
   };
 
-  return { newPosition, sidelineValue, pnl, fees };
+  return { newPosition, sidelineValue, closedCapital, pnl, fees };
 }

@@ -238,7 +238,7 @@ describe('runAllBacktests - result properties', () => {
     ];
     const strategyConfig: StrategyConfig = {
       startingCapital: 10,
-      tradingFee: 20.0,
+      tradingFee: 50.0, // Higher fee to trigger liquidation (fee = capital * leverage * feeRate / 100)
       atrEnabled: false,
     };
 
@@ -268,7 +268,7 @@ describe('runAllBacktests - result properties', () => {
     ];
     const strategyConfig: StrategyConfig = {
       startingCapital: 10,
-      tradingFee: 20.0,
+      tradingFee: 50.0, // Higher fee to trigger liquidation (fee = capital * leverage * feeRate / 100)
       atrEnabled: false,
     };
 
