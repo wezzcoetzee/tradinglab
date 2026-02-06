@@ -72,7 +72,7 @@ describe('ResultsTable', () => {
       expect(screen.getByText('Long Lev')).toBeDefined();
       expect(screen.getByText('Short Lev')).toBeDefined();
       expect(screen.getByText('ATR Config')).toBeDefined();
-      expect(screen.getByText('Final Balance')).toBeDefined();
+      expect(screen.getByText('Collateral')).toBeDefined();
       expect(screen.getByText('Return')).toBeDefined();
       expect(screen.getByText('Trades')).toBeDefined();
       expect(screen.getByText('Status')).toBeDefined();
@@ -184,9 +184,9 @@ describe('ResultsTable', () => {
 
     test('should_sort_non_liquidated_by_return_descending', () => {
       const results = [
-        createMockResult({ totalReturn: 10, isLiquidated: false, finalBalance: 1100 }),
-        createMockResult({ totalReturn: 50, isLiquidated: false, finalBalance: 1500 }),
-        createMockResult({ totalReturn: 30, isLiquidated: false, finalBalance: 1300 }),
+        createMockResult({ totalReturn: 10, isLiquidated: false, finalBalance: 1100, finalCollateral: 1100 }),
+        createMockResult({ totalReturn: 50, isLiquidated: false, finalBalance: 1500, finalCollateral: 1500 }),
+        createMockResult({ totalReturn: 30, isLiquidated: false, finalBalance: 1300, finalCollateral: 1300 }),
       ];
       render(<ResultsTable results={results} baseline={null} />);
       const rows = screen.getAllByRole('row');
@@ -214,19 +214,19 @@ describe('ResultsTable', () => {
 
   describe('formatting functions', () => {
     test('should_format_currency_correctly', () => {
-      const results = [createMockResult({ finalBalance: 1234.56 })];
+      const results = [createMockResult({ finalBalance: 1234.56, finalCollateral: 1234.56 })];
       render(<ResultsTable results={results} baseline={null} />);
       expect(screen.getByText('$1,234.56')).toBeDefined();
     });
 
     test('should_format_large_currency_values', () => {
-      const results = [createMockResult({ finalBalance: 1234567.89 })];
+      const results = [createMockResult({ finalBalance: 1234567.89, finalCollateral: 1234567.89 })];
       render(<ResultsTable results={results} baseline={null} />);
       expect(screen.getByText('$1,234,567.89')).toBeDefined();
     });
 
     test('should_format_zero_currency', () => {
-      const results = [createMockResult({ finalBalance: 0, isLiquidated: true, liquidationDate: '2024-06-10' })];
+      const results = [createMockResult({ finalBalance: 0, finalCollateral: 0, isLiquidated: true, liquidationDate: '2024-06-10' })];
       render(<ResultsTable results={results} baseline={null} />);
       expect(screen.getByText('$0.00')).toBeDefined();
     });
@@ -358,13 +358,13 @@ describe('ResultsTable', () => {
     });
 
     test('should_handle_extreme_negative_returns', () => {
-      const results = [createMockResult({ totalReturn: -99.99, finalBalance: 0.01 })];
+      const results = [createMockResult({ totalReturn: -99.99, finalBalance: 0.01, finalCollateral: 0.01 })];
       render(<ResultsTable results={results} baseline={null} />);
       expect(screen.getByText('-99.99%')).toBeDefined();
     });
 
     test('should_handle_extreme_positive_returns', () => {
-      const results = [createMockResult({ totalReturn: 9999.99, finalBalance: 100999.90 })];
+      const results = [createMockResult({ totalReturn: 9999.99, finalBalance: 100999.90, finalCollateral: 100999.90 })];
       render(<ResultsTable results={results} baseline={null} />);
       expect(screen.getByText('+9999.99%')).toBeDefined();
     });
@@ -485,23 +485,21 @@ describe('ResultsTable', () => {
     });
 
     test('should_show_dash_when_no_baseline', () => {
-      const results = [createMockResult({ finalBalance: 1200 })];
+      const results = [createMockResult({ finalBalance: 1200, finalCollateral: 1200 })];
       render(<ResultsTable results={results} baseline={null} />);
       const cells = screen.getAllByText('-');
       expect(cells.length).toBeGreaterThan(0);
     });
 
     test('should_calculate_vs_hold_correctly', () => {
-      // #given: baseline final value is 1200, strategy final balance is 1500
-      // vsHold = ((1500 - 1200) / 1200) * 100 = 25%
-      const results = [createMockResult({ finalBalance: 1500 })];
+      const results = [createMockResult({ finalBalance: 1500, finalCollateral: 1500 })];
       const baseline = createMockBaseline({ finalValue: 1200 });
       render(<ResultsTable results={results} baseline={baseline} />);
       expect(screen.getByText('+25.00%')).toBeDefined();
     });
 
     test('should_show_green_when_vs_hold_above_5_percent', () => {
-      const results = [createMockResult({ finalBalance: 1300 })];
+      const results = [createMockResult({ finalBalance: 1300, finalCollateral: 1300 })];
       const baseline = createMockBaseline({ finalValue: 1200 });
       const { container } = render(<ResultsTable results={results} baseline={baseline} />);
       const tableBody = container.querySelector('tbody');
@@ -512,7 +510,7 @@ describe('ResultsTable', () => {
     });
 
     test('should_show_red_when_vs_hold_below_minus_5_percent', () => {
-      const results = [createMockResult({ finalBalance: 1100 })];
+      const results = [createMockResult({ finalBalance: 1100, finalCollateral: 1100 })];
       const baseline = createMockBaseline({ finalValue: 1200 });
       const { container } = render(<ResultsTable results={results} baseline={baseline} />);
       const tableBody = container.querySelector('tbody');
@@ -523,7 +521,7 @@ describe('ResultsTable', () => {
     });
 
     test('should_show_yellow_when_vs_hold_within_5_percent', () => {
-      const results = [createMockResult({ finalBalance: 1200 })];
+      const results = [createMockResult({ finalBalance: 1200, finalCollateral: 1200 })];
       const baseline = createMockBaseline({ finalValue: 1200 });
       const { container } = render(<ResultsTable results={results} baseline={baseline} />);
       const vsHoldCell = container.querySelector('.text-yellow-600');

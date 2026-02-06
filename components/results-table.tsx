@@ -34,7 +34,7 @@ interface VsHoldCellProps {
 }
 
 function VsHoldCell({ result, baseline }: VsHoldCellProps) {
-  const vsHold = calculateVsHold(result.finalBalance, baseline.finalValue);
+  const vsHold = calculateVsHold(result.finalCollateral, baseline.finalValue);
   return <span className={getVsHoldColorClass(vsHold)}>{formatPercent(vsHold)}</span>;
 }
 
@@ -99,7 +99,7 @@ export function ResultsTable({ results, baseline, bestResultWithDays, isTruncate
               <TableHead>Long Lev</TableHead>
               <TableHead>Short Lev</TableHead>
               <TableHead>ATR Config</TableHead>
-              <TableHead className="text-right">Final Balance</TableHead>
+              <TableHead className="text-right">Collateral</TableHead>
               <TableHead className="text-right">Return</TableHead>
               <TableHead className="text-right">vs Hold</TableHead>
               <TableHead className="text-right">Trades</TableHead>
@@ -119,7 +119,7 @@ export function ResultsTable({ results, baseline, bestResultWithDays, isTruncate
                 <TableCell>{result.config.shortLeverage}x</TableCell>
                 <TableCell>{formatAtrConfig(result.config.atr)}</TableCell>
                 <TableCell className="text-right font-mono">
-                  {formatCurrency(result.finalBalance)}
+                  {formatCurrency(result.finalCollateral)}
                 </TableCell>
                 <TableCell className={`text-right font-mono ${getReturnColorClass(result.totalReturn)}`}>
                   {formatPercent(result.totalReturn)}

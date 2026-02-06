@@ -75,7 +75,7 @@ describe('SmaComparisonTable', () => {
       const results = [createMockResult()];
       render(<SmaComparisonTable results={results} baseline={null} />);
       expect(screen.getByText('SMA Period')).toBeDefined();
-      expect(screen.getByText('Final Value')).toBeDefined();
+      expect(screen.getByText('Collateral')).toBeDefined();
       expect(screen.getByText('% Gain')).toBeDefined();
       expect(screen.getByText('% vs Hold')).toBeDefined();
       expect(screen.getByText('Status')).toBeDefined();
@@ -95,9 +95,9 @@ describe('SmaComparisonTable', () => {
   describe('grouping by sma period', () => {
     test('should_group_results_by_sma_period', () => {
       const results = [
-        createMockResult({ config: { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 1100 }),
-        createMockResult({ config: { smaPeriod: 20, longLeverage: 2, shortLeverage: 2, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 1200 }),
-        createMockResult({ config: { smaPeriod: 30, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 1300 }),
+        createMockResult({ config: { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 1100, finalCollateral: 1100 }),
+        createMockResult({ config: { smaPeriod: 20, longLeverage: 2, shortLeverage: 2, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 1200, finalCollateral: 1200 }),
+        createMockResult({ config: { smaPeriod: 30, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 1300, finalCollateral: 1300 }),
       ];
       render(<SmaComparisonTable results={results} baseline={null} />);
 
@@ -110,11 +110,13 @@ describe('SmaComparisonTable', () => {
         createMockResult({
           config: { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 },
           finalBalance: 1100,
+          finalCollateral: 1100,
           isLiquidated: false,
         }),
         createMockResult({
           config: { smaPeriod: 20, longLeverage: 2, shortLeverage: 2, startingCapital: 1000, feeRate: 0.1 },
           finalBalance: 1500,
+          finalCollateral: 1500,
           isLiquidated: false,
         }),
       ];
@@ -129,16 +131,19 @@ describe('SmaComparisonTable', () => {
         createMockResult({
           config: { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 },
           finalBalance: 1600,
+          finalCollateral: 1600,
           isLiquidated: false,
         }),
         createMockResult({
           config: { smaPeriod: 20, longLeverage: 2, shortLeverage: 2, startingCapital: 1000, feeRate: 0.1 },
           finalBalance: 1200,
+          finalCollateral: 1200,
           isLiquidated: false,
         }),
         createMockResult({
           config: { smaPeriod: 20, longLeverage: 3, shortLeverage: 3, startingCapital: 1000, feeRate: 0.1 },
           finalBalance: 1400,
+          finalCollateral: 1400,
           isLiquidated: false,
         }),
       ];
@@ -154,12 +159,14 @@ describe('SmaComparisonTable', () => {
         createMockResult({
           config: { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 },
           finalBalance: 2000,
+          finalCollateral: 2000,
           isLiquidated: true,
           liquidationDate: '2024-06-10',
         }),
         createMockResult({
           config: { smaPeriod: 20, longLeverage: 2, shortLeverage: 2, startingCapital: 1000, feeRate: 0.1 },
           finalBalance: 1100,
+          finalCollateral: 1100,
           isLiquidated: false,
         }),
       ];
@@ -174,12 +181,14 @@ describe('SmaComparisonTable', () => {
         createMockResult({
           config: { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 },
           finalBalance: 800,
+          finalCollateral: 800,
           isLiquidated: true,
           liquidationDate: '2024-06-10',
         }),
         createMockResult({
           config: { smaPeriod: 20, longLeverage: 2, shortLeverage: 2, startingCapital: 1000, feeRate: 0.1 },
           finalBalance: 900,
+          finalCollateral: 900,
           isLiquidated: true,
           liquidationDate: '2024-06-11',
         }),
@@ -195,11 +204,13 @@ describe('SmaComparisonTable', () => {
         createMockResult({
           config: { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 },
           finalBalance: 1300,
+          finalCollateral: 1300,
           isLiquidated: false,
         }),
         createMockResult({
           config: { smaPeriod: 20, longLeverage: 2, shortLeverage: 2, startingCapital: 1000, feeRate: 0.1 },
           finalBalance: 1700,
+          finalCollateral: 1700,
           isLiquidated: false,
         }),
       ];
@@ -213,9 +224,9 @@ describe('SmaComparisonTable', () => {
   describe('default sorting', () => {
     test('should_sort_by_final_balance_descending_by_default', () => {
       const results = [
-        createMockResult({ config: { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 1100, isLiquidated: false }),
-        createMockResult({ config: { smaPeriod: 30, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 1500, isLiquidated: false }),
-        createMockResult({ config: { smaPeriod: 40, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 1300, isLiquidated: false }),
+        createMockResult({ config: { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 1100, finalCollateral: 1100, isLiquidated: false }),
+        createMockResult({ config: { smaPeriod: 30, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 1500, finalCollateral: 1500, isLiquidated: false }),
+        createMockResult({ config: { smaPeriod: 40, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 1300, finalCollateral: 1300, isLiquidated: false }),
       ];
       render(<SmaComparisonTable results={results} baseline={null} />);
 
@@ -227,9 +238,9 @@ describe('SmaComparisonTable', () => {
 
     test('should_place_liquidated_rows_at_bottom', () => {
       const results = [
-        createMockResult({ config: { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 1100, isLiquidated: false }),
-        createMockResult({ config: { smaPeriod: 30, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 1500, isLiquidated: true, liquidationDate: '2024-06-10' }),
-        createMockResult({ config: { smaPeriod: 40, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 1300, isLiquidated: false }),
+        createMockResult({ config: { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 1100, finalCollateral: 1100, isLiquidated: false }),
+        createMockResult({ config: { smaPeriod: 30, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 1500, finalCollateral: 1500, isLiquidated: true, liquidationDate: '2024-06-10' }),
+        createMockResult({ config: { smaPeriod: 40, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 1300, finalCollateral: 1300, isLiquidated: false }),
       ];
       render(<SmaComparisonTable results={results} baseline={null} />);
 
@@ -239,9 +250,9 @@ describe('SmaComparisonTable', () => {
 
     test('should_sort_liquidated_by_final_balance_descending', () => {
       const results = [
-        createMockResult({ config: { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 800, isLiquidated: true, liquidationDate: '2024-06-10' }),
-        createMockResult({ config: { smaPeriod: 30, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 1000, isLiquidated: true, liquidationDate: '2024-06-11' }),
-        createMockResult({ config: { smaPeriod: 40, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 900, isLiquidated: true, liquidationDate: '2024-06-12' }),
+        createMockResult({ config: { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 800, finalCollateral: 800, isLiquidated: true, liquidationDate: '2024-06-10' }),
+        createMockResult({ config: { smaPeriod: 30, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 1000, finalCollateral: 1000, isLiquidated: true, liquidationDate: '2024-06-11' }),
+        createMockResult({ config: { smaPeriod: 40, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 900, finalCollateral: 900, isLiquidated: true, liquidationDate: '2024-06-12' }),
       ];
       render(<SmaComparisonTable results={results} baseline={null} />);
 
@@ -258,12 +269,12 @@ describe('SmaComparisonTable', () => {
     test('should_toggle_sort_direction_on_header_click', async () => {
       const user = userEvent.setup();
       const results = [
-        createMockResult({ config: { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 1100, isLiquidated: false }),
-        createMockResult({ config: { smaPeriod: 30, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 1500, isLiquidated: false }),
+        createMockResult({ config: { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 1100, finalCollateral: 1100, isLiquidated: false }),
+        createMockResult({ config: { smaPeriod: 30, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 1500, finalCollateral: 1500, isLiquidated: false }),
       ];
       render(<SmaComparisonTable results={results} baseline={null} />);
 
-      const finalValueHeader = screen.getByText('Final Value').closest('th');
+      const finalValueHeader = screen.getByText('Collateral').closest('th');
       await user.click(finalValueHeader!);
 
       const rows = screen.getAllByRole('row');
@@ -311,9 +322,9 @@ describe('SmaComparisonTable', () => {
       const user = userEvent.setup();
       const baseline = createMockBaseline({ finalValue: 1200 });
       const results = [
-        createMockResult({ config: { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 1300, isLiquidated: false }),
-        createMockResult({ config: { smaPeriod: 30, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 1500, isLiquidated: false }),
-        createMockResult({ config: { smaPeriod: 40, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 1400, isLiquidated: false }),
+        createMockResult({ config: { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 1300, finalCollateral: 1300, isLiquidated: false }),
+        createMockResult({ config: { smaPeriod: 30, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 1500, finalCollateral: 1500, isLiquidated: false }),
+        createMockResult({ config: { smaPeriod: 40, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 }, finalBalance: 1400, finalCollateral: 1400, isLiquidated: false }),
       ];
       render(<SmaComparisonTable results={results} baseline={baseline} />);
 
@@ -426,6 +437,7 @@ describe('SmaComparisonTable', () => {
         createMockResult({
           config: { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 },
           finalBalance: 1500,
+          finalCollateral: 1500,
           isLiquidated: false,
         }),
       ];
@@ -441,6 +453,7 @@ describe('SmaComparisonTable', () => {
         createMockResult({
           config: { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 },
           finalBalance: 1300,
+          finalCollateral: 1300,
           isLiquidated: false,
         }),
       ];
@@ -456,6 +469,7 @@ describe('SmaComparisonTable', () => {
         createMockResult({
           config: { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 },
           finalBalance: 1100,
+          finalCollateral: 1100,
           isLiquidated: false,
         }),
       ];
@@ -471,6 +485,7 @@ describe('SmaComparisonTable', () => {
         createMockResult({
           config: { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 },
           finalBalance: 900,
+          finalCollateral: 900,
           isLiquidated: false,
         }),
       ];
@@ -486,6 +501,7 @@ describe('SmaComparisonTable', () => {
         createMockResult({
           config: { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 },
           finalBalance: 700,
+          finalCollateral: 700,
           isLiquidated: false,
         }),
       ];
@@ -515,6 +531,7 @@ describe('SmaComparisonTable', () => {
         createMockResult({
           config: { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 },
           finalBalance: 1500,
+          finalCollateral: 1500,
           isLiquidated: true,
           liquidationDate: '2024-06-10',
         }),
@@ -574,7 +591,7 @@ describe('SmaComparisonTable', () => {
   describe('formatting', () => {
     test('should_format_currency_correctly', () => {
       const results = [
-        createMockResult({ finalBalance: 1234.56 }),
+        createMockResult({ finalBalance: 1234.56, finalCollateral: 1234.56 }),
       ];
       render(<SmaComparisonTable results={results} baseline={null} />);
 
@@ -613,7 +630,7 @@ describe('SmaComparisonTable', () => {
     test('should_calculate_vs_hold_correctly', () => {
       const baseline = createMockBaseline({ finalValue: 1200 });
       const results = [
-        createMockResult({ finalBalance: 1500 }),
+        createMockResult({ finalBalance: 1500, finalCollateral: 1500 }),
       ];
       render(<SmaComparisonTable results={results} baseline={baseline} />);
 
@@ -640,7 +657,7 @@ describe('SmaComparisonTable', () => {
 
     test('should_handle_extreme_positive_returns', () => {
       const results = [
-        createMockResult({ totalReturn: 9999.99, finalBalance: 100999.90 }),
+        createMockResult({ totalReturn: 9999.99, finalBalance: 100999.90, finalCollateral: 100999.90 }),
       ];
       render(<SmaComparisonTable results={results} baseline={null} />);
 
@@ -649,7 +666,7 @@ describe('SmaComparisonTable', () => {
 
     test('should_handle_extreme_negative_returns', () => {
       const results = [
-        createMockResult({ totalReturn: -99.99, finalBalance: 0.01 }),
+        createMockResult({ totalReturn: -99.99, finalBalance: 0.01, finalCollateral: 0.01 }),
       ];
       render(<SmaComparisonTable results={results} baseline={null} />);
 
@@ -658,7 +675,7 @@ describe('SmaComparisonTable', () => {
 
     test('should_handle_zero_balance', () => {
       const results = [
-        createMockResult({ finalBalance: 0, isLiquidated: true, liquidationDate: '2024-06-10' }),
+        createMockResult({ finalBalance: 0, finalCollateral: 0, isLiquidated: true, liquidationDate: '2024-06-10' }),
       ];
       render(<SmaComparisonTable results={results} baseline={null} />);
 
