@@ -18,7 +18,7 @@ interface OptimalStrategyCardProps {
 }
 
 export function OptimalStrategyCard({ result, baseline }: OptimalStrategyCardProps) {
-  const vsHold = calculateVsHold(result.finalBalance, baseline.finalValue);
+  const vsHold = calculateVsHold(result.finalCollateral, baseline.finalValue);
 
   return (
     <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
@@ -28,7 +28,7 @@ export function OptimalStrategyCard({ result, baseline }: OptimalStrategyCardPro
       <CardContent className="space-y-4">
         <div className="text-center">
           <div className="text-5xl font-bold font-mono tabular-nums tracking-tight">
-            {formatCurrency(result.finalBalance)}
+            {formatCurrency(result.finalCollateral)}
           </div>
           <div className="mt-2 flex justify-center gap-2">
             <Badge

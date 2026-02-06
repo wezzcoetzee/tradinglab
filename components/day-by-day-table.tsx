@@ -25,6 +25,14 @@ const ROW_HEIGHT = 45;
 const CONTAINER_HEIGHT = 600;
 const OVERSCAN = 10;
 
+function calculateCollateralValue(day: DayResult): number {
+  const leverage = day.position?.leverage ?? 1;
+  if (leverage === 1) return day.portfolioValue;
+  const sidelineValue = day.sidelineValue ?? 0;
+  const unrealizedPnl = day.portfolioValue - day.balance - sidelineValue;
+  return day.balance + unrealizedPnl / leverage + sidelineValue;
+}
+
 function calculateBuyHoldValue(
   startingCapital: number,
   purchasePrice: number,
@@ -77,12 +85,13 @@ function CollapsibleHeader({
 
 function TableHeader() {
   return (
-    <div className="grid grid-cols-6 gap-4 px-4 py-2 font-semibold text-sm border-b bg-muted/50 rounded-t-md">
+    <div className="grid grid-cols-7 gap-4 px-4 py-2 font-semibold text-sm border-b bg-muted/50 rounded-t-md">
       <div>Date</div>
       <div className="text-right">Close Price</div>
       <div className="text-right">SMA Value</div>
       <div className="text-center">Position</div>
       <div className="text-right">Portfolio Value</div>
+      <div className="text-right">Collateral</div>
       <div className="text-right">Buy-Hold Value</div>
     </div>
   );
@@ -90,16 +99,17 @@ function TableHeader() {
 
 interface TableRowProps {
   day: DayResult;
+  collateralValue: number;
   buyHoldValue: number;
   top: number;
 }
 
-function TableRow({ day, buyHoldValue, top }: TableRowProps) {
+function TableRow({ day, collateralValue, buyHoldValue, top }: TableRowProps) {
   const positionType: PositionType = day.position?.type ?? 'NONE';
 
   return (
     <div
-      className="absolute left-0 w-full grid grid-cols-6 gap-4 px-4 items-center border-b text-sm"
+      className="absolute left-0 w-full grid grid-cols-7 gap-4 px-4 items-center border-b text-sm"
       style={{ top, height: ROW_HEIGHT }}
     >
       <div className="font-mono">{day.date}</div>
@@ -111,6 +121,7 @@ function TableRow({ day, buyHoldValue, top }: TableRowProps) {
         </Badge>
       </div>
       <div className="text-right font-mono">{formatCurrency(day.portfolioValue)}</div>
+      <div className="text-right font-mono">{formatCurrency(collateralValue)}</div>
       <div className="text-right font-mono">{formatCurrency(buyHoldValue)}</div>
     </div>
   );
@@ -165,10 +176,13 @@ export function DayByDayTable({
                   day.price
                 );
 
+                const collateralValue = calculateCollateralValue(day);
+
                 return (
                   <TableRow
                     key={virtualRow.key}
                     day={day}
+                    collateralValue={collateralValue}
                     buyHoldValue={buyHoldValue}
                     top={virtualRow.start}
                   />

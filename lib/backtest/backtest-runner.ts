@@ -232,11 +232,15 @@ export function runBacktest(
     }
   }
 
+  let finalCollateral: number;
   if (currentPosition && !isLiquidated) {
     const lastRow = csvData[csvData.length - 1];
     const lastPrice = lastRow.close;
     const finalPnl = calculatePositionProfit(currentPosition, lastPrice);
+    finalCollateral = balance + (finalPnl / currentPosition.leverage) + sidelineValue;
     balance += finalPnl;
+  } else {
+    finalCollateral = isLiquidated ? MIN_BALANCE_THRESHOLD : balance + sidelineValue;
   }
 
   const finalBalance = isLiquidated ? MIN_BALANCE_THRESHOLD : balance + sidelineValue;
@@ -246,6 +250,7 @@ export function runBacktest(
     config,
     days,
     finalBalance,
+    finalCollateral,
     totalReturn,
     totalFees,
     totalTrades,

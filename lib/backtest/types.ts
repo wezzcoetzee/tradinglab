@@ -59,6 +59,7 @@ export interface BacktestResult {
   config: BacktestConfig;
   days: DayResult[];
   finalBalance: number;
+  finalCollateral: number;
   totalReturn: number;
   totalFees: number;
   totalTrades: number;

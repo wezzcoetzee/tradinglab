@@ -31,6 +31,7 @@ function createMockResult(overrides: Partial<BacktestResult> = {}): BacktestResu
     },
     days: [],
     finalBalance: 1100,
+    finalCollateral: 1100,
     totalReturn: 10,
     totalFees: 10,
     totalTrades: 5,
@@ -42,28 +43,28 @@ function createMockResult(overrides: Partial<BacktestResult> = {}): BacktestResu
 describe('OptimalStrategyCard', () => {
   describe('portfolio value rendering', () => {
     test('should_render_final_balance_as_formatted_currency', () => {
-      const result = createMockResult({ finalBalance: 1234.56 });
+      const result = createMockResult({ finalBalance: 1234.56, finalCollateral: 1234.56 });
       const baseline = createMockBaseline();
       render(<OptimalStrategyCard result={result} baseline={baseline} />);
       expect(screen.getByText('$1,234.56')).toBeDefined();
     });
 
     test('should_format_large_currency_values', () => {
-      const result = createMockResult({ finalBalance: 1234567.89 });
+      const result = createMockResult({ finalBalance: 1234567.89, finalCollateral: 1234567.89 });
       const baseline = createMockBaseline();
       render(<OptimalStrategyCard result={result} baseline={baseline} />);
       expect(screen.getByText('$1,234,567.89')).toBeDefined();
     });
 
     test('should_format_zero_balance', () => {
-      const result = createMockResult({ finalBalance: 0 });
+      const result = createMockResult({ finalBalance: 0, finalCollateral: 0 });
       const baseline = createMockBaseline();
       render(<OptimalStrategyCard result={result} baseline={baseline} />);
       expect(screen.getByText('$0.00')).toBeDefined();
     });
 
     test('should_display_balance_in_large_font', () => {
-      const result = createMockResult({ finalBalance: 1500 });
+      const result = createMockResult({ finalBalance: 1500, finalCollateral: 1500 });
       const baseline = createMockBaseline();
       const { container } = render(<OptimalStrategyCard result={result} baseline={baseline} />);
       const balanceElement = container.querySelector('.text-5xl.font-bold.font-mono');
@@ -105,7 +106,7 @@ describe('OptimalStrategyCard', () => {
 
   describe('vs hold percentage badge', () => {
     test('should_display_green_when_vs_hold_above_5_percent', () => {
-      const result = createMockResult({ finalBalance: 1400 });
+      const result = createMockResult({ finalBalance: 1400, finalCollateral: 1400 });
       const baseline = createMockBaseline({ finalValue: 1200 });
       const { container } = render(<OptimalStrategyCard result={result} baseline={baseline} />);
       const badges = container.querySelectorAll('.text-green-600');
@@ -114,7 +115,7 @@ describe('OptimalStrategyCard', () => {
     });
 
     test('should_display_red_when_vs_hold_below_minus_5_percent', () => {
-      const result = createMockResult({ finalBalance: 1000 });
+      const result = createMockResult({ finalBalance: 1000, finalCollateral: 1000 });
       const baseline = createMockBaseline({ finalValue: 1200 });
       const { container } = render(<OptimalStrategyCard result={result} baseline={baseline} />);
       const badge = container.querySelector('.text-destructive');
@@ -122,7 +123,7 @@ describe('OptimalStrategyCard', () => {
     });
 
     test('should_display_yellow_when_vs_hold_within_5_percent', () => {
-      const result = createMockResult({ finalBalance: 1230 });
+      const result = createMockResult({ finalBalance: 1230, finalCollateral: 1230 });
       const baseline = createMockBaseline({ finalValue: 1200 });
       const { container } = render(<OptimalStrategyCard result={result} baseline={baseline} />);
       const badge = container.querySelector('.text-yellow-600');
@@ -130,28 +131,28 @@ describe('OptimalStrategyCard', () => {
     });
 
     test('should_calculate_vs_hold_correctly_when_equal', () => {
-      const result = createMockResult({ finalBalance: 1200 });
+      const result = createMockResult({ finalBalance: 1200, finalCollateral: 1200 });
       const baseline = createMockBaseline({ finalValue: 1200 });
       render(<OptimalStrategyCard result={result} baseline={baseline} />);
       expect(screen.getByText('+0.00% vs hold')).toBeDefined();
     });
 
     test('should_calculate_vs_hold_correctly_when_strategy_outperforms', () => {
-      const result = createMockResult({ finalBalance: 1500 });
+      const result = createMockResult({ finalBalance: 1500, finalCollateral: 1500 });
       const baseline = createMockBaseline({ finalValue: 1200 });
       render(<OptimalStrategyCard result={result} baseline={baseline} />);
       expect(screen.getByText('+25.00% vs hold')).toBeDefined();
     });
 
     test('should_calculate_vs_hold_correctly_when_strategy_underperforms', () => {
-      const result = createMockResult({ finalBalance: 900 });
+      const result = createMockResult({ finalBalance: 900, finalCollateral: 900 });
       const baseline = createMockBaseline({ finalValue: 1200 });
       render(<OptimalStrategyCard result={result} baseline={baseline} />);
       expect(screen.getByText('-25.00% vs hold')).toBeDefined();
     });
 
     test('should_display_yellow_at_exactly_5_percent', () => {
-      const result = createMockResult({ finalBalance: 1260 });
+      const result = createMockResult({ finalBalance: 1260, finalCollateral: 1260 });
       const baseline = createMockBaseline({ finalValue: 1200 });
       const { container } = render(<OptimalStrategyCard result={result} baseline={baseline} />);
       const badge = container.querySelector('.text-yellow-600');
@@ -159,7 +160,7 @@ describe('OptimalStrategyCard', () => {
     });
 
     test('should_display_yellow_at_exactly_minus_5_percent', () => {
-      const result = createMockResult({ finalBalance: 1140 });
+      const result = createMockResult({ finalBalance: 1140, finalCollateral: 1140 });
       const baseline = createMockBaseline({ finalValue: 1200 });
       const { container } = render(<OptimalStrategyCard result={result} baseline={baseline} />);
       const badge = container.querySelector('.text-yellow-600');
@@ -167,7 +168,7 @@ describe('OptimalStrategyCard', () => {
     });
 
     test('should_display_green_at_just_above_5_percent', () => {
-      const result = createMockResult({ finalBalance: 1261 });
+      const result = createMockResult({ finalBalance: 1261, finalCollateral: 1261 });
       const baseline = createMockBaseline({ finalValue: 1200 });
       const { container } = render(<OptimalStrategyCard result={result} baseline={baseline} />);
       const badges = container.querySelectorAll('.text-green-600');
@@ -176,7 +177,7 @@ describe('OptimalStrategyCard', () => {
     });
 
     test('should_display_red_at_just_below_minus_5_percent', () => {
-      const result = createMockResult({ finalBalance: 1139 });
+      const result = createMockResult({ finalBalance: 1139, finalCollateral: 1139 });
       const baseline = createMockBaseline({ finalValue: 1200 });
       const { container } = render(<OptimalStrategyCard result={result} baseline={baseline} />);
       const badges = container.querySelectorAll('.text-destructive');
@@ -352,7 +353,7 @@ describe('OptimalStrategyCard', () => {
     });
 
     test('should_render_both_badges', () => {
-      const result = createMockResult({ totalReturn: 10, finalBalance: 1300 });
+      const result = createMockResult({ totalReturn: 10, finalBalance: 1300, finalCollateral: 1300 });
       const baseline = createMockBaseline({ finalValue: 1200 });
       render(<OptimalStrategyCard result={result} baseline={baseline} />);
       expect(screen.getByText('+10.00% gain')).toBeDefined();
@@ -362,14 +363,14 @@ describe('OptimalStrategyCard', () => {
 
   describe('edge cases', () => {
     test('should_handle_extreme_positive_return', () => {
-      const result = createMockResult({ totalReturn: 9999.99, finalBalance: 100999.90 });
+      const result = createMockResult({ totalReturn: 9999.99, finalBalance: 100999.90, finalCollateral: 100999.90 });
       const baseline = createMockBaseline();
       render(<OptimalStrategyCard result={result} baseline={baseline} />);
       expect(screen.getByText('+9999.99% gain')).toBeDefined();
     });
 
     test('should_handle_extreme_negative_return', () => {
-      const result = createMockResult({ totalReturn: -99.99, finalBalance: 0.01 });
+      const result = createMockResult({ totalReturn: -99.99, finalBalance: 0.01, finalCollateral: 0.01 });
       const baseline = createMockBaseline();
       render(<OptimalStrategyCard result={result} baseline={baseline} />);
       expect(screen.getByText('-99.99% gain')).toBeDefined();
@@ -407,7 +408,7 @@ describe('OptimalStrategyCard', () => {
     });
 
     test('should_handle_very_small_baseline_value', () => {
-      const result = createMockResult({ finalBalance: 100 });
+      const result = createMockResult({ finalBalance: 100, finalCollateral: 100 });
       const baseline = createMockBaseline({ finalValue: 10 });
       render(<OptimalStrategyCard result={result} baseline={baseline} />);
       expect(screen.getByText('+900.00% vs hold')).toBeDefined();

@@ -40,6 +40,7 @@ function createMockResult(overrides: Partial<BacktestResult> = {}): BacktestResu
       createMockDay({ dayIndex: 161, date: '2024-06-02' }),
     ],
     finalBalance: 1100,
+    finalCollateral: 1100,
     totalReturn: 10,
     totalFees: 10,
     totalTrades: 5,
