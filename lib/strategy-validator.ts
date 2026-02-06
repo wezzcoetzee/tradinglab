@@ -4,6 +4,8 @@ const MIN_STARTING_CAPITAL = 100;
 const MIN_TRADING_FEE = 0;
 const MAX_TRADING_FEE_PERCENT = 100;
 const MIN_SMA_PERIOD = 2;
+const MAX_SMA_MIN_PERIOD = 50;
+const MIN_SMA_MAX_PERIOD = 3;
 const MAX_SMA_PERIOD = 200;
 
 export function validateStrategyConfig(config: StrategyConfig): StrategyConfigValidation {
@@ -35,10 +37,24 @@ export function validateStrategyConfig(config: StrategyConfig): StrategyConfigVa
     };
   }
 
+  if (config.smaMin > MAX_SMA_MIN_PERIOD) {
+    return {
+      valid: false,
+      error: `SMA minimum must be less than ${MAX_SMA_PERIOD}`
+    };
+  }
+
   if (config.smaMax <= config.smaMin) {
     return {
       valid: false,
       error: 'SMA maximum must be greater than SMA minimum'
+    };
+  }
+
+  if (config.smaMax < MIN_SMA_MAX_PERIOD) {
+    return {
+      valid: false,
+      error: `SMA maximum must be at least ${MIN_SMA_MAX_PERIOD}`
     };
   }
 

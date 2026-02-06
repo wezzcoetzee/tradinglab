@@ -124,6 +124,7 @@ export function StrategyConfigForm({ onConfigChange }: StrategyConfigProps) {
               id="smaMin"
               type="number"
               min="2"
+              max="50"
               step="1"
               value={config.smaMin}
               onChange={handleSmaMinChange}

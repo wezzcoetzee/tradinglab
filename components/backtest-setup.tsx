@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import Papa from 'papaparse';
-import { Upload, FileText, AlertCircle, CheckCircle2, Info, Download } from 'lucide-react';
+import { Upload, FileText, AlertCircle, CheckCircle2, Info, Download, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -14,6 +14,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { validateCsv } from '@/lib/csv-validator';
 import type { CsvRow, ValidationResult } from '@/lib/types';
 
@@ -25,6 +31,7 @@ interface BacktestSetupProps {
 export function BacktestSetup({ onDataLoaded, actionButton }: BacktestSetupProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<ValidationResult | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,6 +48,7 @@ export function BacktestSetup({ onDataLoaded, actionButton }: BacktestSetupProps
 
     setIsLoading(true);
     setResult(null);
+    setFileName(file.name);
 
     Papa.parse(file, {
       header: true,
@@ -103,12 +111,26 @@ export function BacktestSetup({ onDataLoaded, actionButton }: BacktestSetupProps
                 <li><strong>low</strong> - Daily low price</li>
                 <li><strong>close</strong> - Daily close price</li>
               </ul>
-              <Button asChild className="mt-2">
-                <a href="/BTC_example.csv" download>
-                  <Download className="mr-2 h-4 w-4" />
-                  Download Example CSV
-                </a>
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button className="mt-2">
+                    <Download className="mr-2 h-4 w-4" />
+                    Download Example CSV
+                    <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem asChild>
+                    <a href="/BTC.csv" download>BTC</a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <a href="/ETH.csv" download>ETH</a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <a href="/SOL.csv" download>SOL</a>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </DialogContent>
           </Dialog>
         </CardDescription>
@@ -142,7 +164,7 @@ export function BacktestSetup({ onDataLoaded, actionButton }: BacktestSetupProps
             <CheckCircle2 className="h-4 w-4" />
             <AlertTitle>Success</AlertTitle>
             <AlertDescription>
-              CSV validated. {result.rowCount} rows loaded.
+              {fileName} validated. {result.rowCount} rows loaded.
             </AlertDescription>
           </Alert>
         )}
