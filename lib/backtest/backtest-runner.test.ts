@@ -1551,6 +1551,44 @@ describe('runBacktest - atr trailing stop', () => {
     }
   });
 
+  test('should_have_continuous_portfolioValue_across_atr_partial_close_and_transition', () => {
+    // #given - price drops trigger ATR partial close, then transitions to SHORT
+    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
+      if (i < 165) {
+        return { time: i + 1, high: 102, low: 98, close: 100, date: `${i + 1}/1/2024` };
+      }
+      if (i < 175) {
+        return { time: i + 1, high: 92, low: 88, close: 90, date: `${i + 1}/1/2024` };
+      }
+      return { time: i + 1, high: 82, low: 78, close: 80, date: `${i + 1}/1/2024` };
+    });
+    const smaValues = Array(200).fill(90);
+    smaValues.fill(85, 175);
+    const atrValues = Array(200).fill(5);
+    const config: BacktestConfig = {
+      smaPeriod: 20,
+      longLeverage: 2,
+      shortLeverage: 2,
+      startingCapital: 1000,
+      feeRate: 0,
+      atr: { period: 14, multiplier: 2, closePercent: 50 },
+    };
+
+    // #when
+    const result = runBacktest(csvData, smaValues, config, atrValues);
+
+    // #then - portfolioValue should not jump between consecutive same-price days
+    for (let i = 1; i < result.days.length; i++) {
+      const prev = result.days[i - 1];
+      const curr = result.days[i];
+      if (prev.price === curr.price) {
+        const jump = Math.abs(curr.portfolioValue - prev.portfolioValue);
+        const tolerance = curr.fees + prev.fees + 0.01;
+        expect(jump).toBeLessThanOrEqual(tolerance);
+      }
+    }
+  });
+
   test('should_correctly_track_capital_through_atr_close_and_transition_cycle', () => {
     // #given - controlled scenario to verify exact capital tracking
     const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {

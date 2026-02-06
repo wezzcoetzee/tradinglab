@@ -94,6 +94,7 @@ export function runBacktest(
         totalTrades++;
 
         if (!summaryOnly) {
+          const unrealizedPnl = currentPosition ? calculatePositionProfit(currentPosition, price) : 0;
           days.push({
             dayIndex: i,
             date: row.date,
@@ -106,6 +107,7 @@ export function runBacktest(
             fees: result.fees,
             isLiquidated: false,
             sidelineValue,
+            portfolioValue: balance + unrealizedPnl + sidelineValue,
           });
         }
         continue;
@@ -117,6 +119,7 @@ export function runBacktest(
 
     if (action === 'HOLD') {
       if (!summaryOnly) {
+        const unrealizedPnl = currentPosition ? calculatePositionProfit(currentPosition, price) : 0;
         days.push({
           dayIndex: i,
           date: row.date,
@@ -128,6 +131,7 @@ export function runBacktest(
           pnl: 0,
           fees: 0,
           isLiquidated: false,
+          portfolioValue: balance + unrealizedPnl + sidelineValue,
         });
       }
       continue;
@@ -176,6 +180,7 @@ export function runBacktest(
           pnl,
           fees,
           isLiquidated: true,
+          portfolioValue: MIN_BALANCE_THRESHOLD,
         });
       }
       break;
@@ -210,6 +215,7 @@ export function runBacktest(
     }
 
     if (!summaryOnly) {
+      const unrealizedPnl = currentPosition ? calculatePositionProfit(currentPosition, price) : 0;
       days.push({
         dayIndex: i,
         date: row.date,
@@ -221,6 +227,7 @@ export function runBacktest(
         pnl,
         fees,
         isLiquidated: false,
+        portfolioValue: balance + unrealizedPnl + sidelineValue,
       });
     }
   }

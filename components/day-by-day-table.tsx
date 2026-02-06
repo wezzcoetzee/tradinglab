@@ -110,7 +110,7 @@ function TableRow({ day, buyHoldValue, top }: TableRowProps) {
           {positionType}
         </Badge>
       </div>
-      <div className="text-right font-mono">{formatCurrency(day.balance)}</div>
+      <div className="text-right font-mono">{formatCurrency(day.portfolioValue)}</div>
       <div className="text-right font-mono">{formatCurrency(buyHoldValue)}</div>
     </div>
   );

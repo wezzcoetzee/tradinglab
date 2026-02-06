@@ -37,6 +37,7 @@ export interface DayResult {
   fees: number;
   isLiquidated: boolean;
   sidelineValue?: number;
+  portfolioValue: number;
 }
 
 export interface AtrConfig {
