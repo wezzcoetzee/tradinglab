@@ -1,5 +1,5 @@
 import { describe, expect, test, afterEach } from 'bun:test';
-import { render, screen, cleanup } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 import { ResultsTable } from './results-table';
 import type { BacktestResult, BuyAndHoldBaseline } from '@/lib/backtest/types';
 
@@ -40,6 +40,10 @@ function createMockResult(overrides: Partial<BacktestResult> = {}): BacktestResu
   };
 }
 
+function expandAllConfigurations() {
+  fireEvent.click(screen.getByText('All Configurations'));
+}
+
 describe('ResultsTable', () => {
   describe('empty state', () => {
     test('should_return_null_when_results_empty', () => {
@@ -68,6 +72,7 @@ describe('ResultsTable', () => {
     test('should_render_table_headers', () => {
       const results = [createMockResult()];
       render(<ResultsTable results={results} baseline={null} />);
+      expandAllConfigurations();
       expect(screen.getByText('SMA')).toBeDefined();
       expect(screen.getByText('Long Lev')).toBeDefined();
       expect(screen.getByText('Short Lev')).toBeDefined();
@@ -87,6 +92,7 @@ describe('ResultsTable', () => {
         }),
       ];
       render(<ResultsTable results={results} baseline={null} />);
+      expandAllConfigurations();
       expect(screen.getByText('25')).toBeDefined();
       expect(screen.getByText('2x')).toBeDefined();
       expect(screen.getByText('1.5x')).toBeDefined();
@@ -177,6 +183,7 @@ describe('ResultsTable', () => {
         createMockResult({ totalReturn: 20, isLiquidated: false, config: { smaPeriod: 40, longLeverage: 1.5, shortLeverage: 1.5, startingCapital: 1000, feeRate: 0.1 } }),
       ];
       render(<ResultsTable results={results} baseline={null} />);
+      expandAllConfigurations();
       const rows = screen.getAllByRole('row');
       const lastRow = rows[rows.length - 1];
       expect(lastRow.textContent).toContain('LIQUIDATED');
@@ -189,6 +196,7 @@ describe('ResultsTable', () => {
         createMockResult({ totalReturn: 30, isLiquidated: false, finalBalance: 1300, finalCollateral: 1300 }),
       ];
       render(<ResultsTable results={results} baseline={null} />);
+      expandAllConfigurations();
       const rows = screen.getAllByRole('row');
       expect(rows[1].textContent).toContain('+50.00%');
       expect(rows[2].textContent).toContain('+30.00%');
@@ -204,6 +212,7 @@ describe('ResultsTable', () => {
         createMockResult({ totalReturn: 20, isLiquidated: false }),
       ];
       render(<ResultsTable results={results} baseline={null} />);
+      expandAllConfigurations();
       const rows = screen.getAllByRole('row');
       const activeBadges = screen.getAllByText('Active');
       const liquidatedBadges = screen.getAllByText('LIQUIDATED');
@@ -216,36 +225,42 @@ describe('ResultsTable', () => {
     test('should_format_currency_correctly', () => {
       const results = [createMockResult({ finalBalance: 1234.56, finalCollateral: 1234.56 })];
       render(<ResultsTable results={results} baseline={null} />);
+      expandAllConfigurations();
       expect(screen.getByText('$1,234.56')).toBeDefined();
     });
 
     test('should_format_large_currency_values', () => {
       const results = [createMockResult({ finalBalance: 1234567.89, finalCollateral: 1234567.89 })];
       render(<ResultsTable results={results} baseline={null} />);
+      expandAllConfigurations();
       expect(screen.getByText('$1,234,567.89')).toBeDefined();
     });
 
     test('should_format_zero_currency', () => {
       const results = [createMockResult({ finalBalance: 0, finalCollateral: 0, isLiquidated: true, liquidationDate: '2024-06-10' })];
       render(<ResultsTable results={results} baseline={null} />);
+      expandAllConfigurations();
       expect(screen.getByText('$0.00')).toBeDefined();
     });
 
     test('should_format_positive_percent_with_plus_sign', () => {
       const results = [createMockResult({ totalReturn: 15.456 })];
       render(<ResultsTable results={results} baseline={null} />);
+      expandAllConfigurations();
       expect(screen.getByText('+15.46%')).toBeDefined();
     });
 
     test('should_format_negative_percent_without_plus_sign', () => {
       const results = [createMockResult({ totalReturn: -12.345 })];
       render(<ResultsTable results={results} baseline={null} />);
+      expandAllConfigurations();
       expect(screen.getByText('-12.35%')).toBeDefined();
     });
 
     test('should_format_zero_percent', () => {
       const results = [createMockResult({ totalReturn: 0 })];
       render(<ResultsTable results={results} baseline={null} />);
+      expandAllConfigurations();
       expect(screen.getByText('+0.00%')).toBeDefined();
     });
 
@@ -263,6 +278,7 @@ describe('ResultsTable', () => {
         })
       ];
       render(<ResultsTable results={results} baseline={null} />);
+      expandAllConfigurations();
       expect(screen.getByText('14/3/50%')).toBeDefined();
     });
 
@@ -280,12 +296,14 @@ describe('ResultsTable', () => {
         })
       ];
       render(<ResultsTable results={results} baseline={null} />);
+      expandAllConfigurations();
       expect(screen.getByText('20/2.5/25%')).toBeDefined();
     });
 
     test('should_show_dash_when_no_atr_config', () => {
       const results = [createMockResult({ config: { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 } })];
       render(<ResultsTable results={results} baseline={null} />);
+      expandAllConfigurations();
       const cells = screen.getAllByText('-');
       expect(cells.length).toBeGreaterThan(0);
     });
@@ -295,24 +313,28 @@ describe('ResultsTable', () => {
     test('should_show_liquidated_badge_when_liquidated', () => {
       const results = [createMockResult({ isLiquidated: true, liquidationDate: '2024-06-10' })];
       render(<ResultsTable results={results} baseline={null} />);
+      expandAllConfigurations();
       expect(screen.getByText('LIQUIDATED')).toBeDefined();
     });
 
     test('should_show_active_badge_when_not_liquidated', () => {
       const results = [createMockResult({ isLiquidated: false })];
       render(<ResultsTable results={results} baseline={null} />);
+      expandAllConfigurations();
       expect(screen.getByText('Active')).toBeDefined();
     });
 
     test('should_show_liquidation_date_when_liquidated', () => {
       const results = [createMockResult({ isLiquidated: true, liquidationDate: '2024-06-10' })];
       render(<ResultsTable results={results} baseline={null} />);
+      expandAllConfigurations();
       expect(screen.getByText('2024-06-10')).toBeDefined();
     });
 
     test('should_show_dash_when_not_liquidated', () => {
       const results = [createMockResult({ isLiquidated: false })];
       render(<ResultsTable results={results} baseline={null} />);
+      expandAllConfigurations();
       const cells = screen.getAllByText('-');
       expect(cells.length).toBeGreaterThan(0);
     });
@@ -320,6 +342,7 @@ describe('ResultsTable', () => {
     test('should_show_dash_when_liquidation_date_undefined', () => {
       const results = [createMockResult({ isLiquidated: true, liquidationDate: undefined })];
       render(<ResultsTable results={results} baseline={null} />);
+      expandAllConfigurations();
       const cells = screen.getAllByText('-');
       expect(cells.length).toBeGreaterThan(0);
     });
@@ -327,6 +350,7 @@ describe('ResultsTable', () => {
     test('should_apply_destructive_styling_to_liquidated_row', () => {
       const results = [createMockResult({ isLiquidated: true, liquidationDate: '2024-06-10' })];
       const { container } = render(<ResultsTable results={results} baseline={null} />);
+      expandAllConfigurations();
       const row = container.querySelector('.bg-destructive\\/10');
       expect(row).not.toBeNull();
     });
@@ -334,6 +358,7 @@ describe('ResultsTable', () => {
     test('should_not_apply_destructive_styling_to_active_row', () => {
       const results = [createMockResult({ isLiquidated: false })];
       const { container } = render(<ResultsTable results={results} baseline={null} />);
+      expandAllConfigurations();
       const rows = container.querySelectorAll('tbody tr');
       expect(rows[0].className).not.toContain('bg-destructive');
     });
@@ -360,12 +385,14 @@ describe('ResultsTable', () => {
     test('should_handle_extreme_negative_returns', () => {
       const results = [createMockResult({ totalReturn: -99.99, finalBalance: 0.01, finalCollateral: 0.01 })];
       render(<ResultsTable results={results} baseline={null} />);
+      expandAllConfigurations();
       expect(screen.getByText('-99.99%')).toBeDefined();
     });
 
     test('should_handle_extreme_positive_returns', () => {
       const results = [createMockResult({ totalReturn: 9999.99, finalBalance: 100999.90, finalCollateral: 100999.90 })];
       render(<ResultsTable results={results} baseline={null} />);
+      expandAllConfigurations();
       expect(screen.getByText('+9999.99%')).toBeDefined();
     });
 
@@ -376,6 +403,7 @@ describe('ResultsTable', () => {
         })
       ];
       render(<ResultsTable results={results} baseline={null} />);
+      expandAllConfigurations();
       expect(screen.getByText('1.25x')).toBeDefined();
       expect(screen.getByText('1.75x')).toBeDefined();
     });
@@ -387,6 +415,7 @@ describe('ResultsTable', () => {
         createMockResult({ isLiquidated: true, liquidationDate: '162/1/2024' }),
       ];
       render(<ResultsTable results={results} baseline={null} />);
+      expandAllConfigurations();
       expect(screen.getByText('2024-06-10')).toBeDefined();
       expect(screen.getByText('1/1/2024')).toBeDefined();
       expect(screen.getByText('162/1/2024')).toBeDefined();
@@ -481,12 +510,14 @@ describe('ResultsTable', () => {
     test('should_render_vs_hold_header', () => {
       const results = [createMockResult()];
       render(<ResultsTable results={results} baseline={null} />);
+      expandAllConfigurations();
       expect(screen.getByText('vs Hold')).toBeDefined();
     });
 
     test('should_show_dash_when_no_baseline', () => {
       const results = [createMockResult({ finalBalance: 1200, finalCollateral: 1200 })];
       render(<ResultsTable results={results} baseline={null} />);
+      expandAllConfigurations();
       const cells = screen.getAllByText('-');
       expect(cells.length).toBeGreaterThan(0);
     });
@@ -495,6 +526,7 @@ describe('ResultsTable', () => {
       const results = [createMockResult({ finalBalance: 1500, finalCollateral: 1500 })];
       const baseline = createMockBaseline({ finalValue: 1200 });
       render(<ResultsTable results={results} baseline={baseline} />);
+      expandAllConfigurations();
       expect(screen.getByText('+25.00%')).toBeDefined();
     });
 
@@ -502,6 +534,7 @@ describe('ResultsTable', () => {
       const results = [createMockResult({ finalBalance: 1300, finalCollateral: 1300 })];
       const baseline = createMockBaseline({ finalValue: 1200 });
       const { container } = render(<ResultsTable results={results} baseline={baseline} />);
+      expandAllConfigurations();
       const tableBody = container.querySelector('tbody');
       const allCells = tableBody?.querySelectorAll('td');
       const vsHoldCell = allCells?.[6];
@@ -513,6 +546,7 @@ describe('ResultsTable', () => {
       const results = [createMockResult({ finalBalance: 1100, finalCollateral: 1100 })];
       const baseline = createMockBaseline({ finalValue: 1200 });
       const { container } = render(<ResultsTable results={results} baseline={baseline} />);
+      expandAllConfigurations();
       const tableBody = container.querySelector('tbody');
       const allCells = tableBody?.querySelectorAll('td');
       const vsHoldCell = allCells?.[6];
@@ -524,6 +558,7 @@ describe('ResultsTable', () => {
       const results = [createMockResult({ finalBalance: 1200, finalCollateral: 1200 })];
       const baseline = createMockBaseline({ finalValue: 1200 });
       const { container } = render(<ResultsTable results={results} baseline={baseline} />);
+      expandAllConfigurations();
       const vsHoldCell = container.querySelector('.text-yellow-600');
       expect(vsHoldCell?.textContent).toContain('+0.00%');
     });
