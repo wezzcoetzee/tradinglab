@@ -8,6 +8,7 @@ import { BaselineCard } from '@/components/baseline-card';
 import { MetricsCards, type Metrics } from '@/components/metrics-cards';
 import { OptimalStrategyCard } from '@/components/optimal-strategy-card';
 import { DayByDayTable } from '@/components/day-by-day-table';
+import { PerformanceChart } from '@/components/performance-chart';
 import { TablePagination } from '@/components/table-pagination';
 import { usePagination } from '@/hooks/use-pagination';
 import {
@@ -82,6 +83,10 @@ export function ResultsTable({ results, baseline, bestResultWithDays, isTruncate
 
         {baseline && sortedResults.length > 0 && !sortedResults[0].isLiquidated && (
           <OptimalStrategyCard result={sortedResults[0]} baseline={baseline} />
+        )}
+
+        {baseline && bestResultWithDays && !bestResultWithDays.isLiquidated && (
+          <PerformanceChart result={bestResultWithDays} baseline={baseline} />
         )}
 
         {baseline && bestResultWithDays && !bestResultWithDays.isLiquidated && (
