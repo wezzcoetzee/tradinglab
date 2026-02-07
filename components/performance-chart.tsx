@@ -21,21 +21,13 @@ import {
 } from '@/components/ui/chart';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { WARMUP_DAYS } from '@/lib/backtest/constants';
 import type { BacktestResult, BuyAndHoldBaseline } from '@/lib/backtest/types';
+import { buildChartData } from '@/lib/chart-data';
+import { formatDateTick, currencyTickFormatter } from '@/lib/format';
 
 interface PerformanceChartProps {
   result: BacktestResult;
   baseline: BuyAndHoldBaseline;
-}
-
-interface ChartDataPoint {
-  date: string;
-  price: number;
-  sma: number;
-  portfolioValue: number;
-  buyHoldValue: number;
-  isAtrStop: boolean;
 }
 
 const MAX_POINTS = 2000;
@@ -50,97 +42,11 @@ const equityChartConfig = {
   buyHoldValue: { label: 'Buy & Hold', color: 'var(--chart-3)' },
 } satisfies ChartConfig;
 
-function downsampleLTTB(data: ChartDataPoint[], threshold: number, yKey: keyof ChartDataPoint): number[] {
-  const length = data.length;
-  if (threshold >= length || threshold < 3) {
-    return data.map((_, i) => i);
-  }
-
-  const sampled: number[] = [0];
-  const bucketSize = (length - 2) / (threshold - 2);
-
-  let prevIndex = 0;
-
-  for (let i = 1; i < threshold - 1; i++) {
-    const avgStart = Math.floor((i + 0) * bucketSize) + 1;
-    const avgEnd = Math.min(Math.floor((i + 1) * bucketSize) + 1, length);
-
-    let avgX = 0;
-    let avgY = 0;
-    const avgCount = avgEnd - avgStart;
-
-    for (let j = avgStart; j < avgEnd; j++) {
-      avgX += j;
-      avgY += data[j][yKey] as number;
-    }
-    avgX /= avgCount;
-    avgY /= avgCount;
-
-    const rangeStart = Math.floor((i - 1) * bucketSize) + 1;
-    const rangeEnd = Math.min(Math.floor(i * bucketSize) + 1, length);
-
-    const prevX = prevIndex;
-    const prevY = data[prevIndex][yKey] as number;
-
-    let maxArea = -1;
-    let maxIndex = rangeStart;
-
-    for (let j = rangeStart; j < rangeEnd; j++) {
-      const area = Math.abs(
-        (prevX - avgX) * ((data[j][yKey] as number) - prevY) -
-        (prevX - j) * (avgY - prevY)
-      );
-      if (area > maxArea) {
-        maxArea = area;
-        maxIndex = j;
-      }
-    }
-
-    sampled.push(maxIndex);
-    prevIndex = maxIndex;
-  }
-
-  sampled.push(length - 1);
-  return sampled;
-}
-
-function formatDateTick(dateStr: string): string {
-  const [, month, year] = dateStr.split('/');
-  return `${month}/${year.slice(2)}`;
-}
-
-function currencyTickFormatter(value: number): string {
-  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
-  if (value >= 1_000) return `$${(value / 1_000).toFixed(0)}K`;
-  return `$${value.toFixed(0)}`;
-}
-
 export function PerformanceChart({ result, baseline }: PerformanceChartProps) {
-  const chartData = useMemo(() => {
-    const tradingDays = result.days.filter((day) => day.dayIndex >= WARMUP_DAYS);
-    const sharesAcquired = baseline.startingCapital / baseline.purchasePrice;
-
-    const allPoints: ChartDataPoint[] = tradingDays.map((day) => ({
-      date: day.date,
-      price: day.price,
-      sma: day.sma,
-      portfolioValue: day.portfolioValue,
-      buyHoldValue: sharesAcquired * day.price,
-      isAtrStop: day.action === 'ATR_PARTIAL_CLOSE',
-    }));
-
-    if (allPoints.length <= MAX_POINTS) return allPoints;
-
-    const sampledIndices = downsampleLTTB(allPoints, MAX_POINTS, 'price');
-    const indexSet = new Set(sampledIndices);
-
-    allPoints.forEach((point, i) => {
-      if (point.isAtrStop) indexSet.add(i);
-    });
-
-    const sortedIndices = Array.from(indexSet).sort((a, b) => a - b);
-    return sortedIndices.map((i) => allPoints[i]);
-  }, [result.days, baseline.startingCapital, baseline.purchasePrice]);
+  const chartData = useMemo(
+    () => buildChartData(result.days, baseline.startingCapital, baseline.purchasePrice, MAX_POINTS),
+    [result.days, baseline.startingCapital, baseline.purchasePrice]
+  );
 
   const atrStopPoints = useMemo(
     () => chartData.filter((d) => d.isAtrStop),
@@ -149,7 +55,7 @@ export function PerformanceChart({ result, baseline }: PerformanceChartProps) {
 
   const [logScale, setLogScale] = useState(true);
   const yAxisScale = logScale ? 'log' : 'auto';
-  const yAxisDomain = logScale ? (['auto', 'auto'] as const) : undefined;
+  const yAxisDomain: [string, string] | undefined = logScale ? ['auto', 'auto'] : undefined;
 
   return (
     <Card>

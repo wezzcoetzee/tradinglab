@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { WARMUP_DAYS } from '@/lib/backtest/constants';
 import type { BacktestResult, DayResult, PositionType } from '@/lib/backtest/types';
-import { formatCurrency } from '@/lib/format';
+import { calculateBuyHoldValue, calculateCollateralValue, formatCurrency } from '@/lib/format';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 
 interface DayByDayTableProps {
@@ -24,23 +24,6 @@ const POSITION_BADGE_STYLES: Record<PositionType, string> = {
 const ROW_HEIGHT = 45;
 const CONTAINER_HEIGHT = 600;
 const OVERSCAN = 10;
-
-function calculateCollateralValue(day: DayResult): number {
-  const leverage = day.position?.leverage ?? 1;
-  if (leverage === 1) return day.portfolioValue;
-  const sidelineValue = day.sidelineValue ?? 0;
-  const unrealizedPnl = day.portfolioValue - day.balance - sidelineValue;
-  return day.balance + unrealizedPnl / leverage + sidelineValue;
-}
-
-function calculateBuyHoldValue(
-  startingCapital: number,
-  purchasePrice: number,
-  currentPrice: number
-): number {
-  const sharesAcquired = startingCapital / purchasePrice;
-  return sharesAcquired * currentPrice;
-}
 
 function filterTradingDays(days: DayResult[]): DayResult[] {
   return days.filter((day) => day.dayIndex >= WARMUP_DAYS);

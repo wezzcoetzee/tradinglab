@@ -9,6 +9,10 @@ import {
   formatAtrConfig,
   calculateVsHold,
   getVsHoldBackgroundClass,
+  formatDateTick,
+  currencyTickFormatter,
+  calculateCollateralValue,
+  calculateBuyHoldValue,
 } from './format';
 
 describe('formatCurrency', () => {
@@ -286,5 +290,111 @@ describe('getVsHoldBackgroundClass', () => {
     test('should_handle_very_large_negative', () => {
       expect(getVsHoldBackgroundClass(-999999)).toBe('bg-red-50 dark:bg-red-900/20');
     });
+  });
+});
+
+describe('formatDateTick', () => {
+  test('should_format_dd_mm_yyyy_to_mm_yy', () => {
+    expect(formatDateTick('15/06/2024')).toBe('06/24');
+  });
+
+  test('should_handle_single_digit_day', () => {
+    expect(formatDateTick('1/12/2023')).toBe('12/23');
+  });
+
+  test('should_handle_january', () => {
+    expect(formatDateTick('01/01/2020')).toBe('01/20');
+  });
+});
+
+describe('currencyTickFormatter', () => {
+  test('should_format_millions', () => {
+    expect(currencyTickFormatter(1_500_000)).toBe('$1.5M');
+  });
+
+  test('should_format_exactly_one_million', () => {
+    expect(currencyTickFormatter(1_000_000)).toBe('$1.0M');
+  });
+
+  test('should_format_thousands', () => {
+    expect(currencyTickFormatter(5_000)).toBe('$5K');
+  });
+
+  test('should_format_exactly_one_thousand', () => {
+    expect(currencyTickFormatter(1_000)).toBe('$1K');
+  });
+
+  test('should_format_values_below_thousand', () => {
+    expect(currencyTickFormatter(500)).toBe('$500');
+  });
+
+  test('should_format_zero', () => {
+    expect(currencyTickFormatter(0)).toBe('$0');
+  });
+
+  test('should_format_large_thousands', () => {
+    expect(currencyTickFormatter(250_000)).toBe('$250K');
+  });
+});
+
+describe('calculateCollateralValue', () => {
+  test('should_return_portfolio_value_at_1x_leverage', () => {
+    // #given
+    const day = { portfolioValue: 1000, balance: 800, position: { leverage: 1 } };
+
+    // #then
+    expect(calculateCollateralValue(day)).toBe(1000);
+  });
+
+  test('should_reduce_unrealized_pnl_by_leverage', () => {
+    // #given - balance=800, portfolioValue=1000, leverage=2
+    // unrealizedPnl = 1000 - 800 - 0 = 200
+    // collateral = 800 + 200/2 + 0 = 900
+    const day = { portfolioValue: 1000, balance: 800, position: { leverage: 2 } };
+
+    // #then
+    expect(calculateCollateralValue(day)).toBe(900);
+  });
+
+  test('should_include_sideline_value', () => {
+    // #given - balance=800, portfolioValue=1200, sidelineValue=100, leverage=2
+    // unrealizedPnl = 1200 - 800 - 100 = 300
+    // collateral = 800 + 300/2 + 100 = 1050
+    const day = { portfolioValue: 1200, balance: 800, sidelineValue: 100, position: { leverage: 2 } };
+
+    // #then
+    expect(calculateCollateralValue(day)).toBe(1050);
+  });
+
+  test('should_default_leverage_to_1_when_no_position', () => {
+    const day = { portfolioValue: 1000, balance: 800, position: null };
+    expect(calculateCollateralValue(day)).toBe(1000);
+  });
+
+  test('should_default_sideline_to_0_when_undefined', () => {
+    const day = { portfolioValue: 1000, balance: 600, position: { leverage: 2 } };
+    // unrealizedPnl = 1000 - 600 - 0 = 400, collateral = 600 + 200 + 0 = 800
+    expect(calculateCollateralValue(day)).toBe(800);
+  });
+});
+
+describe('calculateBuyHoldValue', () => {
+  test('should_calculate_shares_times_current_price', () => {
+    // #given - $1000 / $50 = 20 shares, at $100 = $2000
+    expect(calculateBuyHoldValue(1000, 50, 100)).toBe(2000);
+  });
+
+  test('should_return_starting_capital_when_price_unchanged', () => {
+    expect(calculateBuyHoldValue(1000, 100, 100)).toBe(1000);
+  });
+
+  test('should_handle_fractional_shares', () => {
+    // $1000 / $3 = 333.33... shares, at $6 = $2000
+    expect(calculateBuyHoldValue(1000, 3, 6)).toBeCloseTo(2000, 5);
+  });
+
+  test('should_handle_price_decrease', () => {
+    // $1000 / $100 = 10 shares, at $50 = $500
+    expect(calculateBuyHoldValue(1000, 100, 50)).toBe(500);
   });
 });

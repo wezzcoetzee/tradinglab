@@ -20,51 +20,22 @@ export function StrategyConfigForm({ onConfigChange }: StrategyConfigProps) {
   const [validation, setValidation] = useState<StrategyConfigValidation | null>(null);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
-  const handleStartingCapitalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseFloat(e.target.value);
-    setConfig({ ...config, startingCapital: isNaN(value) ? 0 : value });
-  };
+  const handleChange = (field: keyof StrategyConfig, parser: (v: string) => number) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = parser(e.target.value);
+      setConfig((prev) => ({ ...prev, [field]: isNaN(value) ? 0 : value }));
+    };
 
-  const handleStartingCapitalBlur = () => {
-    setTouched({ ...touched, startingCapital: true });
-    setValidation(validateStrategyConfig(config));
-  };
-
-  const handleTradingFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseFloat(e.target.value);
-    setConfig({ ...config, tradingFee: isNaN(value) ? 0 : value });
-  };
-
-  const handleTradingFeeBlur = () => {
-    setTouched({ ...touched, tradingFee: true });
+  const handleBlur = (field: string) => () => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
     setValidation(validateStrategyConfig(config));
   };
 
   const handleAtrEnabledChange = (checked: boolean) => {
     const newConfig: StrategyConfig = { ...config, atrEnabled: checked };
     setConfig(newConfig);
-    setTouched({ ...touched, atrEnabled: true });
+    setTouched((prev) => ({ ...prev, atrEnabled: true }));
     setValidation(validateStrategyConfig(newConfig));
-  };
-
-  const handleSmaMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value, 10);
-    setConfig({ ...config, smaMin: isNaN(value) ? 0 : value });
-  };
-
-  const handleSmaMinBlur = () => {
-    setTouched({ ...touched, smaMin: true });
-    setValidation(validateStrategyConfig(config));
-  };
-
-  const handleSmaMaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value, 10);
-    setConfig({ ...config, smaMax: isNaN(value) ? 0 : value });
-  };
-
-  const handleSmaMaxBlur = () => {
-    setTouched({ ...touched, smaMax: true });
-    setValidation(validateStrategyConfig(config));
   };
 
   const shouldShowError = validation && !validation.valid && Object.keys(touched).length > 0;
@@ -95,8 +66,8 @@ export function StrategyConfigForm({ onConfigChange }: StrategyConfigProps) {
               min="0"
               step="100"
               value={config.startingCapital}
-              onChange={handleStartingCapitalChange}
-              onBlur={handleStartingCapitalBlur}
+              onChange={handleChange('startingCapital', parseFloat)}
+              onBlur={handleBlur('startingCapital')}
               autoComplete="off"
               className="w-32"
             />
@@ -111,8 +82,8 @@ export function StrategyConfigForm({ onConfigChange }: StrategyConfigProps) {
               max="100"
               step="0.01"
               value={config.tradingFee}
-              onChange={handleTradingFeeChange}
-              onBlur={handleTradingFeeBlur}
+              onChange={handleChange('tradingFee', parseFloat)}
+              onBlur={handleBlur('tradingFee')}
               autoComplete="off"
               className="w-24"
             />
@@ -127,8 +98,8 @@ export function StrategyConfigForm({ onConfigChange }: StrategyConfigProps) {
               max="50"
               step="1"
               value={config.smaMin}
-              onChange={handleSmaMinChange}
-              onBlur={handleSmaMinBlur}
+              onChange={handleChange('smaMin', (v) => parseInt(v, 10))}
+              onBlur={handleBlur('smaMin')}
               autoComplete="off"
               className="w-20"
             />
@@ -142,8 +113,8 @@ export function StrategyConfigForm({ onConfigChange }: StrategyConfigProps) {
               min="3"
               step="1"
               value={config.smaMax}
-              onChange={handleSmaMaxChange}
-              onBlur={handleSmaMaxBlur}
+              onChange={handleChange('smaMax', (v) => parseInt(v, 10))}
+              onBlur={handleBlur('smaMax')}
               autoComplete="off"
               className="w-20"
             />

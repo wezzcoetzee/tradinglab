@@ -52,3 +52,36 @@ export function getVsHoldBackgroundClass(vsHold: number): string {
   if (vsHold >= -20) return 'bg-orange-50 dark:bg-orange-900/20';
   return 'bg-red-50 dark:bg-red-900/20';
 }
+
+export function formatDateTick(dateStr: string): string {
+  const [, month, year] = dateStr.split('/');
+  return `${month}/${year.slice(2)}`;
+}
+
+export function currencyTickFormatter(value: number): string {
+  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000) return `$${(value / 1_000).toFixed(0)}K`;
+  return `$${value.toFixed(0)}`;
+}
+
+export function calculateCollateralValue(day: {
+  portfolioValue: number;
+  balance: number;
+  sidelineValue?: number;
+  position: { leverage: number } | null;
+}): number {
+  const leverage = day.position?.leverage ?? 1;
+  if (leverage === 1) return day.portfolioValue;
+  const sidelineValue = day.sidelineValue ?? 0;
+  const unrealizedPnl = day.portfolioValue - day.balance - sidelineValue;
+  return day.balance + unrealizedPnl / leverage + sidelineValue;
+}
+
+export function calculateBuyHoldValue(
+  startingCapital: number,
+  purchasePrice: number,
+  currentPrice: number
+): number {
+  const sharesAcquired = startingCapital / purchasePrice;
+  return sharesAcquired * currentPrice;
+}
