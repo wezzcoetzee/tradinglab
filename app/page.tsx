@@ -5,7 +5,6 @@ import { useCallback, useState } from 'react';
 import { BacktestSetup } from '@/components/backtest-setup';
 import { OptimizationProgressCard } from '@/components/optimization-progress';
 import { ResultsTable } from '@/components/results-table';
-import { SmaComparisonTable } from '@/components/sma-comparison-table';
 import { StrategyConfigForm } from '@/components/strategy-config';
 import { Button } from '@/components/ui/button';
 import { useOptimization } from '@/hooks/use-optimization';
@@ -60,8 +59,6 @@ export default function Home() {
         )}
 
         <ResultsTable results={results ?? []} baseline={baseline} bestResultWithDays={bestResultWithDays} isTruncated={isTruncated} totalConfigsTested={totalConfigsTested} />
-
-        <SmaComparisonTable results={results ?? []} baseline={baseline} />
       </div>
     </div>
   );
