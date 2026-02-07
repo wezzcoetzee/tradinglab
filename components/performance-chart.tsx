@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   CartesianGrid,
   Line,
@@ -19,6 +19,8 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { WARMUP_DAYS } from '@/lib/backtest/constants';
 import type { BacktestResult, BuyAndHoldBaseline } from '@/lib/backtest/types';
 
@@ -145,10 +147,18 @@ export function PerformanceChart({ result, baseline }: PerformanceChartProps) {
     [chartData]
   );
 
+  const [logScale, setLogScale] = useState(true);
+  const yAxisScale = logScale ? 'log' : 'auto';
+  const yAxisDomain = logScale ? (['auto', 'auto'] as const) : undefined;
+
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Performance Chart</CardTitle>
+        <div className="flex items-center gap-2">
+          <Switch id="log-scale" checked={logScale} onCheckedChange={setLogScale} />
+          <Label htmlFor="log-scale" className="text-sm font-normal">Log scale</Label>
+        </div>
       </CardHeader>
       <CardContent className="space-y-8">
         <div>
@@ -165,6 +175,8 @@ export function PerformanceChart({ result, baseline }: PerformanceChartProps) {
                 minTickGap={60}
               />
               <YAxis
+                scale={yAxisScale}
+                domain={yAxisDomain}
                 tickFormatter={currencyTickFormatter}
                 tickLine={false}
                 axisLine={false}
@@ -215,6 +227,8 @@ export function PerformanceChart({ result, baseline }: PerformanceChartProps) {
                 minTickGap={60}
               />
               <YAxis
+                scale={yAxisScale}
+                domain={yAxisDomain}
                 tickFormatter={currencyTickFormatter}
                 tickLine={false}
                 axisLine={false}
