@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "simply-the-best",
+      "name": "tradinglab",
       "dependencies": {
         "@tanstack/react-virtual": "^3.13.18",
         "class-variance-authority": "^0.7.1",
