@@ -77,6 +77,7 @@ const jsonLd = {
     url: 'https://wezzcoetzee.com',
   },
   datePublished: '2025-01-01',
+  dateModified: new Date().toISOString().split('T')[0],
   offers: {
     '@type': 'Offer',
     price: '0',
