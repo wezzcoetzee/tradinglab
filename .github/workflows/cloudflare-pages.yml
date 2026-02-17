@@ -10,14 +10,10 @@ on:
       - main
 
 jobs:
-  deploy:
+  quality:
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      deployments: write
-    name: Build and Deploy
-
+    name: Quality
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,6 +29,25 @@ jobs:
 
       - name: Test
         run: bun test
+
+  deploy:
+    needs: quality
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    name: Deploy
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
 
       - name: Build site
         run: bun run build
