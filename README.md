@@ -1,4 +1,4 @@
-# Simply The Best
+# TradingLab
 
 A crypto trading strategy backtester that exhaustively optimizes SMA crossover strategies with configurable leverage and ATR-based trailing stops.
 

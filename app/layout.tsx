@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
-const siteUrl = 'https://simplythebest.wezzcoetzee.com';
-const siteName = 'Simply The Best';
+const siteUrl = 'https://tradinglab.vip';
+const siteName = 'TradingLab';
 const siteDescription =
   'Crypto trading strategy backtester with exhaustive parameter optimization. Test SMA crossover strategies with leverage and ATR-based trailing stops.';
 

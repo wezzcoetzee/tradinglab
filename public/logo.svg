@@ -1,6 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
   <rect width="512" height="512" rx="96" fill="#000000"/>
-  <path d="M128 320 L192 240 L256 280 L320 160 L384 200" stroke="#22c55e" stroke-width="32" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-  <circle cx="384" cy="200" r="24" fill="#22c55e"/>
-  <path d="M384 200 L384 140 L344 180" stroke="#22c55e" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Beaker body -->
+  <path d="M196 100H316V200L396 370C406 395 388 420 362 420H150C124 420 106 395 116 370L196 200V100Z" stroke="#D4AF37" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Beaker rim -->
+  <path d="M180 100H332" stroke="#D4AF37" stroke-width="24" stroke-linecap="round"/>
+  <!-- Liquid line -->
+  <path d="M144 320H368" stroke="#F5C842" stroke-width="16" stroke-linecap="round"/>
+  <!-- Bubbles -->
+  <circle cx="220" cy="370" r="14" fill="#F5C842"/>
+  <circle cx="280" cy="350" r="10" fill="#D4AF37"/>
+  <circle cx="310" cy="380" r="8" fill="#F5C842"/>
+  <!-- Liquid fill area (below liquid line) -->
+  <path d="M144 320L116 370C106 395 124 420 150 420H362C388 420 406 395 396 370L368 320Z" fill="#B8960C" opacity="0.3"/>
 </svg>

@@ -5,6 +5,6 @@ export const dynamic = 'force-static';
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: { userAgent: '*', allow: '/' },
-    sitemap: 'https://simplythebest.wezzcoetzee.com/sitemap.xml',
+    sitemap: 'https://tradinglab.vip/sitemap.xml',
   };
 }

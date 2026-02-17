@@ -4,8 +4,8 @@ export const dynamic = 'force-static';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Simply The Best - Crypto Backtester',
-    short_name: 'Simply The Best',
+    name: 'TradingLab - Crypto Backtester',
+    short_name: 'TradingLab',
     description:
       'Crypto trading strategy backtester with exhaustive parameter optimization',
     start_url: '/',

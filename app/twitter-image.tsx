@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 
 export const dynamic = 'force-static';
-export const alt = 'Simply The Best - Crypto Trading Backtester';
+export const alt = 'TradingLab - Crypto Trading Backtester';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -33,13 +33,14 @@ export default function TwitterImage() {
             height="80"
             viewBox="0 0 24 24"
             fill="none"
-            stroke="#22c55e"
+            stroke="#D4AF37"
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
           >
-            <path d="M3 3v18h18" />
-            <path d="m19 9-5 5-4-4-3 3" />
+            <path d="M9 3H15V8L18 16C18.5 17.5 17.5 19 16 19H8C6.5 19 5.5 17.5 6 16L9 8V3Z" />
+            <path d="M9 3H15" />
+            <path d="M7 14H17" />
           </svg>
         </div>
         <div
@@ -51,7 +52,7 @@ export default function TwitterImage() {
             letterSpacing: '-0.02em',
           }}
         >
-          Simply The Best
+          TradingLab
         </div>
         <div
           style={{
