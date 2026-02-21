@@ -39,6 +39,9 @@ export const metadata: Metadata = {
     'backtest',
   ],
   authors: [{ name: 'Wesley Coetzee' }],
+  alternates: {
+    canonical: siteUrl,
+  },
   openGraph: {
     type: 'website',
     locale: 'en_US',
@@ -46,12 +49,21 @@ export const metadata: Metadata = {
     siteName,
     title: `Crypto Trading Backtester | ${siteName}`,
     description: siteDescription,
+    images: [
+      {
+        url: '/opengraph-image.png',
+        width: 1200,
+        height: 630,
+        alt: `${siteName} - Crypto Trading Backtester`,
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: `Crypto Trading Backtester | ${siteName}`,
     description: siteDescription,
     creator: '@wezzcoetzee',
+    site: '@wezzcoetzee',
   },
   robots: {
     index: true,

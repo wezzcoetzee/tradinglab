@@ -68,7 +68,7 @@ export function PerformanceChart({ result, baseline }: PerformanceChartProps) {
       </CardHeader>
       <CardContent className="space-y-8">
         <div>
-          <h3 className="text-sm font-medium mb-2">Price &amp; SMA</h3>
+          <h2 className="text-sm font-medium mb-2">Price &amp; SMA</h2>
           <ChartContainer config={priceChartConfig} className="h-[300px] w-full">
             <LineChart data={chartData} margin={{ left: 12, right: 12 }}>
               <CartesianGrid vertical={false} />
@@ -120,7 +120,7 @@ export function PerformanceChart({ result, baseline }: PerformanceChartProps) {
         </div>
 
         <div>
-          <h3 className="text-sm font-medium mb-2">Equity Curve</h3>
+          <h2 className="text-sm font-medium mb-2">Equity Curve</h2>
           <ChartContainer config={equityChartConfig} className="h-[300px] w-full">
             <LineChart data={chartData} margin={{ left: 12, right: 12 }}>
               <CartesianGrid vertical={false} />
