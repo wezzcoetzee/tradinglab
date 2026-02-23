@@ -268,7 +268,7 @@ describe('validateStrategyConfig', () => {
 
       // #then
       expect(result.valid).toBe(false);
-      expect(result.error).toBe('SMA minimum must be less than 200');
+      expect(result.error).toBe('SMA minimum must be 50 or less');
     });
 
     test('should_accept_sma_min_exactly_2', () => {
@@ -393,7 +393,7 @@ describe('validateStrategyConfig', () => {
 
       // #then
       expect(result.valid).toBe(false);
-      expect(result.error).toBe('SMA maximum must be less than 200');
+      expect(result.error).toBe('SMA maximum must be 200 or less');
     });
 
     test('should_accept_sma_max_exactly_3', () => {

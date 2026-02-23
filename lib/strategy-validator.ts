@@ -40,7 +40,7 @@ export function validateStrategyConfig(config: StrategyConfig): StrategyConfigVa
   if (config.smaMin > MAX_SMA_MIN_PERIOD) {
     return {
       valid: false,
-      error: `SMA minimum must be less than ${MAX_SMA_PERIOD}`
+      error: `SMA minimum must be ${MAX_SMA_MIN_PERIOD} or less`
     };
   }
 
@@ -61,7 +61,7 @@ export function validateStrategyConfig(config: StrategyConfig): StrategyConfigVa
   if (config.smaMax > MAX_SMA_PERIOD) {
     return {
       valid: false,
-      error: `SMA maximum must be less than ${MAX_SMA_PERIOD}`
+      error: `SMA maximum must be ${MAX_SMA_PERIOD} or less`
     };
   }
 
