@@ -1,0 +1,337 @@
+# TradingLab
+
+> Crypto trading strategy backtester with exhaustive parameter optimization. Test SMA crossover strategies against historical OHLC data with configurable leverage and ATR-based trailing stops. Free, open-source, runs entirely in the browser.
+
+TradingLab is a single-page web application available at https://tradinglab.vip. It is built with Next.js 16 and React 19, and all computation runs client-side in a Web Worker so the UI stays responsive during optimization.
+
+---
+
+## Overview
+
+TradingLab lets you upload historical crypto price data (OHLC CSV) and exhaustively test all combinations of SMA crossover strategy parameters to find the best-performing configuration. It compares results against a buy-and-hold baseline and provides a day-by-day trade log for the top strategy.
+
+**Author:** Wesley Coetzee (https://wezzcoetzee.com)  
+**License:** Open source (https://github.com/wezzcoetzee/tradinglab)  
+**Live site:** https://tradinglab.vip
+
+---
+
+## CSV Data Format
+
+Your input CSV file must contain the following columns (order does not matter, headers are required):
+
+| Column | Type   | Description                        |
+|--------|--------|------------------------------------|
+| high   | number | Period high price                  |
+| low    | number | Period low price                   |
+| close  | number | Period close price                 |
+| date   | string | Human-readable date (DD/MM/YYYY)   |
+
+- Minimum required rows: 160 (warmup period for SMA/ATR pre-computation)
+- The CSV validator strips invalid rows and reports errors before optimization begins
+- Sample data files for BTC, ETH, and SOL are bundled at `/BTC.csv`, `/ETH.csv`, `/SOL.csv`
+
+---
+
+## Strategy Configuration
+
+The following parameters are configurable before running optimization:
+
+### Starting Capital
+- Default: $1,000
+- The initial portfolio value used for all backtests in the optimization run
+
+### Trading Fee
+- Default: 0.05%
+- Fee percentage applied per trade (per position open/close/transition)
+- Example: 0.05 means 0.05% fee per trade
+
+### SMA Range
+- Min SMA period: default 2, minimum allowed 2
+- Max SMA period: default 200, maximum tested is 200
+- The optimizer tests all integer SMA periods within this range
+
+### ATR Trailing Stop (optional toggle)
+- Default: disabled
+- When enabled, the optimizer additionally tests ATR-based trailing stop configurations alongside each SMA/leverage combination
+- Enabling ATR significantly increases the number of configurations tested
+
+---
+
+## Optimization Parameters
+
+The backtester performs exhaustive search across all parameter combinations:
+
+### Leverage Levels
+Both long leverage and short leverage are independently varied across:
+- 1×, 1.25×, 1.5×, 1.75×, 2×, 2.25×, 2.5×, 2.75×, 3×
+
+Long and short leverage are tested independently, meaning each SMA period is paired with every combination of (longLeverage × shortLeverage).
+
+### ATR Configurations (when ATR enabled)
+60 ATR configurations are tested per SMA/leverage combination:
+- **ATR Periods:** 10, 14, 20
+- **ATR Multipliers:** 2, 2.5, 3, 3.5, 4
+- **Partial Close Percentages:** 10%, 25%, 50%, 100%
+
+Total ATR configs = 3 periods × 5 multipliers × 4 close percentages = 60
+
+### Total Configurations
+- Without ATR: `(smaMax - smaMin + 1) × 9 (long leverages) × 9 (short leverages)`
+- With ATR: multiply the above by 60 ATR configurations
+
+---
+
+## Strategy Logic
+
+TradingLab implements a **SMA crossover strategy** with optional ATR trailing stops.
+
+### Signal Generation
+- **Long signal:** price > SMA — open or maintain a long position
+- **Short signal:** price < SMA — open or maintain a short position
+- Signals are evaluated once per day (candle close)
+
+### Position Actions
+Each day one of the following actions is taken:
+
+| Action                      | Description                                                   |
+|-----------------------------|---------------------------------------------------------------|
+| OPEN_LONG                   | No position → enter long at current price                     |
+| OPEN_SHORT                  | No position → enter short at current price                    |
+| CLOSE_LONG                  | Price dropped below SMA → exit long position                  |
+| CLOSE_SHORT                 | Price rose above SMA → exit short position                    |
+| TRANSITION_LONG_TO_SHORT    | Direct flip from long to short (fee applied once)             |
+| TRANSITION_SHORT_TO_LONG    | Direct flip from short to long (fee applied once)             |
+| HOLD                        | Signal unchanged, no action taken                             |
+| ATR_PARTIAL_CLOSE           | ATR trailing stop triggered — partial close executed          |
+
+### Leverage and PnL
+- Leveraged PnL = (price change % × leverage) × position value
+- Liquidation occurs if leveraged loss exceeds 100% of position collateral
+- On liquidation, the position is closed at zero value
+
+### ATR Trailing Stop Logic
+When ATR is enabled:
+1. An extreme price is tracked from position entry (highest price for longs, lowest for shorts)
+2. The stop triggers when price moves `ATR × multiplier` against the position from the extreme
+3. On trigger: `closePercent`% of the position is closed (10%, 25%, 50%, or 100%)
+4. Closed capital moves to "sideline" (uninvested cash earning no return)
+5. The remaining open portion continues until the next SMA signal
+
+### Fee Calculation
+- Fee is charged on the notional value of each trade (entry value × leverage)
+- Transitions (long→short or short→long) are treated as a single trade for fee purposes
+- ATR partial closes incur fees on the partial close amount
+
+---
+
+## Backtest Engine Internals
+
+### SMA Pre-computation
+- SMA values for all periods in the configured range are pre-computed once before optimization
+- Pre-computation uses a rolling sum for efficiency: O(n × periods) total
+
+### ATR Pre-computation
+- ATR (Average True Range) is pre-computed for periods 10, 14, and 20
+- True Range = max(high−low, |high−prevClose|, |low−prevClose|)
+- ATR uses a Wilder smoothing (exponential) average
+
+### Web Worker Execution
+- The optimization loop runs in a browser Web Worker to avoid blocking the main thread
+- Progress updates are sent to the main thread every 100 configurations
+- The optimization can be cancelled mid-run
+
+### Result Tracking
+- Without ATR: all results are collected and sorted by total return
+- With ATR: a top-K min-heap is used to track only the top 1,000 results by total return, reducing memory usage
+
+---
+
+## Result Metrics
+
+Each backtest result includes:
+
+| Metric           | Description                                                    |
+|------------------|----------------------------------------------------------------|
+| totalReturn      | Percentage gain/loss vs starting capital                       |
+| finalBalance     | Final portfolio value (collateral in open position)            |
+| finalCollateral  | Value of collateral held in the final position                 |
+| totalFees        | Total fees paid across all trades                              |
+| totalTrades      | Number of position opens/closes/transitions                    |
+| atrTriggerCount  | Number of times ATR trailing stop fired (if ATR enabled)       |
+| isLiquidated     | Whether the position was liquidated at any point               |
+| liquidationDay   | Day index of liquidation (if applicable)                       |
+| liquidationDate  | Date string of liquidation (if applicable)                     |
+
+### Day-by-Day Log
+For the best-performing strategy, a full day-by-day log is available with:
+- Date, price, SMA value
+- Action taken that day
+- Current position (type, entry price, leverage)
+- Balance, PnL, fees for that day
+- Portfolio value (balance + open position value)
+
+---
+
+## Buy & Hold Baseline
+
+The optimizer also calculates a simple buy-and-hold baseline for comparison:
+- Purchases the asset on the first day of the dataset
+- Holds until the last day
+- Reports purchase price, final price, and percentage gain
+- Compared against the best SMA strategy result
+
+---
+
+## Results Views
+
+### Results Table
+- Lists top strategies sorted by total return (descending)
+- Shows SMA period, long leverage, short leverage, ATR config (if any), total return, fees, trades
+- Paginated (configurable rows per page)
+
+### SMA Comparison Table
+- Groups results by SMA period
+- Shows best return per SMA period with associated leverage and ATR config
+- Useful for identifying which SMA periods perform best regardless of leverage
+
+### Day-by-Day Table
+- Detailed trade log for the single best-performing configuration
+- Shows every day with price, SMA, action, balance, PnL, and portfolio value
+
+---
+
+## Tech Stack
+
+| Technology     | Version | Purpose                                      |
+|----------------|---------|----------------------------------------------|
+| Next.js        | 16      | React framework with App Router              |
+| React          | 19      | UI library                                   |
+| Tailwind CSS   | 4       | Utility-first CSS styling                    |
+| Radix UI       | latest  | Accessible UI primitives (dialogs, switches) |
+| Recharts       | latest  | Chart rendering for performance visualization|
+| Bun            | latest  | JavaScript runtime, package manager, test runner |
+| TypeScript     | latest  | Type-safe development                        |
+
+---
+
+## Project Structure
+
+```
+tradinglab/
+├── app/
+│   ├── layout.tsx          # Root layout with metadata, header, footer
+│   ├── page.tsx            # Home page (mounts Backtester component)
+│   ├── manifest.ts         # Web app manifest
+│   ├── robots.ts           # Robots.txt config
+│   └── sitemap.ts          # Sitemap generation
+├── components/
+│   ├── backtester.tsx      # Main orchestration component
+│   ├── backtest-setup.tsx  # CSV upload and validation UI
+│   ├── strategy-config.tsx # Parameter input form
+│   ├── optimization-progress.tsx # Real-time progress bar with cancel
+│   ├── results-table.tsx   # Top results table with pagination
+│   ├── sma-comparison-table.tsx  # SMA grouped comparison
+│   ├── day-by-day-table.tsx      # Detailed trade log
+│   ├── metrics-cards.tsx   # Summary metrics display
+│   ├── performance-chart.tsx     # Portfolio value over time chart
+│   ├── baseline-card.tsx   # Buy & hold baseline display
+│   ├── header.tsx          # Site header with logo and theme toggle
+│   └── footer.tsx          # Site footer with copyright
+├── lib/
+│   ├── backtest/
+│   │   ├── backtest-engine.ts    # Core simulation loop
+│   │   ├── backtest-runner.ts    # Runs a single backtest config
+│   │   ├── optimization.worker.ts # Web Worker entry point
+│   │   ├── sma-calculator.ts     # SMA pre-computation
+│   │   ├── atr-calculator.ts     # ATR pre-computation
+│   │   ├── position-manager.ts   # Position state and PnL
+│   │   ├── trailing-stop-manager.ts # ATR trailing stop logic
+│   │   ├── leverage-config.ts    # Generates all parameter combos
+│   │   ├── fee-calculator.ts     # Fee calculations
+│   │   ├── top-k-heap.ts         # Min-heap for top-K results
+│   │   ├── baseline-calculator.ts # Buy & hold baseline
+│   │   ├── optimization-types.ts # Worker message types
+│   │   └── constants.ts          # ATR periods, leverages, warmup days
+│   ├── csv-validator.ts    # CSV parsing and validation
+│   ├── strategy-validator.ts # Strategy config validation
+│   ├── types.ts            # Shared TypeScript interfaces
+│   ├── format.ts           # Number/currency formatting utilities
+│   ├── chart-data.ts       # Chart data transformation
+│   └── downsample.ts       # Data downsampling for chart performance
+├── hooks/
+│   └── use-optimization.ts # React hook orchestrating worker lifecycle
+├── public/
+│   ├── BTC.csv             # Sample Bitcoin OHLC data
+│   ├── ETH.csv             # Sample Ethereum OHLC data
+│   ├── SOL.csv             # Sample Solana OHLC data
+│   ├── llms.txt            # LLM-friendly site index (this file's companion)
+│   └── llms-full.txt       # Full LLM-friendly site content (this file)
+└── data/
+    ├── BTC.csv             # Bitcoin OHLC data (dev copy)
+    ├── ETH.csv             # Ethereum OHLC data (dev copy)
+    └── SOL.csv             # Solana OHLC data (dev copy)
+```
+
+---
+
+## Default Configuration Values
+
+| Parameter      | Default | Min  | Max  |
+|----------------|---------|------|------|
+| startingCapital| $1,000  | >0   | —    |
+| tradingFee     | 0.05%   | 0    | 100  |
+| smaMin         | 2       | 2    | 50   |
+| smaMax         | 200     | 3    | 200  |
+| atrEnabled     | false   | —    | —    |
+
+---
+
+## Usage Guide
+
+### Step 1: Prepare CSV Data
+Ensure your CSV has the required columns: `high`, `low`, `close`, `date` (DD/MM/YYYY format). Minimum 160 rows of data required.
+
+Sample files are provided: download BTC.csv, ETH.csv, or SOL.csv from the site to use as a template.
+
+### Step 2: Upload and Validate
+Click "Upload CSV" on the backtester page and select your file. The app validates the file and displays the row count and any errors.
+
+### Step 3: Configure Strategy
+Set your parameters:
+- Starting Capital (default $1,000)
+- Trading Fee % (default 0.05%)
+- SMA Min/Max range (default 2–200)
+- Enable ATR Trailing Stop if desired
+
+### Step 4: Run Optimization
+Click "Run Optimization". The Web Worker begins testing all parameter combinations. A progress bar shows completion percentage. You can cancel at any time.
+
+### Step 5: Analyze Results
+Once complete:
+- Review the Results Table for top-performing strategies
+- Use the SMA Comparison Table to see performance by SMA period
+- Open the Day-by-Day Table for the best strategy's full trade history
+- Compare against the Buy & Hold baseline shown in the metrics cards
+
+---
+
+## Frequently Asked Questions
+
+**Q: Does TradingLab require an account or API key?**  
+A: No. Everything runs in your browser. No data is sent to any server (except for Google Analytics page views).
+
+**Q: How long does optimization take?**  
+A: Depends on dataset size and SMA range. A full run (SMA 2–200, no ATR) on a 3-year daily dataset typically completes in a few seconds. Enabling ATR multiplies the computation by ~60x.
+
+**Q: Can I use minute/hourly data?**  
+A: Yes, as long as each row has `high`, `low`, `close`, and `date` columns. The strategy logic is timeframe-agnostic.
+
+**Q: What does "sideline" mean in the day-by-day log?**  
+A: When an ATR trailing stop partially closes a position, the closed capital moves to "sideline" — it is not reinvested until the next SMA signal triggers a new position.
+
+**Q: Why is there a 160-row minimum?**  
+A: The warmup period of 160 candles is needed to pre-compute SMA values up to period 160 and to initialize ATR calculations. Rows used for warmup are not included in backtesting.
+
+**Q: Are short positions supported?**  
+A: Yes. The strategy goes short (with configurable leverage) when price is below the SMA. Long and short leverage can be set independently.

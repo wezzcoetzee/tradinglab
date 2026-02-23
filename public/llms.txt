@@ -1,0 +1,21 @@
+# TradingLab
+
+> Crypto trading strategy backtester with exhaustive parameter optimization. Test SMA crossover strategies against historical OHLC data with configurable leverage and ATR-based trailing stops. Free, open-source, runs entirely in the browser.
+
+TradingLab is a single-page web application built with Next.js 16 and React 19. There is one primary page (the backtester) and no separate documentation pages. All functionality is described below.
+
+## Application
+
+- [Home / Backtester](https://tradinglab.vip): Upload OHLC CSV data, configure strategy parameters, run exhaustive optimization, and analyze results.
+
+## Key Concepts
+
+- [Strategy Logic](#strategy-logic): SMA crossover with long/short positions, leverage, and optional ATR trailing stops.
+- [CSV Data Format](#csv-data-format): Required columns and format for OHLC input data.
+- [Optimization Parameters](#optimization-parameters): SMA range, leverage levels, and ATR configurations tested.
+- [Result Metrics](#result-metrics): How results are ranked and what metrics are reported.
+
+## Optional
+
+- [Tech Stack](#tech-stack): Next.js, React, Tailwind CSS, Radix UI, Bun.
+- [Source Code](https://github.com/wezzcoetzee/tradinglab): Full source on GitHub.
