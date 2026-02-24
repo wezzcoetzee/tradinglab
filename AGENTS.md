@@ -43,13 +43,13 @@ lib/backtest/optimization.worker.ts  # Web Worker for parallel backtest executio
 
 **Data flow:** CSV Upload → Validate → Configure Strategy → Web Worker runs all parameter combos → Top-K results displayed
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for full details.
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for full details.
 
 ## Context Documents
 
 | Document | Purpose |
 |----------|---------|
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design, directory structure, data flow |
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | System design, directory structure, data flow |
 | [docs/FRONTEND.md](docs/FRONTEND.md) | Component hierarchy, state, conventions |
 | [docs/PRODUCT_SENSE.md](docs/PRODUCT_SENSE.md) | What the product is, user flows |
 | [docs/DESIGN.md](docs/DESIGN.md) | Design system, theming, responsive |
