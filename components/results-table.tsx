@@ -17,9 +17,10 @@ interface ResultsTableProps {
   bestResultWithDays?: BacktestResult | null;
   isTruncated?: boolean;
   totalConfigsTested?: number;
+  assetName?: string | null;
 }
 
-export function ResultsTable({ results, baseline, bestResultWithDays, isTruncated, totalConfigsTested }: ResultsTableProps) {
+export function ResultsTable({ results, baseline, bestResultWithDays, isTruncated, totalConfigsTested, assetName }: ResultsTableProps) {
   const metrics: Metrics = useMemo(() => {
     const total = totalConfigsTested || results.length;
     const liquidated = results.filter(r => r.isLiquidated).length;
@@ -43,7 +44,7 @@ export function ResultsTable({ results, baseline, bestResultWithDays, isTruncate
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Backtest Results</CardTitle>
+        <CardTitle>{assetName ? `${assetName} Backtest Results` : 'Backtest Results'}</CardTitle>
         <CardDescription>
           {metrics.total} configurations tested
           {isTruncated && (
@@ -54,7 +55,7 @@ export function ResultsTable({ results, baseline, bestResultWithDays, isTruncate
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {baseline && <BaselineCard baseline={baseline} />}
+        {baseline && <BaselineCard baseline={baseline} assetName={assetName} />}
 
         <MetricsCards metrics={metrics} />
 
@@ -63,7 +64,7 @@ export function ResultsTable({ results, baseline, bestResultWithDays, isTruncate
         )}
 
         {baseline && bestResultWithDays && !bestResultWithDays.isLiquidated && (
-          <PerformanceChart result={bestResultWithDays} baseline={baseline} />
+          <PerformanceChart result={bestResultWithDays} baseline={baseline} assetName={assetName} />
         )}
 
         {baseline && bestResultWithDays && !bestResultWithDays.isLiquidated && (

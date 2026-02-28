@@ -25,10 +25,11 @@ import type { CsvRow, ValidationResult } from '@/lib/types';
 
 interface BacktestSetupProps {
   onDataLoaded?: (data: CsvRow[]) => void;
+  onAssetNameChange?: (name: string) => void;
   actionButton?: React.ReactNode;
 }
 
-export function BacktestSetup({ onDataLoaded, actionButton }: BacktestSetupProps) {
+export function BacktestSetup({ onDataLoaded, onAssetNameChange, actionButton }: BacktestSetupProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<ValidationResult | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -59,6 +60,7 @@ export function BacktestSetup({ onDataLoaded, actionButton }: BacktestSetupProps
         setIsLoading(false);
         if (validation.valid && validation.data) {
           onDataLoaded?.(validation.data);
+          onAssetNameChange?.(file.name.replace(/\.csv$/i, ''));
         }
       },
       error: (error) => {
@@ -144,6 +146,8 @@ export function BacktestSetup({ onDataLoaded, actionButton }: BacktestSetupProps
           className="hidden"
           aria-label="Upload CSV file"
         />
+
+        <p className="text-xs text-muted-foreground">The file name (without .csv) will be used as the asset name throughout results.</p>
 
         <div className="flex gap-3">
           <Button

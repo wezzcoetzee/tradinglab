@@ -28,6 +28,7 @@ import { formatDateTick, currencyTickFormatter } from '@/lib/format';
 interface PerformanceChartProps {
   result: BacktestResult;
   baseline: BuyAndHoldBaseline;
+  assetName?: string | null;
 }
 
 const MAX_POINTS = 2000;
@@ -42,7 +43,7 @@ const equityChartConfig = {
   buyHoldValue: { label: 'Buy & Hold', color: 'var(--chart-3)' },
 } satisfies ChartConfig;
 
-export function PerformanceChart({ result, baseline }: PerformanceChartProps) {
+export function PerformanceChart({ result, baseline, assetName }: PerformanceChartProps) {
   const chartData = useMemo(
     () => buildChartData(result.days, baseline.startingCapital, baseline.purchasePrice, MAX_POINTS),
     [result.days, baseline.startingCapital, baseline.purchasePrice]
@@ -60,7 +61,7 @@ export function PerformanceChart({ result, baseline }: PerformanceChartProps) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Performance Chart</CardTitle>
+        <CardTitle>{assetName ? `${assetName} Performance` : 'Performance Chart'}</CardTitle>
         <div className="flex items-center gap-2">
           <Switch id="log-scale" checked={logScale} onCheckedChange={setLogScale} />
           <Label htmlFor="log-scale" className="text-sm font-normal">Log scale</Label>

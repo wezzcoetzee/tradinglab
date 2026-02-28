@@ -5,12 +5,13 @@ import { formatCurrency, formatPercent, getReturnColorClass } from '@/lib/format
 
 interface BaselineCardProps {
   baseline: BuyAndHoldBaseline;
+  assetName?: string | null;
 }
 
-export function BaselineCard({ baseline }: BaselineCardProps) {
+export function BaselineCard({ baseline, assetName }: BaselineCardProps) {
   return (
     <div className="p-4 rounded-lg border bg-card">
-      <div className="text-sm font-medium text-muted-foreground mb-3">Buy & Hold Baseline</div>
+      <div className="text-sm font-medium text-muted-foreground mb-3">{assetName ? `${assetName} Buy & Hold Baseline` : 'Buy & Hold Baseline'}</div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div>
           <div className="text-xs text-muted-foreground">Purchase (Day 160)</div>
