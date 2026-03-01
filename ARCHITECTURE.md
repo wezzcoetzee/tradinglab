@@ -13,7 +13,16 @@ Client-side SMA crossover backtester with exhaustive parameter optimization. Use
 tradinglab/
 ├── app/
 │   ├── layout.tsx              # Root layout, metadata, GA, JSON-LD
-│   ├── page.tsx                # Single route → <Backtester />
+│   ├── page.tsx                # Home route → <Backtester />
+│   ├── backtester/             # Backtester route
+│   │   └── page.tsx
+│   ├── calculator/
+│   │   ├── position-size/      # Position size calculator
+│   │   │   └── page.tsx
+│   │   └── profit/             # Profit calculator
+│   │       └── page.tsx
+│   ├── guides/                 # Trading guides index
+│   │   └── page.tsx
 │   ├── globals.css             # Tailwind directives, CSS variables
 │   ├── manifest.ts             # PWA manifest
 │   ├── robots.ts               # Robots.txt
@@ -23,6 +32,10 @@ tradinglab/
 │   └── twitter-image.tsx       # Twitter card image
 ├── components/
 │   ├── ui/                     # ShadCN primitives (14 components)
+│   ├── calculators/            # Calculator feature components
+│   │   ├── position-size-calculator.tsx
+│   │   ├── profit-calculator.tsx
+│   │   └── result-card.tsx
 │   ├── backtester.tsx          # Root orchestrator
 │   ├── backtest-setup.tsx      # CSV upload + validation
 │   ├── strategy-config.tsx     # Parameter form
@@ -45,6 +58,8 @@ tradinglab/
 │   └── use-pagination.ts       # Generic pagination
 ├── lib/
 │   ├── types.ts                # CsvRow, StrategyConfig, ValidationResult
+│   ├── calculations.ts         # Position size and profit calculation logic
+│   ├── formatters.ts           # Shared number/currency formatters
 │   ├── csv-validator.ts        # OHLC CSV validation
 │   ├── strategy-validator.ts   # Strategy input validation
 │   ├── format.ts               # Currency, percent, time formatters

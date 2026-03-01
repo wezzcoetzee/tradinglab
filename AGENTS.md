@@ -33,10 +33,17 @@ bun test <file>  # Single test file
 ## Architecture Quick Reference
 
 ```
-app/                    # Single page SPA (page.tsx → Backtester)
+app/                    # Multi-page app
+app/page.tsx            # Home → <Backtester />
+app/backtester/         # Backtester route
+app/calculator/position-size/  # Position size calculator
+app/calculator/profit/  # Profit calculator
+app/guides/             # Trading guides index
 components/             # Feature components + ui/ (ShadCN primitives)
+components/calculators/ # Calculator feature components
 hooks/                  # use-optimization (Web Worker), use-pagination
 lib/                    # Validators, formatters, utilities
+lib/calculations.ts     # Position size and profit calculation logic
 lib/backtest/           # Core engine: runner, position manager, calculators
 lib/backtest/optimization.worker.ts  # Web Worker for parallel backtest execution
 ```

@@ -10,6 +10,9 @@ A crypto trading strategy backtester that exhaustively optimizes SMA crossover s
 - **Web Worker Execution** - Runs optimization in background thread to keep UI responsive
 - **Buy & Hold Baseline** - Compare strategy performance against simple buy and hold
 - **Day-by-Day Analysis** - Detailed trade log for the best performing strategy
+- **Position Size Calculator** - Calculate optimal position size based on risk tolerance and stop loss distance
+- **Profit Calculator** - Estimate profit, loss, and risk/reward ratio across multiple take profit targets
+- **Trading Guides** - Educational guides covering position sizing, risk management, and risk/reward ratios
 
 ## Getting Started
 

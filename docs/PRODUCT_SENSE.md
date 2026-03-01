@@ -2,7 +2,7 @@
 
 ## What TradingLab Is
 
-A free, browser-based tool for crypto traders to backtest SMA crossover strategies against historical OHLC data. The core value proposition: exhaustive parameter optimization finds the best-performing configuration across thousands of SMA period, leverage, and ATR trailing stop combinations.
+A free, browser-based tool for crypto traders to backtest SMA crossover strategies against historical OHLC data, calculate position sizes, and analyze profit scenarios. The core value proposition: exhaustive parameter optimization finds the best-performing configuration across thousands of SMA period, leverage, and ATR trailing stop combinations, complemented by standalone trading calculators.
 
 **URL:** https://tradinglab.vip
 
@@ -10,8 +10,8 @@ A free, browser-based tool for crypto traders to backtest SMA crossover strategi
 
 - Not a trading platform (no live trading, no exchange integration)
 - Not a portfolio tracker
-- Not multi-strategy (SMA crossover only, by design)
-- Not a data provider (users bring their own CSV)
+- Not multi-strategy (SMA crossover only for backtesting, by design)
+- Not a data provider (users bring their own CSV for backtesting)
 
 ## User Mental Model
 
@@ -22,10 +22,14 @@ They want to:
 2. Understand how leverage amplifies returns (and risk of liquidation)
 3. See if ATR-based trailing stops improve outcomes
 4. Compare strategy performance against buy-and-hold
+5. Calculate position sizes based on risk tolerance
+6. Model profit/loss across multiple take-profit levels
 
-## Core Flow
+## Core Flows
 
-### 1. Upload Data
+### Backtester Flow
+
+#### 1. Upload Data
 User uploads a CSV with columns: `high`, `low`, `close`, `date`. Example CSVs (BTC, ETH, SOL) are provided for download. PapaParse handles parsing; `csv-validator.ts` validates schema and minimum row count (160 days for warmup).
 
 ### 2. Configure Strategy
@@ -49,6 +53,18 @@ Results appear in multiple views:
 - **Day-by-Day Table** — full trade log for the best strategy
 - **SMA Comparison Table** — best result per SMA period
 - **All Configurations Table** — every tested config with sortable columns
+
+### Position Size Calculator Flow
+
+User enters trade type (LONG/SHORT), entry price, stop loss price, leverage, and risk amount. The calculator returns position size, margin required, risk distance, and maximum loss. Validates that stop loss is on the correct side of entry for the trade direction.
+
+### Profit Calculator Flow
+
+User enters trade type, entry price, stop loss, leverage, position size, and up to 4 take-profit levels. The calculator returns per-TP profit breakdown, total/average profit, ROI, risk-reward ratios, and margin. Position is split equally across take-profit levels.
+
+### Guides
+
+Static index page linking to trading educational content. Card-based layout with categorized guides.
 
 ## Key Product Decisions
 

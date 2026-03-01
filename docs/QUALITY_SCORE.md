@@ -35,8 +35,8 @@ GitHub Actions (`cloudflare-pages.yml`):
 | Area | Files | What's Tested |
 |------|-------|---------------|
 | Backtest engine | 10 test files | Runner, position manager, SMA/ATR calculators, fee calculator, trailing stops, leverage configs, top-k heap, baseline |
-| Lib utilities | 5 test files | CSV validator, strategy validator, format functions, chart data, downsampling |
-| Components | 5 test files | Results table, optimization progress, day-by-day table, optimal strategy card, SMA comparison |
+| Lib utilities | 6 test files | CSV validator, strategy validator, format functions, calculations (position size, profit metrics, validation), chart data, downsampling |
+| Components | 7 test files | Results table, optimization progress, day-by-day table, optimal strategy card, SMA comparison, position-size-calculator, profit-calculator |
 | Hooks | 1 test file | useOptimization |
 
 ### Testing Stack
@@ -55,7 +55,7 @@ ESLint 9 with `eslint-config-next`. No custom rules beyond Next.js defaults.
 | Dimension | Current | Target |
 |-----------|---------|--------|
 | Hook test coverage | useOptimization only | Add usePagination tests |
-| Component test coverage | 5 of ~18 feature components | Cover backtest-setup, strategy-config, performance-chart |
+| Component test coverage | 7 of ~20 feature components | Cover backtest-setup, strategy-config, performance-chart |
 | E2E tests | None | Consider Playwright for full flow |
 | Bundle analysis | Not tracked | Add `@next/bundle-analyzer` |
 | Accessibility | ShadCN defaults (Radix) | Audit keyboard navigation, screen reader |

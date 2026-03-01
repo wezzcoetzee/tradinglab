@@ -18,9 +18,15 @@ RootLayout (app/layout.tsx)
 │           ├── OptimalStrategyCard         # Best config highlight
 │           ├── MetricsCards                # Total configs, profitable, liquidated
 │           ├── PerformanceChart            # Recharts line chart (strategy vs hold)
-│           ├── DayByDayTable               # Trade log with pagination
+│           ├── DayByDayTable               # Trade log with virtual scrolling
 │           ├── SmaComparisonTable          # Results grouped by SMA period
 │           └── AllConfigurationsTable      # Full results with all parameters
+├── Backtester (app/backtester/page.tsx)     # Dedicated backtester route
+├── PositionSizeCalculator (app/calculator/position-size/)
+│   └── ResultCard                          # Reusable result display card
+├── ProfitCalculator (app/calculator/profit/)
+│   └── ResultCard
+├── Guides (app/guides/page.tsx)            # Trading guides index with card grid
 └── Footer
 ```
 
@@ -54,7 +60,8 @@ Returns: `progress`, `results`, `baseline`, `bestResultWithDays`, `isTruncated`,
 ## Conventions
 
 ### File Organization
-- Feature components in `components/` (flat, no nesting beyond `ui/`)
+- Feature components in `components/` (flat, except `calculators/` subdirectory)
+- Calculator components in `components/calculators/`
 - ShadCN primitives in `components/ui/`
 - Tests colocated: `foo.tsx` → `foo.test.tsx`
 - One export per file (named exports, no default exports except pages)
@@ -98,7 +105,7 @@ Returns: `progress`, `results`, `baseline`, `bestResultWithDays`, `isTruncated`,
 Every table uses the `usePagination<T>` hook. The `TablePagination` component renders controls from the hook's return value.
 
 ### Virtual Scrolling
-`@tanstack/react-virtual` available but used sparingly — most tables are paginated instead.
+`@tanstack/react-virtual` used in `DayByDayTable` for performant rendering of large trade logs. Most other tables use pagination instead.
 
 ### Chart Downsampling
 `PerformanceChart` uses `buildChartData()` which applies LTTB downsampling to keep chart point count manageable. ATR stop events are always preserved regardless of downsampling.

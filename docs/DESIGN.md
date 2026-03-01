@@ -24,10 +24,11 @@ Key semantic tokens:
 
 ## Layout
 
-- Single page, centered content with `max-w-7xl`
-- Sticky header with logo + theme toggle
-- Two-column grid (`lg:grid-cols-2`) for setup/config section
+- Multi-page app, centered content with `max-w-7xl`
+- Sticky header with logo + navigation + theme toggle
+- Two-column grid (`lg:grid-cols-2`) for setup/config and calculator forms
 - Full-width for results section
+- Card grid for guides index
 - Responsive: stacks to single column on mobile
 
 ## Color Conventions for Financial Data
