@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 
 export const dynamic = 'force-static';
-export const alt = 'TradingLab - Crypto Trading Backtester';
+export const alt = 'TradingLab - Trading Tools & Risk Management';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -63,7 +63,7 @@ export default function TwitterImage() {
             lineHeight: 1.4,
           }}
         >
-          Crypto Trading Strategy Backtester
+          Trading Tools & Risk Management
         </div>
         <div
           style={{
@@ -72,7 +72,7 @@ export default function TwitterImage() {
             marginTop: 48,
           }}
         >
-          {['SMA Crossover', 'ATR Trailing Stop', 'Leverage Testing'].map(
+          {['Backtester', 'Position Sizing', 'Profit Analysis'].map(
             (feature) => (
               <div
                 key={feature}

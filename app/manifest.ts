@@ -4,10 +4,10 @@ export const dynamic = 'force-static';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'TradingLab - Crypto Backtester',
+    name: 'TradingLab - Trading Tools & Risk Management',
     short_name: 'TradingLab',
     description:
-      'Crypto trading strategy backtester with exhaustive parameter optimization',
+      'Free trading tools for position sizing, profit analysis, and strategy backtesting. Manage risk like a professional with live market data.',
     start_url: '/',
     display: 'standalone',
     background_color: '#000000',

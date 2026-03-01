@@ -19,24 +19,23 @@ const geistMono = Geist_Mono({
 const siteUrl = 'https://tradinglab.vip';
 const siteName = 'TradingLab';
 const siteDescription =
-  'Crypto trading strategy backtester with exhaustive parameter optimization. Test SMA crossover strategies with leverage and ATR-based trailing stops.';
+  'Free trading tools for position sizing, profit analysis, and strategy backtesting. Manage risk like a professional with live market data.';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: `Crypto Trading Backtester | ${siteName}`,
+    default: `Trading Tools & Risk Management | ${siteName}`,
     template: `%s | ${siteName}`,
   },
   description: siteDescription,
   keywords: [
+    'position size calculator',
+    'profit calculator',
     'crypto backtester',
-    'trading strategy',
-    'SMA crossover',
-    'parameter optimization',
+    'risk management',
+    'trading tools',
+    'risk reward ratio',
     'leverage trading',
-    'ATR trailing stop',
-    'cryptocurrency',
-    'backtest',
   ],
   authors: [{ name: 'Wesley Coetzee' }],
   alternates: {
@@ -47,20 +46,20 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: siteUrl,
     siteName,
-    title: `Crypto Trading Backtester | ${siteName}`,
+    title: `Trading Tools & Risk Management | ${siteName}`,
     description: siteDescription,
     images: [
       {
         url: '/opengraph-image.png',
         width: 1200,
         height: 630,
-        alt: `${siteName} - Crypto Trading Backtester`,
+        alt: `${siteName} - Trading Tools & Risk Management`,
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: `Crypto Trading Backtester | ${siteName}`,
+    title: `Trading Tools & Risk Management | ${siteName}`,
     description: siteDescription,
     creator: '@wezzcoetzee',
     site: '@wezzcoetzee',
@@ -77,24 +76,40 @@ export const metadata: Metadata = {
 
 const jsonLd = {
   '@context': 'https://schema.org',
-  '@type': 'WebApplication',
-  name: siteName,
-  description: siteDescription,
-  url: siteUrl,
-  applicationCategory: 'FinanceApplication',
-  operatingSystem: 'Web',
-  author: {
-    '@type': 'Person',
-    name: 'Wesley Coetzee',
-    url: 'https://wezzcoetzee.com',
-  },
-  datePublished: '2025-01-01',
-  dateModified: new Date().toISOString().split('T')[0],
-  offers: {
-    '@type': 'Offer',
-    price: '0',
-    priceCurrency: 'USD',
-  },
+  '@graph': [
+    {
+      '@type': 'WebSite',
+      name: siteName,
+      url: siteUrl,
+    },
+    {
+      '@type': 'WebApplication',
+      name: siteName,
+      description: siteDescription,
+      url: siteUrl,
+      applicationCategory: 'FinanceApplication',
+      operatingSystem: 'Web',
+      author: {
+        '@type': 'Person',
+        name: 'Wesley Coetzee',
+        url: 'https://wezzcoetzee.com',
+      },
+      datePublished: '2025-01-01',
+      dateModified: new Date().toISOString().split('T')[0],
+      offers: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'USD',
+      },
+    },
+    {
+      '@type': 'Organization',
+      name: siteName,
+      url: siteUrl,
+      logo: `${siteUrl}/icon-512.png`,
+      sameAs: ['https://x.com/wezzcoetzee'],
+    },
+  ],
 };
 
 export default function RootLayout({
