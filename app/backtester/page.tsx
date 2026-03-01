@@ -21,7 +21,7 @@ export default function BacktesterPage() {
         ]}
       />
       <div className="flex flex-col gap-8 w-full max-w-7xl">
-        <section className="flex flex-col gap-2 text-center">
+        <section className="flex flex-col gap-3 text-center">
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
             Crypto Trading Strategy Backtester
           </h1>

@@ -16,9 +16,9 @@ interface DayByDayTableProps {
 }
 
 const POSITION_BADGE_STYLES: Record<PositionType, string> = {
-  LONG: 'bg-green-100 text-green-800',
-  SHORT: 'bg-red-100 text-red-800',
-  NONE: 'bg-gray-100 text-gray-800',
+  LONG: 'bg-[var(--profit-green)]/15 text-[var(--profit-green)]',
+  SHORT: 'bg-[var(--loss-red)]/15 text-[var(--loss-red)]',
+  NONE: 'bg-muted text-muted-foreground',
 };
 
 const ROW_HEIGHT = 45;

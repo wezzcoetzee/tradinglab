@@ -38,7 +38,7 @@ const profitJsonLd = {
 
 export default function ProfitCalculatorPage() {
   return (
-    <div className="container mx-auto py-8 px-4 max-w-3xl">
+    <div className="flex items-start justify-center px-8 pb-16 pt-22">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(profitJsonLd) }}
@@ -52,15 +52,16 @@ export default function ProfitCalculatorPage() {
           },
         ]}
       />
-      <div className="mb-8 space-y-2">
+      <div className="flex flex-col gap-8 w-full max-w-4xl">
+      <section className="flex flex-col gap-3 text-center">
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
           Profit Calculator
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground max-w-2xl mx-auto">
           Analyze potential profits across multiple take-profit levels. Calculate
           ROI, risk/reward ratios, and expected returns before entering any trade.
         </p>
-      </div>
+      </section>
 
       <Card>
         <CardHeader className="border-b border-border/30 pb-4">
@@ -143,6 +144,7 @@ export default function ProfitCalculatorPage() {
           </div>
         </div>
       </section>
+    </div>
     </div>
   );
 }
