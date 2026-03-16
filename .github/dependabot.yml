@@ -8,3 +8,5 @@ updates:
       - "dependencies"
     commit-message:
       prefix: "chore"
+    assignees:
+      - "wezzcoetzee"
