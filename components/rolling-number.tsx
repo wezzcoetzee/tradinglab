@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, memo, useMemo } from "react";
+import { useRef, memo, useEffect, useState } from "react";
 
 interface RollingDigitProps {
   char: string;
@@ -44,58 +44,51 @@ interface RollingNumberProps {
   className?: string;
 }
 
+interface AnimState {
+  displayChars: string[];
+  prevChars: (string | null)[];
+  direction: "up" | "down" | null;
+}
+
+function computeAnimState(value: string, prev: string): AnimState {
+  const newChars = value.split("");
+  const noPrev: AnimState = { displayChars: newChars, prevChars: newChars.map(() => null), direction: null };
+
+  if (prev === value) return noPrev;
+
+  const prevNum = parseFloat(prev.replace(/[^0-9.-]/g, ""));
+  const currNum = parseFloat(value.replace(/[^0-9.-]/g, ""));
+  const oldChars = prev.split("");
+
+  const maxLen = Math.max(newChars.length, oldChars.length);
+  const paddedNew = newChars.join("").padStart(maxLen, " ").split("");
+  const paddedOld = oldChars.join("").padStart(maxLen, " ").split("");
+
+  if (!isNaN(prevNum) && !isNaN(currNum) && prevNum !== currNum) {
+    const dir: "up" | "down" = currNum > prevNum ? "up" : "down";
+    const prevCharsForAnim: (string | null)[] = paddedNew.map((char, i) =>
+      paddedOld[i] !== char ? (paddedOld[i] ?? null) : null
+    );
+    return { displayChars: newChars, prevChars: prevCharsForAnim, direction: dir };
+  }
+
+  return noPrev;
+}
+
 export function RollingNumber({ value, className = "" }: RollingNumberProps) {
   const prevValueRef = useRef(value);
-  const [animKey, setAnimKey] = useState(0);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  const computed = useMemo((): {
-    displayChars: string[];
-    prevChars: (string | null)[];
-    direction: "up" | "down" | null;
-  } => {
-    const prev = prevValueRef.current;
-    const newChars = value.split("");
-    const noPrev = { displayChars: newChars, prevChars: newChars.map(() => null), direction: null };
-
-    if (prev === value) return noPrev;
-
-    const prevNum = parseFloat(prev.replace(/[^0-9.-]/g, ""));
-    const currNum = parseFloat(value.replace(/[^0-9.-]/g, ""));
-    const oldChars = prev.split("");
-
-    const maxLen = Math.max(newChars.length, oldChars.length);
-    const paddedNew = newChars.join("").padStart(maxLen, " ").split("");
-    const paddedOld = oldChars.join("").padStart(maxLen, " ").split("");
-
-    if (!isNaN(prevNum) && !isNaN(currNum) && prevNum !== currNum) {
-      const dir: "up" | "down" = currNum > prevNum ? "up" : "down";
-      const prevCharsForAnim: (string | null)[] = paddedNew.map((char, i) =>
-        paddedOld[i] !== char ? (paddedOld[i] ?? null) : null
-      );
-      return { displayChars: newChars, prevChars: prevCharsForAnim, direction: dir };
-    }
-
-    return noPrev;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value, animKey]);
-
-  const { displayChars, prevChars, direction } = computed;
+  const [animState, setAnimState] = useState<AnimState>(() =>
+    computeAnimState(value, value)
+  );
 
   useEffect(() => {
-    if (value === prevValueRef.current) return;
+    const prev = prevValueRef.current;
+    if (prev === value) return;
     prevValueRef.current = value;
-
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => {
-      setAnimKey((k) => k + 1);
-    }, 200);
-
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
+    setAnimState(computeAnimState(value, prev));
   }, [value]);
 
+  const { displayChars, prevChars, direction } = animState;
   const offset = prevChars.length - displayChars.length;
 
   return (

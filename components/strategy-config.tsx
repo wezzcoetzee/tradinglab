@@ -57,9 +57,9 @@ export function StrategyConfigForm({ onConfigChange }: StrategyConfigProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 items-end">
           <div className="space-y-2">
-            <Label htmlFor="startingCapital">Starting Capital ($)</Label>
+            <Label htmlFor="startingCapital">Capital ($)</Label>
             <Input
               id="startingCapital"
               type="number"
@@ -73,7 +73,7 @@ export function StrategyConfigForm({ onConfigChange }: StrategyConfigProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="tradingFee">Trading Fee (%)</Label>
+            <Label htmlFor="tradingFee">Fee (%)</Label>
             <Input
               id="tradingFee"
               type="number"
@@ -117,7 +117,7 @@ export function StrategyConfigForm({ onConfigChange }: StrategyConfigProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="atrEnabled">ATR Stop Loss</Label>
+            <Label htmlFor="atrEnabled">ATR Stop</Label>
             <div className="flex items-center h-9">
               <Switch
                 id="atrEnabled"
