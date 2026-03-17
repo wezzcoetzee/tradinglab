@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { TrendingUp, Calculator, Loader2 } from "lucide-react";
+import { TrendingUp, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -110,9 +110,7 @@ type ProfitCalculatorForm = z.infer<typeof profitCalculatorSchema>;
 
 export function ProfitCalculator() {
   const [results, setResults] = useState<ProfitCalculationResult | null>(null);
-  const [isCalculating, setIsCalculating] = useState(false);
   const [showResults, setShowResults] = useState(false);
-  const resultsRef = useRef<HTMLDivElement>(null);
 
   const form = useForm<ProfitCalculatorForm>({
     resolver: zodResolver(profitCalculatorSchema),
@@ -120,49 +118,37 @@ export function ProfitCalculator() {
   });
 
   const handleCalculateProfit = useCallback((data: ProfitCalculatorForm) => {
-    setIsCalculating(true);
     setShowResults(false);
 
-    setTimeout(() => {
-      try {
-        const input = {
-          tradeType: data.tradeType,
-          entryPrice: safeParseFloat(data.entry),
-          stopLossPrice: safeParseFloat(data.stopLoss),
-          leverage: safeParseFloat(data.leverage),
-          positionSize: safeParseFloat(data.positionSize),
-          takeProfits: [
-            safeParseFloat(data.tp1),
-            data.tp2 ? safeParseFloat(data.tp2) : 0,
-            data.tp3 ? safeParseFloat(data.tp3) : 0,
-            data.tp4 ? safeParseFloat(data.tp4) : 0,
-          ],
-        };
+    try {
+      const input = {
+        tradeType: data.tradeType,
+        entryPrice: safeParseFloat(data.entry),
+        stopLossPrice: safeParseFloat(data.stopLoss),
+        leverage: safeParseFloat(data.leverage),
+        positionSize: safeParseFloat(data.positionSize),
+        takeProfits: [
+          safeParseFloat(data.tp1),
+          data.tp2 ? safeParseFloat(data.tp2) : 0,
+          data.tp3 ? safeParseFloat(data.tp3) : 0,
+          data.tp4 ? safeParseFloat(data.tp4) : 0,
+        ],
+      };
 
-        const validation = validateTradingParameters(
-          input.tradeType,
-          input.entryPrice,
-          input.stopLossPrice,
-          input.takeProfits.filter((tp) => tp > 0)
-        );
+      const validation = validateTradingParameters(
+        input.tradeType,
+        input.entryPrice,
+        input.stopLossPrice,
+        input.takeProfits.filter((tp) => tp > 0)
+      );
 
-        if (!validation.isValid) {
-          setIsCalculating(false);
-          return;
-        }
+      if (!validation.isValid) return;
 
-        const result = calculateProfitMetrics(input);
-        setResults(result);
-        setIsCalculating(false);
-
-        requestAnimationFrame(() => {
-          setShowResults(true);
-        });
-      } catch {
-        setResults(null);
-        setIsCalculating(false);
-      }
-    }, 300);
+      setResults(calculateProfitMetrics(input));
+      setShowResults(true);
+    } catch {
+      setResults(null);
+    }
   }, []);
 
   const inputField = (
@@ -248,7 +234,7 @@ export function ProfitCalculator() {
             <span className="data-mono text-xs text-muted-foreground uppercase tracking-wider">
               INPUT_PARAMETERS
             </span>
-            <div className="flex-1 h-px bg-gradient-to-r from-border to-transparent" />
+            <div className="flex-1 h-px bg-border" />
           </div>
 
           <FormField
@@ -317,7 +303,7 @@ export function ProfitCalculator() {
             <span className="data-mono text-xs text-muted-foreground uppercase tracking-wider">
               TARGET_LEVELS
             </span>
-            <div className="flex-1 h-px bg-gradient-to-r from-border to-transparent" />
+            <div className="flex-1 h-px bg-border" />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -329,33 +315,16 @@ export function ProfitCalculator() {
 
           <Button
             type="submit"
-            disabled={isCalculating}
-            className="w-full h-14 data-mono text-sm font-bold uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 relative overflow-hidden group btn-press disabled:opacity-70"
+            className="w-full h-14 data-mono text-sm font-bold uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90 btn-press"
             onClick={form.handleSubmit(handleCalculateProfit)}
-            aria-busy={isCalculating}
           >
-            <span className="relative z-10 flex items-center gap-2">
-              {isCalculating ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <Calculator className="h-4 w-4" />
-                  Calculate Profit
-                </>
-              )}
-            </span>
-            <div
-              className={`absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-700 ${isCalculating ? "btn-processing" : "translate-x-[-100%] group-hover:translate-x-[100%]"}`}
-            />
+            <Calculator className="h-4 w-4" />
+            Calculate Profit
           </Button>
         </div>
 
         {results && (
           <div
-            ref={resultsRef}
             className="border-t border-border/30 pt-6 space-y-6"
             role="region"
             aria-live="polite"
@@ -367,7 +336,7 @@ export function ProfitCalculator() {
               <span className="data-mono text-xs text-muted-foreground uppercase tracking-wider">
                 P&L_ANALYSIS
               </span>
-              <div className="flex-1 h-px bg-gradient-to-r from-border to-transparent" />
+              <div className="flex-1 h-px bg-border" />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -435,7 +404,7 @@ export function ProfitCalculator() {
                   <span className="data-mono text-xs text-muted-foreground uppercase tracking-wider">
                     TARGET_BREAKDOWN
                   </span>
-                  <div className="flex-1 h-px bg-gradient-to-r from-border to-transparent" />
+                  <div className="flex-1 h-px bg-border" />
                 </div>
 
                 <div className="space-y-2" role="list" aria-label="Take profit targets">

@@ -150,17 +150,6 @@
   .stagger-5 { animation-delay: 300ms; }
   .stagger-6 { animation-delay: 375ms; }
 
-  @keyframes buttonProcess {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-  }
-
-  .btn-processing {
-    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%);
-    background-size: 200% 100%;
-    animation: buttonProcess 1.5s linear infinite;
-  }
-
   .btn-press:active {
     transform: scale(0.98);
   }
