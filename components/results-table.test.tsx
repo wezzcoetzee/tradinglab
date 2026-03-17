@@ -119,7 +119,7 @@ describe('ResultsTable', () => {
         createMockResult({ totalReturn: -5, isLiquidated: false }),
       ];
       const { container } = render(<ResultsTable results={results} baseline={null} />);
-      const profitableElement = container.querySelector('.text-green-600.text-2xl.font-bold');
+      const profitableElement = container.querySelector('.text-\\[var\\(--profit-green\\)\\].text-2xl.font-bold');
       expect(profitableElement?.textContent).toBe('2');
     });
 
@@ -152,7 +152,7 @@ describe('ResultsTable', () => {
         createMockResult({ totalReturn: 10, isLiquidated: false }),
       ];
       const { container } = render(<ResultsTable results={results} baseline={null} />);
-      const profitableElement = container.querySelector('.text-green-600.text-2xl.font-bold');
+      const profitableElement = container.querySelector('.text-\\[var\\(--profit-green\\)\\].text-2xl.font-bold');
       expect(profitableElement?.textContent).toBe('1');
     });
 
@@ -438,7 +438,7 @@ describe('ResultsTable', () => {
         createMockResult({ totalReturn: -10, isLiquidated: false }),
       ];
       const { container } = render(<ResultsTable results={results} baseline={null} />);
-      const profitableElement = container.querySelector('.text-green-600.text-2xl.font-bold');
+      const profitableElement = container.querySelector('.text-\\[var\\(--profit-green\\)\\].text-2xl.font-bold');
       expect(profitableElement?.textContent).toBe('0');
     });
 
@@ -539,7 +539,7 @@ describe('ResultsTable', () => {
       const allCells = tableBody?.querySelectorAll('td');
       const vsHoldCell = allCells?.[6];
       expect(vsHoldCell?.textContent).toContain('+8.33%');
-      expect(vsHoldCell?.querySelector('.text-green-600')).not.toBeNull();
+      expect(vsHoldCell?.querySelector('.text-\\[var\\(--profit-green\\)\\]')).not.toBeNull();
     });
 
     test('should_show_red_when_vs_hold_below_minus_5_percent', () => {
@@ -554,13 +554,16 @@ describe('ResultsTable', () => {
       expect(vsHoldCell?.querySelector('.text-destructive')).not.toBeNull();
     });
 
-    test('should_show_yellow_when_vs_hold_within_5_percent', () => {
+    test('should_show_muted_when_vs_hold_within_5_percent', () => {
       const results = [createMockResult({ finalBalance: 1200, finalCollateral: 1200 })];
       const baseline = createMockBaseline({ finalValue: 1200 });
       const { container } = render(<ResultsTable results={results} baseline={baseline} />);
       expandAllConfigurations();
-      const vsHoldCell = container.querySelector('.text-yellow-600');
+      const tableBody = container.querySelector('tbody');
+      const allCells = tableBody?.querySelectorAll('td');
+      const vsHoldCell = allCells?.[6];
       expect(vsHoldCell?.textContent).toContain('+0.00%');
+      expect(vsHoldCell?.querySelector('.text-muted-foreground')).not.toBeNull();
     });
   });
 });

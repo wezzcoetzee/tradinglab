@@ -77,7 +77,7 @@ describe('OptimalStrategyCard', () => {
       const result = createMockResult({ totalReturn: 15.5 });
       const baseline = createMockBaseline();
       const { container } = render(<OptimalStrategyCard result={result} baseline={baseline} />);
-      const badge = container.querySelector('.text-green-600');
+      const badge = container.querySelector('.text-\\[var\\(--profit-green\\)\\]');
       expect(badge?.textContent).toContain('+15.50% gain');
     });
 
@@ -109,7 +109,7 @@ describe('OptimalStrategyCard', () => {
       const result = createMockResult({ finalBalance: 1400, finalCollateral: 1400 });
       const baseline = createMockBaseline({ finalValue: 1200 });
       const { container } = render(<OptimalStrategyCard result={result} baseline={baseline} />);
-      const badges = container.querySelectorAll('.text-green-600');
+      const badges = container.querySelectorAll('.text-\\[var\\(--profit-green\\)\\]');
       const vsHoldBadge = Array.from(badges).find(b => b.textContent?.includes('vs hold'));
       expect(vsHoldBadge?.textContent).toContain('+16.67% vs hold');
     });
@@ -126,7 +126,7 @@ describe('OptimalStrategyCard', () => {
       const result = createMockResult({ finalBalance: 1230, finalCollateral: 1230 });
       const baseline = createMockBaseline({ finalValue: 1200 });
       const { container } = render(<OptimalStrategyCard result={result} baseline={baseline} />);
-      const badge = container.querySelector('.text-yellow-600');
+      const badge = container.querySelector('.text-muted-foreground');
       expect(badge?.textContent).toContain('+2.50% vs hold');
     });
 
@@ -155,7 +155,7 @@ describe('OptimalStrategyCard', () => {
       const result = createMockResult({ finalBalance: 1260, finalCollateral: 1260 });
       const baseline = createMockBaseline({ finalValue: 1200 });
       const { container } = render(<OptimalStrategyCard result={result} baseline={baseline} />);
-      const badge = container.querySelector('.text-yellow-600');
+      const badge = container.querySelector('.text-muted-foreground');
       expect(badge?.textContent).toContain('+5.00% vs hold');
     });
 
@@ -163,7 +163,7 @@ describe('OptimalStrategyCard', () => {
       const result = createMockResult({ finalBalance: 1140, finalCollateral: 1140 });
       const baseline = createMockBaseline({ finalValue: 1200 });
       const { container } = render(<OptimalStrategyCard result={result} baseline={baseline} />);
-      const badge = container.querySelector('.text-yellow-600');
+      const badge = container.querySelector('.text-muted-foreground');
       expect(badge?.textContent).toContain('-5.00% vs hold');
     });
 
@@ -171,7 +171,7 @@ describe('OptimalStrategyCard', () => {
       const result = createMockResult({ finalBalance: 1261, finalCollateral: 1261 });
       const baseline = createMockBaseline({ finalValue: 1200 });
       const { container } = render(<OptimalStrategyCard result={result} baseline={baseline} />);
-      const badges = container.querySelectorAll('.text-green-600');
+      const badges = container.querySelectorAll('.text-\\[var\\(--profit-green\\)\\]');
       const vsHoldBadge = Array.from(badges).find(b => b.textContent?.includes('vs hold'));
       expect(vsHoldBadge).toBeDefined();
     });

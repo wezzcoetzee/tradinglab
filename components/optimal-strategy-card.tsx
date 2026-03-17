@@ -21,7 +21,7 @@ export function OptimalStrategyCard({ result, baseline }: OptimalStrategyCardPro
   const vsHold = calculateVsHold(result.finalCollateral, baseline.finalValue);
 
   return (
-    <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+    <Card className="border-2 border-primary/20">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg">Optimal Strategy</CardTitle>
       </CardHeader>

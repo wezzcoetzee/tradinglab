@@ -19,7 +19,7 @@ export function MetricsCards({ metrics }: MetricsCardsProps) {
         <div className="text-sm text-muted-foreground">Total Configs</div>
       </div>
       <div className="text-center p-3 rounded-lg bg-muted">
-        <div className="text-2xl font-bold text-green-600 tabular-nums">{metrics.profitable}</div>
+        <div className="text-2xl font-bold text-[var(--profit-green)] tabular-nums">{metrics.profitable}</div>
         <div className="text-sm text-muted-foreground">Profitable</div>
       </div>
       <div className="text-center p-3 rounded-lg bg-muted">

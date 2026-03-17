@@ -32,9 +32,9 @@ function getStatusColor(status: OptimizationProgress['status']): string {
       return 'text-muted-foreground';
     case 'preparing':
     case 'running':
-      return 'text-blue-600';
+      return 'text-primary';
     case 'complete':
-      return 'text-green-600';
+      return 'text-[var(--profit-green)]';
     case 'error':
       return 'text-destructive';
   }

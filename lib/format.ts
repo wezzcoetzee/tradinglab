@@ -27,13 +27,13 @@ export function formatNumber(n: number): string {
 }
 
 export function getReturnColorClass(returnPercent: number): string {
-  return returnPercent >= 0 ? 'text-green-600' : 'text-destructive';
+  return returnPercent >= 0 ? 'text-[var(--profit-green)]' : 'text-destructive';
 }
 
 export function getVsHoldColorClass(vsHold: number): string {
-  if (vsHold > 5) return 'text-green-600';
+  if (vsHold > 5) return 'text-[var(--profit-green)]';
   if (vsHold < -5) return 'text-destructive';
-  return 'text-yellow-600';
+  return 'text-muted-foreground';
 }
 
 export function formatAtrConfig(atr: { period: number; multiplier: number; closePercent: number } | undefined, emptyValue = '-'): string {
@@ -46,11 +46,11 @@ export function calculateVsHold(finalBalance: number, baselineFinalValue: number
 }
 
 export function getVsHoldBackgroundClass(vsHold: number): string {
-  if (vsHold >= 50) return 'bg-green-100 dark:bg-green-900/30';
-  if (vsHold >= 20) return 'bg-green-50 dark:bg-green-900/20';
-  if (vsHold >= 0) return 'bg-yellow-50 dark:bg-yellow-900/20';
-  if (vsHold >= -20) return 'bg-orange-50 dark:bg-orange-900/20';
-  return 'bg-red-50 dark:bg-red-900/20';
+  if (vsHold >= 50) return 'bg-[var(--profit-green)]/10';
+  if (vsHold >= 20) return 'bg-[var(--profit-green)]/5';
+  if (vsHold >= 0) return 'bg-muted/50';
+  if (vsHold >= -20) return 'bg-[var(--loss-red)]/5';
+  return 'bg-[var(--loss-red)]/10';
 }
 
 export function formatDateTick(dateStr: string): string {

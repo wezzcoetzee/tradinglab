@@ -523,7 +523,7 @@ describe('ResultsTable - SMA Section', () => {
 
       await expandSmaSection();
 
-      const row = container.querySelector('.bg-green-100');
+      const row = container.querySelector('.bg-\\[var\\(--profit-green\\)\\]\\/10');
       expect(row).not.toBeNull();
     });
 
@@ -541,7 +541,7 @@ describe('ResultsTable - SMA Section', () => {
 
       await expandSmaSection();
 
-      const row = container.querySelector('.bg-green-50');
+      const row = container.querySelector('.bg-\\[var\\(--profit-green\\)\\]\\/5');
       expect(row).not.toBeNull();
     });
 
@@ -559,7 +559,7 @@ describe('ResultsTable - SMA Section', () => {
 
       await expandSmaSection();
 
-      const row = container.querySelector('.bg-yellow-50');
+      const row = container.querySelector('.bg-muted\\/50');
       expect(row).not.toBeNull();
     });
 
@@ -577,7 +577,7 @@ describe('ResultsTable - SMA Section', () => {
 
       await expandSmaSection();
 
-      const row = container.querySelector('.bg-orange-50');
+      const row = container.querySelector('.bg-\\[var\\(--loss-red\\)\\]\\/5');
       expect(row).not.toBeNull();
     });
 
@@ -595,7 +595,7 @@ describe('ResultsTable - SMA Section', () => {
 
       await expandSmaSection();
 
-      const row = container.querySelector('.bg-red-50');
+      const row = container.querySelector('.bg-\\[var\\(--loss-red\\)\\]\\/10');
       expect(row).not.toBeNull();
     });
 
@@ -633,7 +633,7 @@ describe('ResultsTable - SMA Section', () => {
       const destructiveRow = container.querySelector('.bg-destructive\\/10');
       expect(destructiveRow).not.toBeNull();
 
-      const greenRow = container.querySelector('.bg-green-100');
+      const greenRow = container.querySelector('.bg-\\[var\\(--profit-green\\)\\]\\/10');
       expect(greenRow).toBeNull();
     });
   });

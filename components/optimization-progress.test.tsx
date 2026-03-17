@@ -81,7 +81,7 @@ describe('OptimizationProgressCard', () => {
       const progress = createMockProgress({ status: 'preparing' });
       const { container } = render(<OptimizationProgressCard progress={progress} onCancel={mock(() => {})} />);
 
-      const statusElement = container.querySelector('.text-blue-600');
+      const statusElement = container.querySelector('.text-primary');
       expect(statusElement?.textContent).toBe('Preparing...');
     });
   });
@@ -207,7 +207,7 @@ describe('OptimizationProgressCard', () => {
       });
       const { container } = render(<OptimizationProgressCard progress={progress} onCancel={mock(() => {})} />);
 
-      const statusElement = container.querySelector('.text-blue-600');
+      const statusElement = container.querySelector('.text-primary');
       expect(statusElement?.textContent).toBe('Running');
     });
   });
@@ -271,7 +271,7 @@ describe('OptimizationProgressCard', () => {
       });
       const { container } = render(<OptimizationProgressCard progress={progress} onCancel={mock(() => {})} />);
 
-      const statusElement = container.querySelector('.text-green-600');
+      const statusElement = container.querySelector('.text-\\[var\\(--profit-green\\)\\]');
       expect(statusElement?.textContent).toBe('Complete');
     });
   });
