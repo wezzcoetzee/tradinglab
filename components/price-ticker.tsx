@@ -76,7 +76,7 @@ export function PriceTicker({ className = "" }: PriceTickerProps) {
   const isLoading = !isConnected || coinPrices.length === 0;
 
   return (
-    <div className={`overflow-hidden relative ${className}`}>
+    <div className={`overflow-hidden relative ${className}`} role="marquee" aria-label="Live cryptocurrency prices">
       <div className="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
       <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
 
@@ -90,9 +90,11 @@ export function PriceTicker({ className = "" }: PriceTickerProps) {
           style={{ width: "max-content" }}
         >
           <TickerContent coins={coinPrices} />
-          <span className="text-border px-2">|</span>
-          <TickerContent coins={coinPrices} />
-          <span className="text-border px-2">|</span>
+          <span className="text-border px-2" aria-hidden="true">|</span>
+          <span aria-hidden="true">
+            <TickerContent coins={coinPrices} />
+          </span>
+          <span className="text-border px-2" aria-hidden="true">|</span>
         </div>
       )}
     </div>

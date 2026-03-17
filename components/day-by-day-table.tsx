@@ -54,6 +54,7 @@ function CollapsibleHeader({
       onKeyDown={handleKeyDown}
       role="button"
       tabIndex={0}
+      aria-expanded={isExpanded}
     >
       <div className="flex items-center gap-2">
         <ChevronIcon className="h-5 w-5" aria-hidden="true" />
@@ -68,14 +69,14 @@ function CollapsibleHeader({
 
 function TableHeader() {
   return (
-    <div className="grid grid-cols-7 gap-4 px-4 py-2 font-semibold text-sm border-b bg-muted/50 rounded-t-md">
-      <div>Date</div>
-      <div className="text-right">Close Price</div>
-      <div className="text-right">SMA Value</div>
-      <div className="text-center">Position</div>
-      <div className="text-right">Portfolio Value</div>
-      <div className="text-right">Collateral</div>
-      <div className="text-right">Buy-Hold Value</div>
+    <div role="row" aria-rowindex={1} className="grid grid-cols-7 gap-4 px-4 py-2 font-semibold text-sm border-b bg-muted/50 rounded-t-md">
+      <div role="columnheader">Date</div>
+      <div role="columnheader" className="text-right">Close Price</div>
+      <div role="columnheader" className="text-right">SMA Value</div>
+      <div role="columnheader" className="text-center">Position</div>
+      <div role="columnheader" className="text-right">Portfolio Value</div>
+      <div role="columnheader" className="text-right">Collateral</div>
+      <div role="columnheader" className="text-right">Buy-Hold Value</div>
     </div>
   );
 }
@@ -92,20 +93,21 @@ function TableRow({ day, collateralValue, buyHoldValue, top }: TableRowProps) {
 
   return (
     <div
+      role="row"
       className="absolute left-0 w-full grid grid-cols-7 gap-4 px-4 items-center border-b text-sm"
       style={{ top, height: ROW_HEIGHT }}
     >
-      <div className="font-mono">{day.date}</div>
-      <div className="text-right font-mono">{formatCurrency(day.price)}</div>
-      <div className="text-right font-mono">{formatCurrency(day.sma)}</div>
-      <div className="text-center">
+      <div role="cell" className="font-mono">{day.date}</div>
+      <div role="cell" className="text-right font-mono">{formatCurrency(day.price)}</div>
+      <div role="cell" className="text-right font-mono">{formatCurrency(day.sma)}</div>
+      <div role="cell" className="text-center">
         <Badge className={POSITION_BADGE_STYLES[positionType]}>
           {positionType}
         </Badge>
       </div>
-      <div className="text-right font-mono">{formatCurrency(day.portfolioValue)}</div>
-      <div className="text-right font-mono">{formatCurrency(collateralValue)}</div>
-      <div className="text-right font-mono">{formatCurrency(buyHoldValue)}</div>
+      <div role="cell" className="text-right font-mono">{formatCurrency(day.portfolioValue)}</div>
+      <div role="cell" className="text-right font-mono">{formatCurrency(collateralValue)}</div>
+      <div role="cell" className="text-right font-mono">{formatCurrency(buyHoldValue)}</div>
     </div>
   );
 }
@@ -140,7 +142,10 @@ export function DayByDayTable({
 
       {isExpanded && (
         <CardContent>
+          <div role="table" aria-label="Day-by-day trading performance" aria-rowcount={tradingDays.length + 1}>
+          <div role="rowgroup">
           <TableHeader />
+          </div>
 
           <div
             ref={parentRef}
@@ -148,6 +153,7 @@ export function DayByDayTable({
             style={{ height: CONTAINER_HEIGHT }}
           >
             <div
+              role="rowgroup"
               className="relative w-full"
               style={{ height: virtualizer.getTotalSize() }}
             >
@@ -172,6 +178,7 @@ export function DayByDayTable({
                 );
               })}
             </div>
+          </div>
           </div>
         </CardContent>
       )}

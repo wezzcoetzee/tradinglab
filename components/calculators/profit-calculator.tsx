@@ -188,6 +188,7 @@ export function ProfitCalculator() {
                 step={extra?.step ?? "0.01"}
                 min={extra?.min ?? "0"}
                 max={extra?.max}
+                aria-required="true"
                 className="h-12 data-mono text-lg bg-background border-border/50 transition-all pl-3 pr-12"
                 {...field}
               />

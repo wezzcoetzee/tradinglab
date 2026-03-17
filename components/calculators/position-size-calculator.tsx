@@ -209,6 +209,7 @@ export function PositionSizeCalculator() {
                         placeholder="0.00"
                         step="0.01"
                         min="0"
+                        aria-required="true"
                         className="h-12 data-mono text-lg bg-background border-border/50 transition-all pl-3 pr-12"
                         {...field}
                       />
@@ -238,6 +239,7 @@ export function PositionSizeCalculator() {
                         step="0.1"
                         min="1"
                         max="100"
+                        aria-required="true"
                         className="h-12 data-mono text-lg bg-background border-border/50 transition-all pl-3 pr-8"
                         {...field}
                       />
@@ -266,6 +268,7 @@ export function PositionSizeCalculator() {
                         placeholder="0.00"
                         step="0.01"
                         min="0"
+                        aria-required="true"
                         className="h-12 data-mono text-lg bg-background border-border/50 focus-visible:border-[var(--loss-red)] focus-visible:ring-[var(--loss-red)]/30 transition-all pl-3 pr-12"
                         {...field}
                       />
@@ -294,6 +297,7 @@ export function PositionSizeCalculator() {
                         placeholder="100.00"
                         step="0.01"
                         min="0"
+                        aria-required="true"
                         className="h-12 data-mono text-lg bg-background border-border/50 transition-all pl-3 pr-12"
                         {...field}
                       />
