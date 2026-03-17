@@ -189,7 +189,7 @@ describe('DayByDayTable', () => {
       const header = screen.getByText('Day-by-Day Performance').closest('div');
       await user.click(header!);
 
-      const scrollContainer = container.querySelector('.overflow-auto');
+      const scrollContainer = container.querySelector('.overflow-y-auto');
       expect(scrollContainer).not.toBeNull();
     });
   });
@@ -314,7 +314,7 @@ describe('DayByDayTable', () => {
       const header = screen.getByText('Day-by-Day Performance').closest('div');
       await user.click(header!);
 
-      const scrollContainer = container.querySelector('.overflow-auto');
+      const scrollContainer = container.querySelector('.overflow-y-auto');
       expect(scrollContainer).not.toBeNull();
     });
 
@@ -326,7 +326,7 @@ describe('DayByDayTable', () => {
       const header = screen.getByText('Day-by-Day Performance').closest('div');
       await user.click(header!);
 
-      const scrollContainer = container.querySelector('.overflow-auto') as HTMLElement;
+      const scrollContainer = container.querySelector('.overflow-y-auto') as HTMLElement;
       expect(scrollContainer.style.height).toBe('600px');
     });
   });

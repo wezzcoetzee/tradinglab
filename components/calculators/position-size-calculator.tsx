@@ -179,7 +179,7 @@ export function PositionSizeCalculator() {
             )}
           />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="entry"
@@ -324,7 +324,7 @@ export function PositionSizeCalculator() {
               <div className="flex-1 h-px bg-border" />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <ResultCard
                 label="Position Size"
                 value={results.positionSize}

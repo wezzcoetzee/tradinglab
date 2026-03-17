@@ -57,7 +57,7 @@ export function StrategyConfigForm({ onConfigChange }: StrategyConfigProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex flex-wrap gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
           <div className="space-y-2">
             <Label htmlFor="startingCapital">Starting Capital ($)</Label>
             <Input
@@ -69,7 +69,6 @@ export function StrategyConfigForm({ onConfigChange }: StrategyConfigProps) {
               onChange={handleChange('startingCapital', parseFloat)}
               onBlur={handleBlur('startingCapital')}
               autoComplete="off"
-              className="w-32"
             />
           </div>
 
@@ -85,7 +84,6 @@ export function StrategyConfigForm({ onConfigChange }: StrategyConfigProps) {
               onChange={handleChange('tradingFee', parseFloat)}
               onBlur={handleBlur('tradingFee')}
               autoComplete="off"
-              className="w-24"
             />
           </div>
 
@@ -101,7 +99,6 @@ export function StrategyConfigForm({ onConfigChange }: StrategyConfigProps) {
               onChange={handleChange('smaMin', (v) => parseInt(v, 10))}
               onBlur={handleBlur('smaMin')}
               autoComplete="off"
-              className="w-20"
             />
           </div>
 
@@ -116,7 +113,6 @@ export function StrategyConfigForm({ onConfigChange }: StrategyConfigProps) {
               onChange={handleChange('smaMax', (v) => parseInt(v, 10))}
               onBlur={handleBlur('smaMax')}
               autoComplete="off"
-              className="w-20"
             />
           </div>
 

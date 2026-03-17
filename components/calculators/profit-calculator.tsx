@@ -292,7 +292,7 @@ export function ProfitCalculator() {
             )}
           />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {inputField("entry", "Entry Price", "0.00", "USD")}
             {inputField("leverage", "Leverage", "1", "×", { step: "0.1", min: "1", max: "100" })}
             {inputField("stopLoss", "Stop Loss", "0.00", "USD")}
@@ -306,7 +306,7 @@ export function ProfitCalculator() {
             <div className="flex-1 h-px bg-border" />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {tpField("tp1", "Take Profit 1", true)}
             {tpField("tp2", "Take Profit 2")}
             {tpField("tp3", "Take Profit 3")}
@@ -339,7 +339,7 @@ export function ProfitCalculator() {
               <div className="flex-1 h-px bg-border" />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <ResultCard
                 label="Total Profit"
                 value={results.totalProfit}

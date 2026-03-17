@@ -141,15 +141,15 @@ export function DayByDayTable({
       />
 
       {isExpanded && (
-        <CardContent>
-          <div role="table" aria-label="Day-by-day trading performance" aria-rowcount={tradingDays.length + 1}>
+        <CardContent className="overflow-x-auto">
+          <div role="table" aria-label="Day-by-day trading performance" aria-rowcount={tradingDays.length + 1} className="min-w-[700px]">
           <div role="rowgroup">
           <TableHeader />
           </div>
 
           <div
             ref={parentRef}
-            className="overflow-auto"
+            className="overflow-y-auto"
             style={{ height: CONTAINER_HEIGHT }}
           >
             <div
