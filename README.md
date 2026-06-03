@@ -13,6 +13,7 @@ A crypto trading strategy backtester that exhaustively optimizes SMA crossover s
 - **Position Size Calculator** - Calculate optimal position size based on risk tolerance and stop loss distance
 - **Profit Calculator** - Estimate profit, loss, and risk/reward ratio across multiple take profit targets
 - **Trading Guides** - Educational guides covering position sizing, risk management, and risk/reward ratios
+- **Live Price Ticker** - Real-time crypto mid prices streamed from Hyperliquid via WebSocket
 
 ## Getting Started
 
@@ -101,3 +102,4 @@ With ATR trailing stops enabled:
 - [Tailwind CSS](https://tailwindcss.com/) 4
 - [Radix UI](https://www.radix-ui.com/) primitives
 - [Bun](https://bun.sh/) runtime and test runner
+- [Hyperliquid SDK](https://github.com/nktkas/hyperliquid) for live price streaming

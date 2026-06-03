@@ -1,6 +1,8 @@
-import { Window } from 'happy-dom';
+import { GlobalWindow } from 'happy-dom';
 
-const window = new Window();
+// GlobalWindow (unlike Window) exposes the JS global constructors — including
+// SyntaxError — that happy-dom's query-selector parser references internally.
+const window = new GlobalWindow();
 
 // @ts-expect-error - happy-dom Window types don't fully match DOM Window, but this is expected for testing
 global.window = window;

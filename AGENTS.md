@@ -27,6 +27,7 @@ bun test <file>  # Single test file
 | Styling | Tailwind CSS 4, CSS variables for theming |
 | Charts | Recharts |
 | CSV Parsing | PapaParse |
+| Live Prices | Hyperliquid SDK (`@nktkas/hyperliquid`) WebSocket |
 | Testing | Bun test runner, Testing Library, happy-dom |
 | CI/CD | GitHub Actions → Cloudflare Pages |
 
@@ -41,7 +42,7 @@ app/calculator/profit/  # Profit calculator
 app/guides/             # Trading guides index
 components/             # Feature components + ui/ (ShadCN primitives)
 components/calculators/ # Calculator feature components
-hooks/                  # use-optimization (Web Worker), use-pagination
+hooks/                  # use-optimization (Web Worker), use-hyperliquid-prices, use-pagination
 lib/                    # Validators, formatters, utilities
 lib/calculations.ts     # Position size and profit calculation logic
 lib/backtest/           # Core engine: runner, position manager, calculators

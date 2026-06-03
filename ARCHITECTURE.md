@@ -4,8 +4,10 @@
 
 Client-side SMA crossover backtester with exhaustive parameter optimization. Users upload OHLC CSV data, configure strategy parameters, and the app tests every combination of SMA period × leverage × ATR config in a Web Worker.
 
+Alongside the backtester, the app ships standalone position-size and profit calculators and a set of educational trading guides. A live price ticker in the header streams Hyperliquid mid prices over a client-side WebSocket.
+
 **Deployment:** Next.js static export (`output: 'export'`) → Cloudflare Pages
-**Runtime:** 100% browser. No server, no API, no database.
+**Runtime:** 100% browser. No backend server or database. The only external call is a client-side Hyperliquid WebSocket for live prices.
 
 ## Directory Structure
 
@@ -21,8 +23,11 @@ tradinglab/
 │   │   │   └── page.tsx
 │   │   └── profit/             # Profit calculator
 │   │       └── page.tsx
-│   ├── guides/                 # Trading guides index
-│   │   └── page.tsx
+│   ├── guides/                 # Trading guides
+│   │   ├── page.tsx                                  # Guides index
+│   │   ├── how-to-calculate-position-size/page.tsx
+│   │   ├── position-sizing-strategies/page.tsx
+│   │   └── risk-reward-ratio/page.tsx
 │   ├── globals.css             # Tailwind directives, CSS variables
 │   ├── manifest.ts             # PWA manifest
 │   ├── robots.ts               # Robots.txt
@@ -31,7 +36,7 @@ tradinglab/
 │   ├── opengraph-image.tsx     # OG image (1200×630)
 │   └── twitter-image.tsx       # Twitter card image
 ├── components/
-│   ├── ui/                     # ShadCN primitives (14 components)
+│   ├── ui/                     # ShadCN primitives (17 components)
 │   ├── calculators/            # Calculator feature components
 │   │   ├── position-size-calculator.tsx
 │   │   ├── profit-calculator.tsx
@@ -49,12 +54,17 @@ tradinglab/
 │   ├── sma-comparison-table.tsx # Results grouped by SMA
 │   ├── all-configurations-table.tsx # Full results
 │   ├── table-pagination.tsx    # Pagination controls
-│   ├── header.tsx              # Sticky header
+│   ├── header.tsx              # Sticky header (with live price ticker)
 │   ├── footer.tsx              # Footer
+│   ├── price-ticker.tsx        # Live Hyperliquid price ticker
+│   ├── rolling-number.tsx      # Animated number transitions
+│   ├── structured-data.tsx     # Per-page JSON-LD schema
 │   ├── theme-provider.tsx      # next-themes wrapper
 │   └── theme-toggle.tsx        # Dark/light toggle
 ├── hooks/
 │   ├── use-optimization.ts     # Web Worker orchestration
+│   ├── use-hyperliquid-prices.ts # Hyperliquid WebSocket live mids
+│   ├── use-animated-number.ts  # Number tween hook
 │   └── use-pagination.ts       # Generic pagination
 ├── lib/
 │   ├── types.ts                # CsvRow, StrategyConfig, ValidationResult
@@ -82,9 +92,10 @@ tradinglab/
 │       ├── top-k-heap.ts       # Min-heap for top 1000 results
 │       └── optimization.worker.ts # Web Worker entry point
 ├── public/
-│   ├── BTC.csv, ETH.csv, SOL.csv  # Example datasets
-│   └── icons/images               # PWA assets
-├── data/                       # (empty, reserved)
+│   ├── BTC.csv, ETH.csv, SOL.csv  # Downloadable sample datasets
+│   ├── llms.txt, llms-full.txt    # LLM discoverability
+│   └── icons/images               # PWA assets, logo
+├── data/                       # Source OHLC datasets (BTC, ETH, BNB, SOL, DOGE)
 ├── .github/workflows/
 │   └── cloudflare-pages.yml    # CI: lint + test → build → deploy
 └── docs/                       # This documentation
@@ -183,7 +194,8 @@ Push to main
     │   └── bun test
     │
     └── Deploy Job (requires Quality)
+        ├── setup-node (Node.js 22, for wrangler)
         ├── bun install --frozen-lockfile
         ├── bun run build (triggers prebuild: test + lint)
-        └── wrangler pages deploy out/
+        └── wrangler-action@v4: pages deploy out/
 ```

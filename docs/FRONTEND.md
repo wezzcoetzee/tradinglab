@@ -6,6 +6,7 @@
 RootLayout (app/layout.tsx)
 ├── ThemeProvider
 ├── Header
+│   ├── PriceTicker                          # Live Hyperliquid mids (useHyperliquidPrices)
 │   └── ThemeToggle
 ├── Home (app/page.tsx)
 │   └── Backtester                          # Root orchestrator, owns csvData + strategyConfig state
@@ -97,7 +98,7 @@ Returns: `progress`, `results`, `baseline`, `bestResultWithDays`, `isTruncated`,
 }
 ```
 
-**Installed primitives:** Alert, Badge, Button, Card, Chart, Checkbox, Dialog, DropdownMenu, Input, Label, Pagination, Select, Switch, Table
+**Installed primitives:** Alert, Badge, Button, Card, Chart, Checkbox, Dialog, DropdownMenu, Form, Input, Label, Pagination, RadioGroup, Select, Skeleton, Switch, Table
 
 ## Key Patterns
 

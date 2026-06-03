@@ -55,7 +55,7 @@ ESLint 9 with `eslint-config-next`. No custom rules beyond Next.js defaults.
 | Dimension | Current | Target |
 |-----------|---------|--------|
 | Hook test coverage | useOptimization only | Add usePagination tests |
-| Component test coverage | 7 of ~20 feature components | Cover backtest-setup, strategy-config, performance-chart |
+| Component test coverage | 6 of 21 feature components | Cover strategy-config, performance-chart, price-ticker |
 | E2E tests | None | Consider Playwright for full flow |
 | Bundle analysis | Not tracked | Add `@next/bundle-analyzer` |
 | Accessibility | ShadCN defaults (Radix) | Audit keyboard navigation, screen reader |
