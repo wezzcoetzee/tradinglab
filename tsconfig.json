@@ -31,5 +31,5 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules", "out", "whats-risk-management"]
+  "exclude": ["node_modules", "out", "whats-risk-management", "**/*.test.ts", "**/*.test.tsx", "**/__tests__/**"]
 }

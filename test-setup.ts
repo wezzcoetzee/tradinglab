@@ -12,5 +12,11 @@ global.document = window.document;
 global.navigator = window.navigator;
 // @ts-expect-error - happy-dom HTMLElement types don't fully match DOM HTMLElement, but this is expected for testing
 global.HTMLElement = window.HTMLElement;
+// @ts-expect-error - happy-dom HTML element constructor types don't fully match DOM globals, but this is expected for testing
+global.HTMLFormElement = window.HTMLFormElement;
+// @ts-expect-error - happy-dom HTML element constructor types don't fully match DOM globals, but this is expected for testing
+global.HTMLInputElement = window.HTMLInputElement;
+// @ts-expect-error - happy-dom HTML element constructor types don't fully match DOM globals, but this is expected for testing
+global.HTMLButtonElement = window.HTMLButtonElement;
 // @ts-expect-error - happy-dom CustomElementRegistry types don't fully match DOM CustomElementRegistry, but this is expected for testing
 global.customElements = window.customElements;
