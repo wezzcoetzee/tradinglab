@@ -5,14 +5,16 @@ import type { CsvRow, StrategyConfig } from '@/lib/types';
 import type { WorkerMessage } from '@/lib/backtest/optimization-types';
 
 const mockCsvData: CsvRow[] = [
-  { time: 1, high: 102, low: 98, close: 100, RSI: 50, date: '1/1/2024' },
-  { time: 2, high: 103, low: 99, close: 101,  date: '2/1/2024' },
+  { high: 102, low: 98, close: 100, date: '1/1/2024' },
+  { high: 103, low: 99, close: 101, date: '2/1/2024' },
 ];
 
 const mockStrategyConfig: StrategyConfig = {
   startingCapital: 1000,
   tradingFee: 0.1,
   atrEnabled: false,
+  smaMin: 20,
+  smaMax: 40,
 };
 
 class MockWorker {
@@ -35,7 +37,6 @@ class MockWorker {
 }
 
 let mockWorkerInstance: MockWorker;
-const originalWorker = global.Worker;
 
 beforeEach(() => {
   mockWorkerInstance = new MockWorker();
@@ -62,21 +63,10 @@ describe('useOptimization', () => {
       expect(result.current.baseline).toBeNull();
     });
 
-    test('should_provide_startOptimization_function', () => {
-      const { result } = renderHook(() => useOptimization());
-
-      expect(typeof result.current.startOptimization).toBe('function');
-    });
-
-    test('should_provide_cancelOptimization_function', () => {
-      const { result } = renderHook(() => useOptimization());
-
-      expect(typeof result.current.cancelOptimization).toBe('function');
-    });
   });
 
   describe('startOptimization', () => {
-    test('should_transition_to_preparing_status', () => {
+    test('should_transition_to_running_status', () => {
       const { result } = renderHook(() => useOptimization());
 
       act(() => {
@@ -107,52 +97,15 @@ describe('useOptimization', () => {
       expect(mockWorkerInstance.postMessage).toHaveBeenCalledTimes(1);
     });
 
-    test('should_post_message_with_worker_input', () => {
+    test('should_post_csv_data_and_strategy_config_to_worker', () => {
       const { result } = renderHook(() => useOptimization());
 
       act(() => {
         result.current.startOptimization(mockCsvData, mockStrategyConfig);
       });
 
-      const call = mockWorkerInstance.postMessage.mock.calls[0] as unknown as [unknown];
-      const input = call[0] as Record<string, unknown>;
-
-      expect(input.csvData).toEqual(mockCsvData);
-      expect(input.startingCapital).toBe(1000);
-      expect(input.allSMAs).toBeDefined();
-      expect(input.configs).toBeDefined();
-    });
-
-    test('should_include_atr_when_enabled', () => {
-      const { result } = renderHook(() => useOptimization());
-
-      act(() => {
-        result.current.startOptimization(mockCsvData, {
-          ...mockStrategyConfig,
-          atrEnabled: true,
-        });
-      });
-
-      const call = mockWorkerInstance.postMessage.mock.calls[0] as unknown as [unknown];
-      const input = call[0] as Record<string, unknown>;
-
-      expect(input.allATRs).not.toBeNull();
-    });
-
-    test('should_exclude_atr_when_disabled', () => {
-      const { result } = renderHook(() => useOptimization());
-
-      act(() => {
-        result.current.startOptimization(mockCsvData, {
-          ...mockStrategyConfig,
-          atrEnabled: false,
-        });
-      });
-
-      const call = mockWorkerInstance.postMessage.mock.calls[0] as unknown as [unknown];
-      const input = call[0] as Record<string, unknown>;
-
-      expect(input.allATRs).toBeNull();
+      const [input] = mockWorkerInstance.postMessage.mock.calls[0] as unknown as [unknown];
+      expect(input).toEqual({ csvData: mockCsvData, strategyConfig: mockStrategyConfig });
     });
 
     test('should_terminate_existing_worker_before_starting_new', () => {
@@ -284,7 +237,8 @@ describe('useOptimization', () => {
         mockWorkerInstance.simulateMessage({
           type: 'complete',
           results: [],
-          totalConfigs: 0,
+          stats: { total: 0, profitable: 0, liquidated: 0 },
+          bestResultWithDays: null,
           totalTimeMs: 10000,
           baseline: null,
           isTruncated: false,
@@ -327,7 +281,8 @@ describe('useOptimization', () => {
         mockWorkerInstance.simulateMessage({
           type: 'complete',
           results: mockResults,
-          totalConfigs: mockResults.length,
+          stats: { total: mockResults.length, profitable: 0, liquidated: 0 },
+          bestResultWithDays: null,
           totalTimeMs: 10000,
           baseline: mockBaseline,
           isTruncated: false,
@@ -336,6 +291,7 @@ describe('useOptimization', () => {
 
       expect(result.current.results).toEqual(mockResults);
       expect(result.current.baseline).toEqual(mockBaseline);
+      expect(result.current.stats).toEqual({ total: mockResults.length, profitable: 0, liquidated: 0 });
     });
 
     test('should_set_progress_to_100_percent', () => {
@@ -349,7 +305,8 @@ describe('useOptimization', () => {
         mockWorkerInstance.simulateMessage({
           type: 'complete',
           results: [],
-          totalConfigs: 0,
+          stats: { total: 0, profitable: 0, liquidated: 0 },
+          bestResultWithDays: null,
           totalTimeMs: 10000,
           baseline: null,
           isTruncated: false,
@@ -380,7 +337,8 @@ describe('useOptimization', () => {
         mockWorkerInstance.simulateMessage({
           type: 'complete',
           results: mockResults,
-          totalConfigs: 100,
+          stats: { total: 100, profitable: 0, liquidated: 0 },
+          bestResultWithDays: null,
           totalTimeMs: 10000,
           baseline: null,
           isTruncated: false,
@@ -403,7 +361,8 @@ describe('useOptimization', () => {
         mockWorkerInstance.simulateMessage({
           type: 'complete',
           results: [],
-          totalConfigs: 0,
+          stats: { total: 0, profitable: 0, liquidated: 0 },
+          bestResultWithDays: null,
           totalTimeMs: 10000,
           baseline: null,
           isTruncated: false,
@@ -685,7 +644,8 @@ describe('useOptimization', () => {
               isLiquidated: false,
             },
           ],
-          totalConfigs: 1,
+          stats: { total: 1, profitable: 0, liquidated: 0 },
+          bestResultWithDays: null,
           totalTimeMs: 0,
           baseline: null,
           isTruncated: false,
@@ -699,7 +659,6 @@ describe('useOptimization', () => {
       const { result } = renderHook(() => useOptimization());
 
       const largeCsvData = Array.from({ length: 10000 }, (_, i) => ({
-        time: i,
         high: 100 + i,
         low: 98 + i,
         close: 99 + i,

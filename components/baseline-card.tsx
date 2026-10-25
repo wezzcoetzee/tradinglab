@@ -1,5 +1,6 @@
 'use client';
 
+import { WARMUP_DAYS } from '@/lib/backtest/constants';
 import type { BuyAndHoldBaseline } from '@/lib/backtest/types';
 import { formatCurrency, formatPercent, getReturnColorClass } from '@/lib/format';
 
@@ -14,7 +15,7 @@ export function BaselineCard({ baseline, assetName }: BaselineCardProps) {
       <div className="text-sm font-medium text-muted-foreground mb-3">{assetName ? `${assetName} Buy & Hold Baseline` : 'Buy & Hold Baseline'}</div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <div className="text-xs text-muted-foreground">Purchase (Day 160)</div>
+          <div className="text-xs text-muted-foreground">Purchase (Day {WARMUP_DAYS + 1})</div>
           <div className="font-mono tabular-nums">{formatCurrency(baseline.purchasePrice)}</div>
           <div className="text-xs text-muted-foreground">{baseline.purchaseDate}</div>
         </div>

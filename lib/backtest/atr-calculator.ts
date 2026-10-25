@@ -21,21 +21,18 @@ export function calculateATR(
 ): number[] {
   const atr: number[] = [];
   const trueRanges: number[] = [];
+  let windowSum = 0;
 
   for (let i = 0; i < highs.length; i++) {
-    if (i === 0) {
-      trueRanges.push(highs[i] - lows[i]);
-      atr.push(NaN);
-    } else {
-      trueRanges.push(calculateTrueRange(highs[i], lows[i], closes[i - 1]));
+    const trueRange = i === 0
+      ? highs[i] - lows[i]
+      : calculateTrueRange(highs[i], lows[i], closes[i - 1]);
+    trueRanges.push(trueRange);
+    windowSum += trueRange;
+    if (i >= period) windowSum -= trueRanges[i - period];
 
-      if (i < period) {
-        atr.push(NaN);
-      } else {
-        const sum = trueRanges.slice(i - period + 1, i + 1).reduce((a, b) => a + b, 0);
-        atr.push(sum / period);
-      }
-    }
+    // Starting at `period` keeps bar 0 (no previous close, so only high - low) out of every window.
+    atr.push(i < period ? NaN : windowSum / period);
   }
 
   return atr;

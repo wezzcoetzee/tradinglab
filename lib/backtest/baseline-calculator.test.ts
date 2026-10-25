@@ -5,7 +5,6 @@ import { WARMUP_DAYS } from './constants';
 
 function generateCsvData(days: number, startPrice: number = 100): CsvRow[] {
   return Array.from({ length: days }, (_, i) => ({
-    time: i + 1,
     high: startPrice + i + 2,
     low: startPrice + i - 2,
     close: startPrice + i,
@@ -22,8 +21,8 @@ describe('calculateBuyAndHoldBaseline', () => {
     const baseline = calculateBuyAndHoldBaseline(csvData, 1000);
 
     // #then
-    expect(baseline!.purchaseDate).toBe(csvData[WARMUP_DAYS - 1].date);
-    expect(baseline!.purchasePrice).toBe(csvData[WARMUP_DAYS - 1].close);
+    expect(baseline!.purchaseDate).toBe(csvData[WARMUP_DAYS].date);
+    expect(baseline!.purchasePrice).toBe(csvData[WARMUP_DAYS].close);
   });
 
   test('should_use_last_day_as_final_date', () => {
@@ -43,7 +42,7 @@ describe('calculateBuyAndHoldBaseline', () => {
     // #given
     const csvData = generateCsvData(200, 100);
     const startingCapital = 1000;
-    const purchasePrice = csvData[WARMUP_DAYS - 1].close;
+    const purchasePrice = csvData[WARMUP_DAYS].close;
     const finalPrice = csvData[csvData.length - 1].close;
     const expectedShares = startingCapital / purchasePrice;
     const expectedFinalValue = expectedShares * finalPrice;
@@ -59,7 +58,7 @@ describe('calculateBuyAndHoldBaseline', () => {
     // #given
     const csvData = generateCsvData(200, 100);
     const startingCapital = 1000;
-    const purchasePrice = csvData[WARMUP_DAYS - 1].close;
+    const purchasePrice = csvData[WARMUP_DAYS].close;
     const finalPrice = csvData[csvData.length - 1].close;
     const sharesAcquired = startingCapital / purchasePrice;
     const finalValue = sharesAcquired * finalPrice;
@@ -87,7 +86,6 @@ describe('calculateBuyAndHoldBaseline', () => {
   test('should_handle_price_decrease', () => {
     // #given: price decreases over time
     const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => ({
-      time: i + 1,
       high: 202 - i,
       low: 198 - i,
       close: 200 - i,
@@ -106,7 +104,6 @@ describe('calculateBuyAndHoldBaseline', () => {
   test('should_handle_flat_price', () => {
     // #given: price stays constant
     const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => ({
-      time: i + 1,
       high: 102,
       low: 98,
       close: 100,
@@ -131,7 +128,7 @@ describe('calculateBuyAndHoldBaseline', () => {
     const baseline = calculateBuyAndHoldBaseline(csvData, startingCapital);
 
     // #then
-    expect(baseline!.purchaseDate).toBe(csvData[WARMUP_DAYS - 1].date);
+    expect(baseline!.purchaseDate).toBe(csvData[WARMUP_DAYS].date);
     expect(baseline!.finalDate).toBe(csvData[WARMUP_DAYS].date);
   });
 

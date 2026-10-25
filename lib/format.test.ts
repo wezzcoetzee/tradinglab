@@ -11,7 +11,8 @@ import {
   getVsHoldBackgroundClass,
   formatDateTick,
   currencyTickFormatter,
-  calculateCollateralValue,
+  formatPercentage,
+  safeParseFloat,
   calculateBuyHoldValue,
 } from './format';
 
@@ -337,47 +338,6 @@ describe('currencyTickFormatter', () => {
   });
 });
 
-describe('calculateCollateralValue', () => {
-  test('should_return_portfolio_value_at_1x_leverage', () => {
-    // #given
-    const day = { portfolioValue: 1000, balance: 800, position: { leverage: 1 } };
-
-    // #then
-    expect(calculateCollateralValue(day)).toBe(1000);
-  });
-
-  test('should_reduce_unrealized_pnl_by_leverage', () => {
-    // #given - balance=800, portfolioValue=1000, leverage=2
-    // unrealizedPnl = 1000 - 800 - 0 = 200
-    // collateral = 800 + 200/2 + 0 = 900
-    const day = { portfolioValue: 1000, balance: 800, position: { leverage: 2 } };
-
-    // #then
-    expect(calculateCollateralValue(day)).toBe(900);
-  });
-
-  test('should_include_sideline_value', () => {
-    // #given - balance=800, portfolioValue=1200, sidelineValue=100, leverage=2
-    // unrealizedPnl = 1200 - 800 - 100 = 300
-    // collateral = 800 + 300/2 + 100 = 1050
-    const day = { portfolioValue: 1200, balance: 800, sidelineValue: 100, position: { leverage: 2 } };
-
-    // #then
-    expect(calculateCollateralValue(day)).toBe(1050);
-  });
-
-  test('should_default_leverage_to_1_when_no_position', () => {
-    const day = { portfolioValue: 1000, balance: 800, position: null };
-    expect(calculateCollateralValue(day)).toBe(1000);
-  });
-
-  test('should_default_sideline_to_0_when_undefined', () => {
-    const day = { portfolioValue: 1000, balance: 600, position: { leverage: 2 } };
-    // unrealizedPnl = 1000 - 600 - 0 = 400, collateral = 600 + 200 + 0 = 800
-    expect(calculateCollateralValue(day)).toBe(800);
-  });
-});
-
 describe('calculateBuyHoldValue', () => {
   test('should_calculate_shares_times_current_price', () => {
     // #given - $1000 / $50 = 20 shares, at $100 = $2000
@@ -396,5 +356,21 @@ describe('calculateBuyHoldValue', () => {
   test('should_handle_price_decrease', () => {
     // $1000 / $100 = 10 shares, at $50 = $500
     expect(calculateBuyHoldValue(1000, 100, 50)).toBe(500);
+  });
+});
+
+describe('formatPercentage', () => {
+  test('should_format_without_sign_using_given_decimals', () => {
+    expect(formatPercentage(12.345)).toBe('12.35%');
+    expect(formatPercentage(-3.1, 1)).toBe('-3.1%');
+  });
+});
+
+describe('safeParseFloat', () => {
+  test('should_parse_numeric_input_and_fall_back_to_zero', () => {
+    expect(safeParseFloat('42.5')).toBe(42.5);
+    expect(safeParseFloat(7)).toBe(7);
+    expect(safeParseFloat('abc')).toBe(0);
+    expect(safeParseFloat(Infinity)).toBe(0);
   });
 });

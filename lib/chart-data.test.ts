@@ -19,24 +19,6 @@ function makeDayResult(overrides: Partial<DayResult> & { dayIndex: number; price
 }
 
 describe('buildChartData', () => {
-  test('should_filter_warmup_days', () => {
-    // #given
-    const days: DayResult[] = [
-      makeDayResult({ dayIndex: 0, price: 100 }),
-      makeDayResult({ dayIndex: WARMUP_DAYS - 1, price: 110 }),
-      makeDayResult({ dayIndex: WARMUP_DAYS, price: 120 }),
-      makeDayResult({ dayIndex: WARMUP_DAYS + 1, price: 130 }),
-    ];
-
-    // #when
-    const result = buildChartData(days, 1000, 100, 2000);
-
-    // #then
-    expect(result.length).toBe(2);
-    expect(result[0].price).toBe(120);
-    expect(result[1].price).toBe(130);
-  });
-
   test('should_calculate_buy_hold_values', () => {
     // #given - $1000 capital, $50 purchase price = 20 shares
     const days: DayResult[] = [

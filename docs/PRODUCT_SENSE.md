@@ -30,7 +30,7 @@ They want to:
 ### Backtester Flow
 
 #### 1. Upload Data
-User uploads a CSV with columns: `high`, `low`, `close`, `date`. Example CSVs (BTC, ETH, SOL) are provided for download. PapaParse handles parsing; `csv-validator.ts` validates schema and minimum row count (160 days for warmup).
+User uploads a CSV with columns: `high`, `low`, `close`, `date`. Example CSVs (BTC, ETH, SOL) are provided for download. PapaParse handles parsing; `csv-validator.ts` validates schema and positive prices and minimum row count (161: 160 warmup days plus the first trading day).
 
 ### 2. Configure Strategy
 User sets:

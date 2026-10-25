@@ -9,10 +9,6 @@ import {
 } from "@nktkas/hyperliquid";
 import type { AllMidsWsEvent } from "@nktkas/hyperliquid";
 
-export interface HyperliquidPrices {
-  [symbol: string]: number;
-}
-
 export interface CoinPrice {
   symbol: string;
   price: number;
@@ -32,10 +28,8 @@ interface Meta {
 type MetaAndAssetCtxsResponse = [Meta, AssetContext[]];
 
 interface UseHyperliquidPricesReturn {
-  prices: HyperliquidPrices;
   coinPrices: CoinPrice[];
   isConnected: boolean;
-  error: Error | null;
 }
 
 const TOP_20_COINS = [
@@ -47,14 +41,12 @@ const TOP_20_COINS = [
 const POLL_INTERVAL = 5 * 60 * 1000;
 
 export function useHyperliquidPrices(): UseHyperliquidPricesReturn {
-  const [prices, setPrices] = useState<HyperliquidPrices>({});
+  const [prices, setPrices] = useState<Record<string, number>>({});
   const [prevDayPrices, setPrevDayPrices] = useState<Record<string, number>>({});
   const [isConnected, setIsConnected] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
 
   const transportRef = useRef<WebSocketTransport | null>(null);
   const subscriptionRef = useRef<{ unsubscribe: () => Promise<void> } | null>(null);
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchPrevDayPrices = useCallback(async () => {
     try {
@@ -102,21 +94,25 @@ export function useHyperliquidPrices(): UseHyperliquidPricesReturn {
         const subscription = await subscriptionClient.allMids((event: AllMidsWsEvent) => {
           if (!isMounted) return;
 
-          const newPrices: HyperliquidPrices = {};
+          const newPrices: Record<string, number> = {};
           for (const [symbol, price] of Object.entries(event.mids)) {
             newPrices[symbol] = parseFloat(price);
           }
           setPrices(newPrices);
           setIsConnected(true);
-          setError(null);
         });
 
+        // Unmounted while subscribing: cleanup already ran, so release this connection here.
+        if (!isMounted) {
+          await subscription.unsubscribe().catch(() => {});
+          await transport.close().catch(() => {});
+          return;
+        }
         subscriptionRef.current = subscription;
       } catch (err) {
         if (!isMounted) return;
 
         console.error("Failed to connect to Hyperliquid WebSocket:", err);
-        setError(err instanceof Error ? err : new Error("Failed to connect"));
         setIsConnected(false);
       }
     };
@@ -150,14 +146,11 @@ export function useHyperliquidPrices(): UseHyperliquidPricesReturn {
 
   useEffect(() => {
     const id = setTimeout(fetchPrevDayPrices, 0);
-    pollIntervalRef.current = setInterval(fetchPrevDayPrices, POLL_INTERVAL);
+    const pollInterval = setInterval(fetchPrevDayPrices, POLL_INTERVAL);
 
     return () => {
       clearTimeout(id);
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current);
-        pollIntervalRef.current = null;
-      }
+      clearInterval(pollInterval);
     };
   }, [fetchPrevDayPrices]);
 
@@ -177,5 +170,5 @@ export function useHyperliquidPrices(): UseHyperliquidPricesReturn {
       };
     });
 
-  return { prices, coinPrices, isConnected, error };
+  return { coinPrices, isConnected };
 }

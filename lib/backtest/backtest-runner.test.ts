@@ -5,7 +5,6 @@ import type { BacktestConfig } from './types';
 
 function generateCsvData(days: number, startPrice: number = 100): CsvRow[] {
   return Array.from({ length: days }, (_, i) => ({
-    time: i + 1,
     high: startPrice + i + 2,
     low: startPrice + i - 2,
     close: startPrice + i,
@@ -108,7 +107,6 @@ describe('runBacktest - position logic', () => {
 
   test('should_open_short_when_price_below_sma', () => {
     const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => ({
-      time: i + 1,
       high: 22,
       low: 18,
       close: 20,
@@ -131,7 +129,6 @@ describe('runBacktest - position logic', () => {
 
   test('should_hold_when_price_equals_sma', () => {
     const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => ({
-      time: i + 1,
       high: 102,
       low: 98,
       close: 100,
@@ -156,13 +153,12 @@ describe('runBacktest - position logic', () => {
   test('should_close_long_when_price_crosses_below_sma', () => {
     const csvData: CsvRow[] = [
       ...Array(161).fill(null).map((_, i) => ({
-        time: i + 1,
         high: 102,
         low: 98,
         close: 100,
                 date: `${i + 1}/1/2024`,
       })),
-      { time: 162, high: 52, low: 48, close: 50, RSI: 50, date: '162/1/2024' },
+      { high: 82, low: 78, close: 80, date: '162/1/2024' },
     ];
     const smaValues = Array(162).fill(90);
     const config: BacktestConfig = {
@@ -182,13 +178,12 @@ describe('runBacktest - position logic', () => {
   test('should_transition_long_to_short', () => {
     const csvData: CsvRow[] = [
       ...Array(161).fill(null).map((_, i) => ({
-        time: i + 1,
         high: 102,
         low: 98,
         close: 100,
                 date: `${i + 1}/1/2024`,
       })),
-      { time: 162, high: 82, low: 78, close: 80, RSI: 50, date: '162/1/2024' },
+      { high: 82, low: 78, close: 80, date: '162/1/2024' },
     ];
     const smaValues = Array(162).fill(90);
     const config: BacktestConfig = {
@@ -211,15 +206,14 @@ describe('runBacktest - position logic', () => {
   test('should_transition_short_to_long', () => {
     const csvData: CsvRow[] = [
       ...Array(161).fill(null).map((_, i) => ({
-        time: i + 1,
         high: 22,
         low: 18,
         close: 20,
                 date: `${i + 1}/1/2024`,
       })),
-      { time: 162, high: 52, low: 48, close: 50, RSI: 50, date: '162/1/2024' },
+      { high: 32, low: 28, close: 30, date: '162/1/2024' },
     ];
-    const smaValues = Array(162).fill(40);
+    const smaValues = Array(162).fill(25);
     const config: BacktestConfig = {
       smaPeriod: 20,
       longLeverage: 1.5,
@@ -260,13 +254,12 @@ describe('runBacktest - liquidation', () => {
   test('should_detect_liquidation_when_balance_drops_to_zero', () => {
     const csvData: CsvRow[] = [
       ...Array(161).fill(null).map((_, i) => ({
-        time: i + 1,
         high: 52,
         low: 48,
         close: 50,
                 date: `${i + 1}/1/2024`,
       })),
-      { time: 162, high: 102, low: 98, close: 100, RSI: 50, date: '162/1/2024' },
+      { high: 102, low: 98, close: 100, date: '162/1/2024' },
     ];
     const smaValues = Array(162).fill(60);
     const config: BacktestConfig = {
@@ -287,13 +280,12 @@ describe('runBacktest - liquidation', () => {
   test('should_stop_processing_after_liquidation', () => {
     const csvData: CsvRow[] = [
       ...Array(161).fill(null).map((_, i) => ({
-        time: i + 1,
         high: 52,
         low: 48,
         close: 50,
                 date: `${i + 1}/1/2024`,
       })),
-      { time: 162, high: 102, low: 98, close: 100, RSI: 50, date: '162/1/2024' },
+      { high: 102, low: 98, close: 100, date: '162/1/2024' },
     ];
     const smaValues = Array(162).fill(60);
     const config: BacktestConfig = {
@@ -318,13 +310,12 @@ describe('runBacktest - liquidation', () => {
   test('should_mark_liquidation_day_correctly', () => {
     const csvData: CsvRow[] = [
       ...Array(161).fill(null).map((_, i) => ({
-        time: i + 1,
         high: 52,
         low: 48,
         close: 50,
                 date: `${i + 1}/1/2024`,
       })),
-      { time: 162, high: 102, low: 98, close: 100, RSI: 50, date: '162/1/2024' },
+      { high: 102, low: 98, close: 100, date: '162/1/2024' },
     ];
     const smaValues = Array(162).fill(60);
     const config: BacktestConfig = {
@@ -382,13 +373,12 @@ describe('runBacktest - fee deduction', () => {
   test('should_deduct_double_fees_on_transition', () => {
     const csvData: CsvRow[] = [
       ...Array(161).fill(null).map((_, i) => ({
-        time: i + 1,
         high: 102,
         low: 98,
         close: 100,
                 date: `${i + 1}/1/2024`,
       })),
-      { time: 162, high: 82, low: 78, close: 80, RSI: 50, date: '162/1/2024' },
+      { high: 82, low: 78, close: 80, date: '162/1/2024' },
     ];
     const smaValues = Array(162).fill(90);
     const config: BacktestConfig = {
@@ -428,13 +418,12 @@ describe('runBacktest - fee deduction', () => {
   test('should_track_total_fees', () => {
     const csvData: CsvRow[] = [
       ...Array(161).fill(null).map((_, i) => ({
-        time: i + 1,
         high: 102,
         low: 98,
         close: 100,
                 date: `${i + 1}/1/2024`,
       })),
-      { time: 162, high: 22, low: 18, close: 20, RSI: 50, date: '162/1/2024' },
+      { high: 22, low: 18, close: 20, date: '162/1/2024' },
     ];
     const smaValues = Array(162).fill(90);
     const config: BacktestConfig = {
@@ -456,15 +445,14 @@ describe('runBacktest - profit calculation', () => {
   test('should_calculate_long_profit_correctly', () => {
     const csvData: CsvRow[] = [
       ...Array(160).fill(null).map((_, i) => ({
-        time: i + 1,
         high: 102,
         low: 98,
         close: 100,
                 date: `${i + 1}/1/2024`,
       })),
-      { time: 161, high: 102, low: 98, close: 100, RSI: 50, date: '161/1/2024' },
-      { time: 162, high: 112, low: 108, close: 110, RSI: 50, date: '162/1/2024' },
-      { time: 163, high: 112, low: 108, close: 110, RSI: 50, date: '163/1/2024' },
+      { high: 102, low: 98, close: 100, date: '161/1/2024' },
+      { high: 112, low: 108, close: 110, date: '162/1/2024' },
+      { high: 112, low: 108, close: 110, date: '163/1/2024' },
     ];
     const smaValues = Array(163).fill(90);
     smaValues[161] = 90;
@@ -488,15 +476,14 @@ describe('runBacktest - profit calculation', () => {
   test('should_calculate_short_profit_correctly', () => {
     const csvData: CsvRow[] = [
       ...Array(160).fill(null).map((_, i) => ({
-        time: i + 1,
         high: 102,
         low: 98,
         close: 100,
                 date: `${i + 1}/1/2024`,
       })),
-      { time: 161, high: 102, low: 98, close: 100, RSI: 50, date: '161/1/2024' },
-      { time: 162, high: 92, low: 88, close: 90, RSI: 50, date: '162/1/2024' },
-      { time: 163, high: 92, low: 88, close: 90, RSI: 50, date: '163/1/2024' },
+      { high: 102, low: 98, close: 100, date: '161/1/2024' },
+      { high: 92, low: 88, close: 90, date: '162/1/2024' },
+      { high: 92, low: 88, close: 90, date: '163/1/2024' },
     ];
     const smaValues = Array(163).fill(110);
     smaValues[161] = 110;
@@ -520,14 +507,13 @@ describe('runBacktest - profit calculation', () => {
   test('should_calculate_loss_for_long_position', () => {
     const csvData: CsvRow[] = [
       ...Array(160).fill(null).map((_, i) => ({
-        time: i + 1,
         high: 102,
         low: 98,
         close: 100,
                 date: `${i + 1}/1/2024`,
       })),
-      { time: 161, high: 102, low: 98, close: 100, RSI: 50, date: '161/1/2024' },
-      { time: 162, high: 92, low: 88, close: 90, RSI: 50, date: '162/1/2024' },
+      { high: 102, low: 98, close: 100, date: '161/1/2024' },
+      { high: 92, low: 88, close: 90, date: '162/1/2024' },
     ];
     const smaValues = Array(162).fill(90);
     smaValues[161] = 95;
@@ -550,15 +536,14 @@ describe('runBacktest - profit calculation', () => {
   test('should_add_profit_to_balance', () => {
     const csvData: CsvRow[] = [
       ...Array(160).fill(null).map((_, i) => ({
-        time: i + 1,
         high: 102,
         low: 98,
         close: 100,
                 date: `${i + 1}/1/2024`,
       })),
-      { time: 161, high: 102, low: 98, close: 100, RSI: 50, date: '161/1/2024' },
-      { time: 162, high: 122, low: 118, close: 120, RSI: 50, date: '162/1/2024' },
-      { time: 163, high: 122, low: 118, close: 120, RSI: 50, date: '163/1/2024' },
+      { high: 102, low: 98, close: 100, date: '161/1/2024' },
+      { high: 122, low: 118, close: 120, date: '162/1/2024' },
+      { high: 122, low: 118, close: 120, date: '163/1/2024' },
     ];
     const smaValues = Array(163).fill(90);
     smaValues[161] = 90;
@@ -669,7 +654,6 @@ describe('runBacktest - edge cases', () => {
 
   test('should_handle_frequent_transitions', () => {
     const csvData: CsvRow[] = Array.from({ length: 170 }, (_, i) => ({
-      time: i + 1,
       high: 102,
       low: 98,
       close: i % 2 === 0 ? 100 : 50,
@@ -711,7 +695,6 @@ describe('runBacktest - edge cases', () => {
 
   test('should_handle_all_prices_below_sma', () => {
     const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => ({
-      time: i + 1,
       high: 52,
       low: 48,
       close: 50,
@@ -735,7 +718,6 @@ describe('runBacktest - edge cases', () => {
 describe('runBacktest - atr trailing stop', () => {
   function generateCsvDataWithVolatility(days: number, startPrice: number = 100): CsvRow[] {
     return Array.from({ length: days }, (_, i) => ({
-      time: i + 1,
       high: startPrice + i * 0.5 + 5,
       low: startPrice + i * 0.5 - 5,
       close: startPrice + i * 0.5,
@@ -771,7 +753,6 @@ describe('runBacktest - atr trailing stop', () => {
     const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
       if (i < 165) {
         return {
-          time: i + 1,
           high: 105,
           low: 95,
           close: 100,
@@ -779,7 +760,6 @@ describe('runBacktest - atr trailing stop', () => {
         };
       }
       return {
-        time: i + 1,
         high: 85,
         low: 75,
         close: 80,
@@ -812,7 +792,6 @@ describe('runBacktest - atr trailing stop', () => {
     const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
       if (i < 165) {
         return {
-          time: i + 1,
           high: 95,
           low: 85,
           close: 90,
@@ -820,7 +799,6 @@ describe('runBacktest - atr trailing stop', () => {
         };
       }
       return {
-        time: i + 1,
         high: 115,
         low: 105,
         close: 110,
@@ -852,7 +830,6 @@ describe('runBacktest - atr trailing stop', () => {
     const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
       if (i < 165) {
         return {
-          time: i + 1,
           high: 105,
           low: 95,
           close: 100,
@@ -860,7 +837,6 @@ describe('runBacktest - atr trailing stop', () => {
         };
       }
       return {
-        time: i + 1,
         high: 85,
         low: 75,
         close: 80,
@@ -900,7 +876,6 @@ describe('runBacktest - atr trailing stop', () => {
     const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
       if (i < 165) {
         return {
-          time: i + 1,
           high: 105,
           low: 95,
           close: 100,
@@ -908,7 +883,6 @@ describe('runBacktest - atr trailing stop', () => {
         };
       }
       return {
-        time: i + 1,
         high: 85,
         low: 75,
         close: 80,
@@ -940,7 +914,6 @@ describe('runBacktest - atr trailing stop', () => {
     const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
       if (i < 165) {
         return {
-          time: i + 1,
           high: 105,
           low: 95,
           close: 100,
@@ -948,7 +921,6 @@ describe('runBacktest - atr trailing stop', () => {
         };
       }
       return {
-        time: i + 1,
         high: 85,
         low: 75,
         close: 80,
@@ -978,7 +950,6 @@ describe('runBacktest - atr trailing stop', () => {
 
   test('should_update_extreme_price_when_price_moves_favorably', () => {
     const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => ({
-      time: i + 1,
       high: 100 + i * 0.5,
       low: 90 + i * 0.5,
       close: 95 + i * 0.5,
@@ -1018,7 +989,6 @@ describe('runBacktest - atr trailing stop', () => {
     const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
       if (i < 165) {
         return {
-          time: i + 1,
           high: 105,
           low: 95,
           close: 100,
@@ -1027,7 +997,6 @@ describe('runBacktest - atr trailing stop', () => {
       }
       if (i < 170) {
         return {
-          time: i + 1,
           high: 85,
           low: 75,
           close: 80,
@@ -1035,7 +1004,6 @@ describe('runBacktest - atr trailing stop', () => {
         };
       }
       return {
-        time: i + 1,
         high: 75,
         low: 65,
         close: 70,
@@ -1072,7 +1040,6 @@ describe('runBacktest - atr trailing stop', () => {
     const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
       if (i < 165) {
         return {
-          time: i + 1,
           high: 105,
           low: 95,
           close: 100,
@@ -1080,7 +1047,6 @@ describe('runBacktest - atr trailing stop', () => {
         };
       }
       return {
-        time: i + 1,
         high: 85,
         low: 75,
         close: 80,
@@ -1109,7 +1075,6 @@ describe('runBacktest - atr trailing stop', () => {
 
   test('should_not_trigger_when_atr_is_nan', () => {
     const csvData: CsvRow[] = Array.from({ length: 165 }, (_, i) => ({
-      time: i + 1,
       high: 105,
       low: 95,
       close: 100,
@@ -1140,7 +1105,6 @@ describe('runBacktest - atr trailing stop', () => {
     const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
       if (i < 165) {
         return {
-          time: i + 1,
           high: 105,
           low: 95,
           close: 100,
@@ -1148,7 +1112,6 @@ describe('runBacktest - atr trailing stop', () => {
         };
       }
       return {
-        time: i + 1,
         high: 85,
         low: 75,
         close: 80,
@@ -1187,7 +1150,6 @@ describe('runBacktest - atr trailing stop', () => {
     const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
       if (i < 165) {
         return {
-          time: i + 1,
           high: 105,
           low: 95,
           close: 100,
@@ -1195,7 +1157,6 @@ describe('runBacktest - atr trailing stop', () => {
         };
       }
       return {
-        time: i + 1,
         high: 85,
         low: 75,
         close: 80,
@@ -1234,7 +1195,6 @@ describe('runBacktest - atr trailing stop', () => {
     const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
       if (i < 165) {
         return {
-          time: i + 1,
           high: 105,
           low: 95,
           close: 100,
@@ -1242,7 +1202,6 @@ describe('runBacktest - atr trailing stop', () => {
         };
       }
       return {
-        time: i + 1,
         high: 85,
         low: 75,
         close: 80,
@@ -1294,7 +1253,6 @@ describe('runBacktest - atr trailing stop', () => {
     const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
       if (i < 165) {
         return {
-          time: i + 1,
           high: 105,
           low: 95,
           close: 100,
@@ -1302,7 +1260,6 @@ describe('runBacktest - atr trailing stop', () => {
         };
       }
       return {
-        time: i + 1,
         high: 85,
         low: 75,
         close: 80,
@@ -1333,7 +1290,6 @@ describe('runBacktest - atr trailing stop', () => {
     const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
       if (i < 165) {
         return {
-          time: i + 1,
           high: 105,
           low: 95,
           close: 100,
@@ -1341,7 +1297,6 @@ describe('runBacktest - atr trailing stop', () => {
         };
       }
       return {
-        time: i + 1,
         high: 85,
         low: 75,
         close: 80,
@@ -1376,7 +1331,6 @@ describe('runBacktest - atr trailing stop', () => {
     const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
       if (i < 165) {
         return {
-          time: i + 1,
           high: 105,
           low: 95,
           close: 100,
@@ -1384,7 +1338,6 @@ describe('runBacktest - atr trailing stop', () => {
         };
       }
       return {
-        time: i + 1,
         high: 85,
         low: 75,
         close: 80,
@@ -1416,7 +1369,6 @@ describe('runBacktest - atr trailing stop', () => {
 
   test('should_use_different_multipliers', () => {
     const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => ({
-      time: i + 1,
       high: 105,
       low: 95,
       close: 100,
@@ -1450,7 +1402,6 @@ describe('runBacktest - atr trailing stop', () => {
 
   test('should_use_different_atr_periods', () => {
     const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => ({
-      time: i + 1,
       high: 105,
       low: 95,
       close: 100,
@@ -1487,7 +1438,6 @@ describe('runBacktest - atr trailing stop', () => {
     const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
       if (i < 165) {
         return {
-          time: i + 1,
           high: 105,
           low: 95,
           close: 100,
@@ -1497,7 +1447,6 @@ describe('runBacktest - atr trailing stop', () => {
       if (i < 175) {
         // Price drops to trigger ATR stop
         return {
-          time: i + 1,
           high: 85,
           low: 75,
           close: 80,
@@ -1506,7 +1455,6 @@ describe('runBacktest - atr trailing stop', () => {
       }
       // Price drops further to trigger transition to SHORT
       return {
-        time: i + 1,
         high: 65,
         low: 55,
         close: 60,
@@ -1555,12 +1503,12 @@ describe('runBacktest - atr trailing stop', () => {
     // #given - price drops trigger ATR partial close, then transitions to SHORT
     const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
       if (i < 165) {
-        return { time: i + 1, high: 102, low: 98, close: 100, date: `${i + 1}/1/2024` };
+        return { high: 102, low: 98, close: 100, date: `${i + 1}/1/2024` };
       }
       if (i < 175) {
-        return { time: i + 1, high: 92, low: 88, close: 90, date: `${i + 1}/1/2024` };
+        return { high: 92, low: 88, close: 90, date: `${i + 1}/1/2024` };
       }
-      return { time: i + 1, high: 82, low: 78, close: 80, date: `${i + 1}/1/2024` };
+      return { high: 82, low: 78, close: 80, date: `${i + 1}/1/2024` };
     });
     const smaValues = Array(200).fill(90);
     smaValues.fill(85, 175);
@@ -1594,7 +1542,6 @@ describe('runBacktest - atr trailing stop', () => {
     const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
       if (i < 165) {
         return {
-          time: i + 1,
           high: 102,
           low: 98,
           close: 100, // Entry price
@@ -1603,7 +1550,6 @@ describe('runBacktest - atr trailing stop', () => {
       }
       if (i < 175) {
         return {
-          time: i + 1,
           high: 92,
           low: 88,
           close: 90, // -10% from entry, triggers ATR
@@ -1611,7 +1557,6 @@ describe('runBacktest - atr trailing stop', () => {
         };
       }
       return {
-        time: i + 1,
         high: 82,
         low: 78,
         close: 80, // -20% from entry
@@ -1654,5 +1599,64 @@ describe('runBacktest - atr trailing stop', () => {
       // This verifies balance was properly reduced
       expect(partialCloseDay.balance).toBeLessThan(openDay.balance);
     }
+  });
+});
+
+describe('runBacktest - account model', () => {
+  const warmup = (close: number): CsvRow[] =>
+    Array.from({ length: 160 }, (_, i) => ({ high: close, low: close, close, date: `${i + 1}/1/2024` }));
+  const bar = (close: number, high = close, low = close): CsvRow => ({ high, low, close, date: '1/1/2025' });
+  const baseConfig: BacktestConfig = { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0 };
+
+  test('should_liquidate_on_intraday_move_even_when_no_signal_changes', () => {
+    // 3x long opened at 100; a -40% wick wipes the margin even though the close recovers.
+    const csvData = [...warmup(100), bar(100), bar(100, 100, 60), bar(100)];
+    const result = runBacktest(csvData, Array(csvData.length).fill(50), { ...baseConfig, longLeverage: 3 });
+
+    expect(result.isLiquidated).toBe(true);
+    expect(result.liquidationDay).toBe(161);
+    expect(result.finalBalance).toBe(0);
+  });
+
+  test('should_not_liquidate_after_full_atr_close_when_signal_flips', () => {
+    const csvData = [...warmup(100), bar(100), bar(150), bar(120), bar(40)];
+    const atrValues = Array(csvData.length).fill(5);
+    const result = runBacktest(csvData, Array(csvData.length).fill(90), {
+      ...baseConfig,
+      atr: { period: 10, multiplier: 2, closePercent: 100 },
+    }, atrValues);
+
+    expect(result.atrTriggerCount).toBe(1);
+    expect(result.isLiquidated).toBe(false);
+    // Everything was sidelined at 120 (+20%), then re-deployed short at 40 with no further move.
+    expect(result.finalBalance).toBeCloseTo(1200);
+  });
+
+  test('should_include_full_leveraged_pnl_of_open_position_in_final_balance', () => {
+    const csvData = [...warmup(100), bar(100), bar(110)];
+    const result = runBacktest(csvData, Array(csvData.length).fill(50), { ...baseConfig, longLeverage: 3 });
+
+    expect(result.finalBalance).toBeCloseTo(1300);
+    expect(result.totalReturn).toBeCloseTo(30);
+  });
+
+  test('should_use_linear_pnl_for_shorts', () => {
+    const csvData = [...warmup(100), bar(100), bar(50)];
+    const result = runBacktest(csvData, Array(csvData.length).fill(200), baseConfig);
+
+    expect(result.finalBalance).toBeCloseTo(1500);
+  });
+
+  test('should_charge_opening_fee_on_sidelined_capital_too', () => {
+    const csvData = [...warmup(100), bar(100), bar(150), bar(120), bar(40)];
+    const atrValues = Array(csvData.length).fill(5);
+    const config: BacktestConfig = { ...baseConfig, feeRate: 1, atr: { period: 10, multiplier: 2, closePercent: 100 } };
+    const result = runBacktest(csvData, Array(csvData.length).fill(90), config, atrValues);
+
+    const transition = result.days.find(d => d.action === 'TRANSITION_LONG_TO_SHORT');
+    const sidelined = result.days.find(d => d.action === 'ATR_PARTIAL_CLOSE')!.sidelineValue;
+    // Closing the emptied long costs nothing; the new short is sized on (and charged on) the sidelined cash.
+    expect(transition?.fees).toBeCloseTo(sidelined * 0.01);
+    expect(transition?.position?.entryValue).toBeCloseTo(sidelined * 0.99);
   });
 });

@@ -232,7 +232,7 @@ describe('calculateShortProfit', () => {
 
     const result = calculateShortProfit(entryPrice, exitPrice, positionValue);
 
-    expect(result).toBeCloseTo(111.11, 2); // (100/90 - 1) * 1000
+    expect(result).toBeCloseTo(100, 10); // (1 - 90/100) * 1000
   });
 
   test('should_calculate_loss_when_price_increases', () => {
@@ -242,7 +242,7 @@ describe('calculateShortProfit', () => {
 
     const result = calculateShortProfit(entryPrice, exitPrice, positionValue);
 
-    expect(result).toBeCloseTo(-90.91, 2); // (100/110 - 1) * 1000
+    expect(result).toBeCloseTo(-100, 10); // (1 - 110/100) * 1000
   });
 
   test('should_return_zero_when_price_unchanged', () => {
@@ -262,7 +262,7 @@ describe('calculateShortProfit', () => {
 
     const result = calculateShortProfit(entryPrice, exitPrice, positionValue);
 
-    expect(result).toBe(1000); // (100/50 - 1) * 1000 = 1 * 1000 = 1000
+    expect(result).toBe(500); // (1 - 50/100) * 1000
   });
 
   test('should_handle_small_position_value', () => {
@@ -272,7 +272,7 @@ describe('calculateShortProfit', () => {
 
     const result = calculateShortProfit(entryPrice, exitPrice, positionValue);
 
-    expect(result).toBeCloseTo(1.11, 2);
+    expect(result).toBeCloseTo(1, 10);
   });
 
   test('should_handle_fractional_prices', () => {
@@ -282,7 +282,7 @@ describe('calculateShortProfit', () => {
 
     const result = calculateShortProfit(entryPrice, exitPrice, positionValue);
 
-    expect(result).toBeCloseTo(49.75, 2);
+    expect(result).toBeCloseTo(47.39, 2); // (1 - 100.5/105.5) * 1000
   });
 
   test('should_handle_leveraged_position_value', () => {
@@ -292,7 +292,7 @@ describe('calculateShortProfit', () => {
 
     const result = calculateShortProfit(entryPrice, exitPrice, positionValue);
 
-    expect(result).toBeCloseTo(333.33, 2);
+    expect(result).toBeCloseTo(300, 10);
   });
 });
 
@@ -322,7 +322,7 @@ describe('calculatePositionProfit', () => {
 
     const result = calculatePositionProfit(position, exitPrice);
 
-    expect(result).toBeCloseTo(111.11, 2);
+    expect(result).toBeCloseTo(100, 10);
   });
 
   test('should_return_zero_for_none_position', () => {
@@ -364,7 +364,7 @@ describe('calculatePositionProfit', () => {
 
     const result = calculatePositionProfit(position, exitPrice);
 
-    expect(result).toBeCloseTo(-95.24, 2);
+    expect(result).toBeCloseTo(-100, 10);
   });
 });
 

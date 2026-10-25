@@ -11,6 +11,16 @@ export function formatPercent(value: number): string {
   return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
 }
 
+export function formatPercentage(value: number, decimals = 2): string {
+  return `${value.toFixed(decimals)}%`;
+}
+
+/** Parses user input, treating anything non-numeric as 0. */
+export function safeParseFloat(value: string | number): number {
+  const parsed = typeof value === 'string' ? parseFloat(value) : value;
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 export function formatTime(ms: number): string {
   const seconds = Math.floor(ms / 1000);
   const minutes = Math.floor(seconds / 60);
@@ -62,19 +72,6 @@ export function currencyTickFormatter(value: number): string {
   if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
   if (value >= 1_000) return `$${(value / 1_000).toFixed(0)}K`;
   return `$${value.toFixed(0)}`;
-}
-
-export function calculateCollateralValue(day: {
-  portfolioValue: number;
-  balance: number;
-  sidelineValue?: number;
-  position: { leverage: number } | null;
-}): number {
-  const leverage = day.position?.leverage ?? 1;
-  if (leverage === 1) return day.portfolioValue;
-  const sidelineValue = day.sidelineValue ?? 0;
-  const unrealizedPnl = day.portfolioValue - day.balance - sidelineValue;
-  return day.balance + unrealizedPnl / leverage + sidelineValue;
 }
 
 export function calculateBuyHoldValue(

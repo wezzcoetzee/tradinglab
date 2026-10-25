@@ -4,21 +4,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { CsvRow, StrategyConfig } from '@/lib/types';
 import type { OptimizationProgress, WorkerInput, WorkerMessage } from '@/lib/backtest/optimization-types';
-import type { BacktestResult, BacktestResultSummary, BuyAndHoldBaseline } from '@/lib/backtest/types';
+import type { OptimizationOutcome } from '@/lib/backtest/optimizer';
 
-import { runBacktest } from '@/lib/backtest/backtest-runner';
-
-import { calculateAllATRs } from '@/lib/backtest/atr-calculator';
-import { generateBacktestConfigs } from '@/lib/backtest/leverage-config';
-import { calculateAllSMAs, extractClosePrices } from '@/lib/backtest/sma-calculator';
-
-interface OptimizationState {
+interface OptimizationState extends Omit<OptimizationOutcome, 'results'> {
   progress: OptimizationProgress;
-  results: BacktestResultSummary[] | null;
-  baseline: BuyAndHoldBaseline | null;
-  bestResultWithDays: BacktestResult | null;
-  isTruncated: boolean;
-  totalConfigsTested: number;
+  results: OptimizationOutcome['results'] | null;
 }
 
 const INITIAL_PROGRESS: OptimizationProgress = {
@@ -29,6 +19,15 @@ const INITIAL_PROGRESS: OptimizationProgress = {
   elapsedMs: 0,
   estimatedRemainingMs: null,
   configsPerSecond: 0,
+};
+
+const INITIAL_STATE: OptimizationState = {
+  progress: INITIAL_PROGRESS,
+  results: null,
+  baseline: null,
+  bestResultWithDays: null,
+  isTruncated: false,
+  stats: { total: 0, profitable: 0, liquidated: 0 },
 };
 
 function calculateConfigsPerSecond(current: number, elapsedMs: number): number {
@@ -45,21 +44,8 @@ function calculateEstimatedRemainingMs(
 }
 
 export function useOptimization() {
-  const [state, setState] = useState<OptimizationState>({
-    progress: INITIAL_PROGRESS,
-    results: null,
-    baseline: null,
-    bestResultWithDays: null,
-    isTruncated: false,
-    totalConfigsTested: 0,
-  });
-
+  const [state, setState] = useState<OptimizationState>(INITIAL_STATE);
   const workerRef = useRef<Worker | null>(null);
-  const dataRef = useRef<{
-    csvData: CsvRow[];
-    allSMAs: Map<number, number[]>;
-    allATRs: Map<10 | 14 | 20, number[]> | null;
-  } | null>(null);
 
   const terminateWorker = useCallback(() => {
     if (workerRef.current) {
@@ -74,50 +60,18 @@ export function useOptimization() {
     };
   }, [terminateWorker]);
 
+  const setErrorStatus = useCallback((errorMessage: string) => {
+    setState(prev => ({
+      ...prev,
+      progress: { ...prev.progress, status: 'error', errorMessage },
+    }));
+    terminateWorker();
+  }, [terminateWorker]);
+
   const startOptimization = useCallback(
     (csvData: CsvRow[], strategyConfig: StrategyConfig) => {
       terminateWorker();
-
-      setState({
-        progress: { ...INITIAL_PROGRESS, status: 'preparing' },
-        results: null,
-        baseline: null,
-        bestResultWithDays: null,
-        isTruncated: false,
-        totalConfigsTested: 0,
-      });
-
-      const closePrices = extractClosePrices(csvData);
-      const allSMAs = calculateAllSMAs(closePrices, strategyConfig.smaMin, strategyConfig.smaMax);
-      const allATRs = strategyConfig.atrEnabled ? calculateAllATRs(csvData) : null;
-
-      dataRef.current = { csvData, allSMAs, allATRs };
-
-      const configs = generateBacktestConfigs(
-        strategyConfig.startingCapital,
-        strategyConfig.tradingFee,
-        strategyConfig.atrEnabled,
-        strategyConfig.smaMin,
-        strategyConfig.smaMax
-      );
-
-      const workerInput: WorkerInput = {
-        csvData,
-        allSMAs: Array.from(allSMAs.entries()),
-        allATRs: allATRs ? Array.from(allATRs.entries()) : null,
-        configs,
-        startingCapital: strategyConfig.startingCapital,
-        atrEnabled: strategyConfig.atrEnabled,
-      };
-
-      setState(prev => ({
-        ...prev,
-        progress: {
-          ...prev.progress,
-          status: 'running',
-          total: configs.length,
-        },
-      }));
+      setState({ ...INITIAL_STATE, progress: { ...INITIAL_PROGRESS, status: 'running' } });
 
       const worker = new Worker(
         new URL('@/lib/backtest/optimization.worker.ts', import.meta.url)
@@ -128,12 +82,6 @@ export function useOptimization() {
 
         if (message.type === 'progress') {
           const configsPerSecond = calculateConfigsPerSecond(message.current, message.elapsedMs);
-          const estimatedRemainingMs = calculateEstimatedRemainingMs(
-            message.total,
-            message.current,
-            configsPerSecond
-          );
-          const percentComplete = (message.current / message.total) * 100;
 
           setState(prev => ({
             ...prev,
@@ -141,82 +89,46 @@ export function useOptimization() {
               status: 'running',
               current: message.current,
               total: message.total,
-              percentComplete,
+              percentComplete: (message.current / message.total) * 100,
               elapsedMs: message.elapsedMs,
-              estimatedRemainingMs,
+              estimatedRemainingMs: calculateEstimatedRemainingMs(message.total, message.current, configsPerSecond),
               configsPerSecond,
             },
           }));
         } else if (message.type === 'complete') {
-          const configsPerSecond = calculateConfigsPerSecond(
-            message.totalConfigs,
-            message.totalTimeMs
-          );
-
-          const sortedResults = [...message.results].sort((a, b) => {
-            if (a.isLiquidated !== b.isLiquidated) return a.isLiquidated ? 1 : -1;
-            return b.totalReturn - a.totalReturn;
-          });
-          const bestSummary = sortedResults.find(r => !r.isLiquidated);
-
-          let bestResultWithDays: BacktestResult | null = null;
-          if (bestSummary && dataRef.current) {
-            const { csvData, allSMAs, allATRs } = dataRef.current;
-            const smaValues = allSMAs.get(bestSummary.config.smaPeriod);
-            const atrValues = bestSummary.config.atr && allATRs
-              ? allATRs.get(bestSummary.config.atr.period) ?? null
-              : null;
-            if (smaValues) {
-              bestResultWithDays = runBacktest(csvData, smaValues, bestSummary.config, atrValues);
-            }
-          }
+          const { stats, totalTimeMs } = message;
 
           setState({
-            progress: {
-              status: 'complete',
-              current: message.totalConfigs,
-              total: message.totalConfigs,
-              percentComplete: 100,
-              elapsedMs: message.totalTimeMs,
-              estimatedRemainingMs: 0,
-              configsPerSecond,
-            },
             results: message.results,
             baseline: message.baseline,
-            bestResultWithDays,
+            bestResultWithDays: message.bestResultWithDays,
             isTruncated: message.isTruncated,
-            totalConfigsTested: message.totalConfigs,
+            stats,
+            progress: {
+              status: 'complete',
+              current: stats.total,
+              total: stats.total,
+              percentComplete: 100,
+              elapsedMs: totalTimeMs,
+              estimatedRemainingMs: 0,
+              configsPerSecond: calculateConfigsPerSecond(stats.total, totalTimeMs),
+            },
           });
           terminateWorker();
         } else if (message.type === 'error') {
-          setState(prev => ({
-            ...prev,
-            progress: {
-              ...prev.progress,
-              status: 'error',
-              errorMessage: message.error,
-            },
-          }));
-          terminateWorker();
+          setErrorStatus(message.error);
         }
       };
 
       worker.onerror = (error) => {
-        setState(prev => ({
-          ...prev,
-          progress: {
-            ...prev.progress,
-            status: 'error',
-            errorMessage: error.message || 'Worker error occurred',
-          },
-        }));
-        terminateWorker();
+        setErrorStatus(error.message || 'Worker error occurred');
       };
 
       workerRef.current = worker;
+      const workerInput: WorkerInput = { csvData, strategyConfig };
       worker.postMessage(workerInput);
     },
-    [terminateWorker]
+    [terminateWorker, setErrorStatus]
   );
 
   const cancelOptimization = useCallback(() => {
@@ -231,12 +143,7 @@ export function useOptimization() {
   }, [terminateWorker]);
 
   return {
-    progress: state.progress,
-    results: state.results,
-    baseline: state.baseline,
-    bestResultWithDays: state.bestResultWithDays,
-    isTruncated: state.isTruncated,
-    totalConfigsTested: state.totalConfigsTested,
+    ...state,
     startOptimization,
     cancelOptimization,
   };

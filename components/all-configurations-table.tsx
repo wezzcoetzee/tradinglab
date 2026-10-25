@@ -15,6 +15,7 @@ import {
   formatAtrConfig,
   calculateVsHold,
 } from '@/lib/format';
+import { compareResults } from '@/lib/backtest/ranking';
 import type { BacktestResultSummary, BuyAndHoldBaseline } from '@/lib/backtest/types';
 
 interface AllConfigurationsTableProps {
@@ -23,21 +24,14 @@ interface AllConfigurationsTableProps {
 }
 
 function VsHoldCell({ result, baseline }: { result: BacktestResultSummary; baseline: BuyAndHoldBaseline }) {
-  const vsHold = calculateVsHold(result.finalCollateral, baseline.finalValue);
+  const vsHold = calculateVsHold(result.finalBalance, baseline.finalValue);
   return <span className={getVsHoldColorClass(vsHold)}>{formatPercent(vsHold)}</span>;
 }
 
 export function AllConfigurationsTable({ results, baseline }: AllConfigurationsTableProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const sortedResults = useMemo(() => {
-    return [...results].sort((a, b) => {
-      if (a.isLiquidated !== b.isLiquidated) {
-        return a.isLiquidated ? 1 : -1;
-      }
-      return b.totalReturn - a.totalReturn;
-    });
-  }, [results]);
+  const sortedResults = useMemo(() => [...results].sort(compareResults), [results]);
 
   const pagination = usePagination(sortedResults);
 
@@ -78,7 +72,7 @@ export function AllConfigurationsTable({ results, baseline }: AllConfigurationsT
                 <TableHead>Long Lev</TableHead>
                 <TableHead>Short Lev</TableHead>
                 <TableHead>ATR Config</TableHead>
-                <TableHead className="text-right">Collateral</TableHead>
+                <TableHead className="text-right">Final Balance</TableHead>
                 <TableHead className="text-right">Return</TableHead>
                 <TableHead className="text-right">vs Hold</TableHead>
                 <TableHead className="text-right">Trades</TableHead>
@@ -98,7 +92,7 @@ export function AllConfigurationsTable({ results, baseline }: AllConfigurationsT
                   <TableCell>{result.config.shortLeverage}x</TableCell>
                   <TableCell>{formatAtrConfig(result.config.atr)}</TableCell>
                   <TableCell className="text-right font-mono">
-                    {formatCurrency(result.finalCollateral)}
+                    {formatCurrency(result.finalBalance)}
                   </TableCell>
                   <TableCell className={`text-right font-mono ${getReturnColorClass(result.totalReturn)}`}>
                     {formatPercent(result.totalReturn)}

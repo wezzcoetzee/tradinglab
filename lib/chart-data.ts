@@ -1,6 +1,6 @@
-import { WARMUP_DAYS } from '@/lib/backtest/constants';
 import type { DayResult } from '@/lib/backtest/types';
 import { downsampleLTTB } from '@/lib/downsample';
+import { calculateBuyHoldValue } from '@/lib/format';
 
 export interface ChartDataPoint {
   date: string;
@@ -17,15 +17,12 @@ export function buildChartData(
   purchasePrice: number,
   maxPoints: number
 ): ChartDataPoint[] {
-  const tradingDays = days.filter((day) => day.dayIndex >= WARMUP_DAYS);
-  const sharesAcquired = startingCapital / purchasePrice;
-
-  const allPoints: ChartDataPoint[] = tradingDays.map((day) => ({
+  const allPoints: ChartDataPoint[] = days.map((day) => ({
     date: day.date,
     price: day.price,
     sma: day.sma,
     portfolioValue: day.portfolioValue,
-    buyHoldValue: sharesAcquired * day.price,
+    buyHoldValue: calculateBuyHoldValue(startingCapital, purchasePrice, day.price),
     isAtrStop: day.action === 'ATR_PARTIAL_CLOSE',
   }));
 

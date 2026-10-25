@@ -22,7 +22,7 @@ interface SmaComparisonTableProps {
   baseline: BuyAndHoldBaseline | null;
 }
 
-type SmaSortField = 'smaPeriod' | 'finalCollateral' | 'percentGain' | 'vsHold' | 'status';
+type SmaSortField = 'smaPeriod' | 'finalBalance' | 'percentGain' | 'vsHold' | 'status';
 
 interface SmaSortConfig {
   field: SmaSortField;
@@ -48,7 +48,7 @@ function shouldReplace(existing: BacktestResultSummary, current: BacktestResultS
     return true;
   }
   if (existing.isLiquidated === current.isLiquidated) {
-    return current.finalCollateral > existing.finalCollateral;
+    return current.finalBalance > existing.finalBalance;
   }
   return false;
 }
@@ -97,7 +97,7 @@ function SmaStatusCell({ result }: { result: BacktestResultSummary }) {
 
 export function SmaComparisonTable({ results, baseline }: SmaComparisonTableProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [sortConfig, setSortConfig] = useState<SmaSortConfig>({ field: 'finalCollateral', direction: 'desc' });
+  const [sortConfig, setSortConfig] = useState<SmaSortConfig>({ field: 'finalBalance', direction: 'desc' });
 
   const bestBySma = useMemo(() => {
     const map = new Map<number, BacktestResultSummary>();
@@ -114,7 +114,7 @@ export function SmaComparisonTable({ results, baseline }: SmaComparisonTableProp
     return Array.from(map.entries()).map(([smaPeriod, result]) => ({
       smaPeriod,
       result,
-      vsHold: baseline ? calculateVsHold(result.finalCollateral, baseline.finalValue) : 0,
+      vsHold: baseline ? calculateVsHold(result.finalBalance, baseline.finalValue) : 0,
     }));
   }, [results, baseline]);
 
@@ -136,7 +136,7 @@ export function SmaComparisonTable({ results, baseline }: SmaComparisonTableProp
 
       const fieldMap: Record<SmaSortField, number> = {
         smaPeriod: a.smaPeriod - b.smaPeriod,
-        finalCollateral: a.result.finalCollateral - b.result.finalCollateral,
+        finalBalance: a.result.finalBalance - b.result.finalBalance,
         percentGain: a.result.totalReturn - b.result.totalReturn,
         vsHold: a.vsHold - b.vsHold,
         status: 0,
@@ -195,7 +195,7 @@ export function SmaComparisonTable({ results, baseline }: SmaComparisonTableProp
             <TableHeader>
               <TableRow>
                 <SortableHeader field="smaPeriod" label="SMA Period" sortConfig={sortConfig} onSort={handleSort} />
-                <SortableHeader field="finalCollateral" label="Collateral" sortConfig={sortConfig} onSort={handleSort} className="text-right" />
+                <SortableHeader field="finalBalance" label="Final Balance" sortConfig={sortConfig} onSort={handleSort} className="text-right" />
                 <SortableHeader field="percentGain" label="% Gain" sortConfig={sortConfig} onSort={handleSort} className="text-right" />
                 <SortableHeader field="vsHold" label="% vs Hold" sortConfig={sortConfig} onSort={handleSort} className="text-right" />
                 <SortableHeader field="status" label="Status" sortConfig={sortConfig} onSort={handleSort} />
@@ -206,7 +206,7 @@ export function SmaComparisonTable({ results, baseline }: SmaComparisonTableProp
                 <TableRow key={smaPeriod} className={getSmaRowClassName(result, vsHold)}>
                   <TableCell>{smaPeriod} days</TableCell>
                   <TableCell className="text-right font-mono">
-                    {formatCurrency(result.finalCollateral)}
+                    {formatCurrency(result.finalBalance)}
                   </TableCell>
                   <TableCell className={`text-right font-mono ${getReturnColorClass(result.totalReturn)}`}>
                     {formatPercent(result.totalReturn)}

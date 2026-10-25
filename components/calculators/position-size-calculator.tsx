@@ -20,11 +20,9 @@ import { ResultCard } from "@/components/calculators/result-card";
 import {
   calculatePositionSize,
   validateTradingParameters,
-  formatCurrency,
-  formatPercentage,
-  safeParseFloat,
   type PositionCalculationResult,
 } from "@/lib/calculations";
+import { formatCurrency, formatPercentage, safeParseFloat } from "@/lib/format";
 
 const positionSizeCalculatorSchema = z
   .object({
@@ -32,25 +30,25 @@ const positionSizeCalculatorSchema = z
     entry: z
       .string()
       .min(1, "Entry price is required")
-      .refine((val) => !isNaN(safeParseFloat(val)), "Must be a valid number")
+      .refine((val) => Number.isFinite(parseFloat(val)), "Must be a valid number")
       .refine((val) => safeParseFloat(val) > 0, "Entry price must be greater than 0")
       .refine((val) => safeParseFloat(val) < 1000000, "Entry price too large"),
     leverage: z
       .string()
       .min(1, "Leverage is required")
-      .refine((val) => !isNaN(safeParseFloat(val)), "Must be a valid number")
+      .refine((val) => Number.isFinite(parseFloat(val)), "Must be a valid number")
       .refine((val) => safeParseFloat(val) >= 1, "Leverage must be at least 1x")
       .refine((val) => safeParseFloat(val) <= 100, "Leverage cannot exceed 100x"),
     stopLoss: z
       .string()
       .min(1, "Stop loss is required")
-      .refine((val) => !isNaN(safeParseFloat(val)), "Must be a valid number")
+      .refine((val) => Number.isFinite(parseFloat(val)), "Must be a valid number")
       .refine((val) => safeParseFloat(val) > 0, "Stop loss must be greater than 0")
       .refine((val) => safeParseFloat(val) < 1000000, "Stop loss price too large"),
     riskAmount: z
       .string()
       .min(1, "Risk amount is required")
-      .refine((val) => !isNaN(safeParseFloat(val)), "Must be a valid number")
+      .refine((val) => Number.isFinite(parseFloat(val)), "Must be a valid number")
       .refine((val) => safeParseFloat(val) > 0, "Risk amount must be greater than 0")
       .refine((val) => safeParseFloat(val) < 1000000, "Risk amount too large"),
   })

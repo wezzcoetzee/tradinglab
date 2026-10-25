@@ -10,11 +10,11 @@
 | TD-4 | Types | `test-setup.ts` uses `@ts-expect-error` for happy-dom type mismatches | Low |
 | TD-5 | Build | No bundle size analysis or budget | Low |
 | TD-6 | A11y | No accessibility audit beyond Radix defaults | Medium |
-| TD-7 | Engine | `backtest-engine.ts` exists alongside `backtest-runner.ts` — unclear boundary between the two | Low |
-| TD-8 | Validation | `validateTradingParameters` TP ordering check is dead code — sorts before checking order | Low |
 
 ## Resolved Debt
 
 | ID | Area | Description | Resolution |
 |----|------|-------------|------------|
+| TD-7 | Engine | `backtest-engine.ts` exists alongside `backtest-runner.ts` — unclear boundary between the two | Removed the unused engine; `optimizer.ts` is the single orchestration path, run by the worker |
+| TD-8 | Validation | `validateTradingParameters` TP ordering check is dead code — sorts before checking order | Checks TPs in the order entered |
 | TD-9 | Testing | happy-dom v20 broke all DOM component tests (273 failures) — its query-selector parser eagerly constructs `new this.window.SyntaxError(...)`, which `Window` doesn't expose | `test-setup.ts` now uses `GlobalWindow` instead of `Window` (exposes JS global constructors) |

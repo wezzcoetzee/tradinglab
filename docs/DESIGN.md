@@ -48,7 +48,7 @@ These are applied via utility functions in `lib/format.ts`: `getReturnColorClass
 
 ### ShadCN Primitives (`components/ui/`)
 
-Alert, Badge, Button, Card, Chart, Checkbox, Dialog, DropdownMenu, Input, Label, Pagination, Select, Switch, Table
+Alert, Badge, Button, Card, Chart, Dialog, DropdownMenu, Form, Input, Label, RadioGroup, Skeleton, Switch, Table
 
 ### Adding New ShadCN Components
 

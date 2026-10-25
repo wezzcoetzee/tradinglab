@@ -12,7 +12,6 @@ describe('initTrailingStop', () => {
   test('should_initialize_long_trailing_stop_with_high', () => {
     const row: CsvRow = {
       date: '2024-01-01',
-      time: 100,
       high: 105,
       low: 95,
       close: 102,
@@ -27,7 +26,6 @@ describe('initTrailingStop', () => {
   test('should_initialize_short_trailing_stop_with_low', () => {
     const row: CsvRow = {
       date: '2024-01-01',
-      time: 100,
       high: 105,
       low: 95,
       close: 102,
@@ -42,7 +40,6 @@ describe('initTrailingStop', () => {
   test('should_set_triggered_to_false', () => {
     const row: CsvRow = {
       date: '2024-01-01',
-      time: 100,
       high: 110,
       low: 90,
       close: 105,
@@ -58,7 +55,6 @@ describe('initTrailingStop', () => {
   test('should_handle_equal_high_and_low', () => {
     const row: CsvRow = {
       date: '2024-01-01',
-      time: 100,
       high: 100,
       low: 100,
       close: 100,
@@ -74,7 +70,6 @@ describe('initTrailingStop', () => {
   test('should_handle_large_range', () => {
     const row: CsvRow = {
       date: '2024-01-01',
-      time: 100,
       high: 200,
       low: 50,
       close: 150,
@@ -90,7 +85,6 @@ describe('initTrailingStop', () => {
   test('should_handle_fractional_prices', () => {
     const row: CsvRow = {
       date: '2024-01-01',
-      time: 100.5,
       high: 105.75,
       low: 95.25,
       close: 102.5,
@@ -113,7 +107,6 @@ describe('updateExtremePrice', () => {
       };
       const row: CsvRow = {
         date: '2024-01-02',
-        time: 100,
         high: 110,
         low: 95,
         close: 105,
@@ -132,7 +125,6 @@ describe('updateExtremePrice', () => {
       };
       const row: CsvRow = {
         date: '2024-01-02',
-        time: 95,
         high: 98,
         low: 90,
         close: 95,
@@ -151,7 +143,6 @@ describe('updateExtremePrice', () => {
       };
       const row: CsvRow = {
         date: '2024-01-02',
-        time: 98,
         high: 100,
         low: 95,
         close: 99,
@@ -170,7 +161,6 @@ describe('updateExtremePrice', () => {
       };
       const row: CsvRow = {
         date: '2024-01-02',
-        time: 110,
         high: 120,
         low: 105,
         close: 115,
@@ -190,7 +180,6 @@ describe('updateExtremePrice', () => {
       };
       const row: CsvRow = {
         date: '2024-01-02',
-        time: 100,
         high: 105,
         low: 95,
         close: 102,
@@ -211,7 +200,6 @@ describe('updateExtremePrice', () => {
       };
       const row: CsvRow = {
         date: '2024-01-02',
-        time: 95,
         high: 105,
         low: 90,
         close: 92,
@@ -230,7 +218,6 @@ describe('updateExtremePrice', () => {
       };
       const row: CsvRow = {
         date: '2024-01-02',
-        time: 105,
         high: 110,
         low: 102,
         close: 108,
@@ -249,7 +236,6 @@ describe('updateExtremePrice', () => {
       };
       const row: CsvRow = {
         date: '2024-01-02',
-        time: 102,
         high: 105,
         low: 100,
         close: 103,
@@ -268,7 +254,6 @@ describe('updateExtremePrice', () => {
       };
       const row: CsvRow = {
         date: '2024-01-02',
-        time: 90,
         high: 95,
         low: 85,
         close: 88,
@@ -288,7 +273,6 @@ describe('updateExtremePrice', () => {
       };
       const row: CsvRow = {
         date: '2024-01-02',
-        time: 98,
         high: 105,
         low: 95,
         close: 97,
@@ -308,7 +292,6 @@ describe('updateExtremePrice', () => {
     };
     const row: CsvRow = {
       date: '2024-01-02',
-      time: 200,
       high: 250,
       low: 50,
       close: 150,
@@ -328,7 +311,6 @@ describe('updateExtremePrice', () => {
     };
     const row: CsvRow = {
       date: '2024-01-02',
-      time: 100,
       high: 105.75,
       low: 95.25,
       close: 102,
@@ -798,9 +780,9 @@ describe('executePartialClose', () => {
       // closedCapital = 200 / 2 = 100, fees = 100 * 2 * 0.1 / 100 = 0.2
       expect(result.newPosition.entryValue).toBe(1800);
       expect(result.closedCapital).toBe(100);
-      expect(result.pnl).toBeCloseTo(22.22, 2);
+      expect(result.pnl).toBeCloseTo(20, 10);
       expect(result.fees).toBeCloseTo(0.2, 10);
-      expect(result.sidelineValue).toBeCloseTo(122.02, 2);
+      expect(result.sidelineValue).toBeCloseTo(119.8, 10);
       expect(result.newPosition.trailingStop?.triggered).toBe(true);
     });
 
@@ -820,9 +802,9 @@ describe('executePartialClose', () => {
       // closedCapital = 500 / 2 = 250, fees = 250 * 2 * 0.1 / 100 = 0.5
       expect(result.newPosition.entryValue).toBe(1500);
       expect(result.closedCapital).toBe(250);
-      expect(result.pnl).toBeCloseTo(55.56, 2);
+      expect(result.pnl).toBeCloseTo(50, 10);
       expect(result.fees).toBeCloseTo(0.5, 10);
-      expect(result.sidelineValue).toBeCloseTo(305.06, 2);
+      expect(result.sidelineValue).toBeCloseTo(299.5, 10);
     });
 
     test('should_close_50_percent_with_profit', () => {
@@ -841,9 +823,9 @@ describe('executePartialClose', () => {
       // closedCapital = 1000 / 2 = 500, fees = 500 * 2 * 0.1 / 100 = 1
       expect(result.newPosition.entryValue).toBe(1000);
       expect(result.closedCapital).toBe(500);
-      expect(result.pnl).toBeCloseTo(111.11, 2);
+      expect(result.pnl).toBeCloseTo(100, 10);
       expect(result.fees).toBeCloseTo(1, 10);
-      expect(result.sidelineValue).toBeCloseTo(610.11, 2);
+      expect(result.sidelineValue).toBeCloseTo(599, 10);
     });
 
     test('should_close_100_percent_with_profit', () => {
@@ -862,9 +844,9 @@ describe('executePartialClose', () => {
       // closedCapital = 2000 / 2 = 1000, fees = 1000 * 2 * 0.1 / 100 = 2
       expect(result.newPosition.entryValue).toBe(0);
       expect(result.closedCapital).toBe(1000);
-      expect(result.pnl).toBeCloseTo(222.22, 2);
+      expect(result.pnl).toBeCloseTo(200, 10);
       expect(result.fees).toBeCloseTo(2, 10);
-      expect(result.sidelineValue).toBeCloseTo(1220.22, 2);
+      expect(result.sidelineValue).toBeCloseTo(1198, 10);
     });
 
     test('should_handle_loss_scenario', () => {
@@ -883,9 +865,9 @@ describe('executePartialClose', () => {
       // closedCapital = 1000 / 2 = 500, fees = 500 * 2 * 0.1 / 100 = 1
       expect(result.newPosition.entryValue).toBe(1000);
       expect(result.closedCapital).toBe(500);
-      expect(result.pnl).toBeCloseTo(-47.62, 2);
+      expect(result.pnl).toBeCloseTo(-50, 10);
       expect(result.fees).toBeCloseTo(1, 10);
-      expect(result.sidelineValue).toBeCloseTo(451.38, 2);
+      expect(result.sidelineValue).toBeCloseTo(449, 10);
     });
   });
 
