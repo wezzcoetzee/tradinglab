@@ -1,1662 +1,221 @@
 import { describe, expect, test } from 'bun:test';
 import { runBacktest } from './backtest-runner';
+import { WARMUP_DAYS } from './constants';
 import type { CsvRow } from '../types';
 import type { BacktestConfig } from './types';
 
-function generateCsvData(days: number, startPrice: number = 100): CsvRow[] {
-  return Array.from({ length: days }, (_, i) => ({
-    high: startPrice + i + 2,
-    low: startPrice + i - 2,
-    close: startPrice + i,
-        date: `${i + 1}/1/2024`,
-  }));
+const bar = (close: number, high = close, low = close): CsvRow => ({ high, low, close, date: '1/1/2025' });
+const warmup = (close = 100): CsvRow[] => Array.from({ length: WARMUP_DAYS }, () => bar(close));
+
+/** Warmup rows plus the given trading bars; `sma` is a constant or one value per trading bar. */
+function run(
+  bars: CsvRow[],
+  sma: number | number[],
+  overrides: Partial<BacktestConfig> = {},
+  atr: number | null = null,
+  summaryOnly = false
+) {
+  const csvData = [...warmup(), ...bars];
+  const tradingSma = typeof sma === 'number' ? bars.map(() => sma) : sma;
+  const smaValues = [...Array(WARMUP_DAYS).fill(NaN), ...tradingSma];
+  const atrValues = atr === null ? null : csvData.map(() => atr);
+  const config: BacktestConfig = { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0, ...overrides };
+  return runBacktest(csvData, smaValues, config, atrValues, summaryOnly);
 }
 
-function generateSmaValues(length: number, value: number = 100): number[] {
-  return Array(length).fill(value);
-}
+const ATR = { period: 10, multiplier: 2, closePercent: 50 } as const;
 
-describe('runBacktest - warmup period', () => {
-  test('should_skip_first_160_days', () => {
-    const csvData = generateCsvData(200);
-    const smaValues = generateSmaValues(200, 100);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 1,
-      shortLeverage: 1,
-      startingCapital: 1000,
-      feeRate: 0.1,
-    };
-
-    const result = runBacktest(csvData, smaValues, config);
-
-    expect(result.days.length).toBeGreaterThan(0);
-    expect(result.days[0].dayIndex).toBe(160);
+describe('runBacktest - warmup', () => {
+  test('should_start_trading_on_the_first_row_after_warmup', () => {
+    const result = run([bar(100), bar(100)], 50);
+    expect(result.days.map((d) => d.dayIndex)).toEqual([WARMUP_DAYS, WARMUP_DAYS + 1]);
   });
 
-  test('should_not_generate_days_before_index_160', () => {
-    const csvData = generateCsvData(200);
-    const smaValues = generateSmaValues(200, 100);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 1,
-      shortLeverage: 1,
-      startingCapital: 1000,
-      feeRate: 0.1,
-    };
-
-    const result = runBacktest(csvData, smaValues, config);
-
-    const hasDaysBeforeWarmup = result.days.some(day => day.dayIndex < 160);
-
-    expect(hasDaysBeforeWarmup).toBe(false);
-  });
-
-  test('should_handle_exactly_160_days_of_data', () => {
-    const csvData = generateCsvData(160);
-    const smaValues = generateSmaValues(160, 100);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 1,
-      shortLeverage: 1,
-      startingCapital: 1000,
-      feeRate: 0.1,
-    };
-
-    const result = runBacktest(csvData, smaValues, config);
-
-    expect(result.days.length).toBe(0);
+  test('should_do_nothing_with_only_warmup_rows', () => {
+    const result = run([], 50);
+    expect(result.days).toEqual([]);
+    expect(result.totalTrades).toBe(0);
     expect(result.finalBalance).toBe(1000);
   });
 
-  test('should_process_day_160_as_first_day', () => {
-    const csvData = generateCsvData(161);
-    const smaValues = Array(161).fill(90);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 1,
-      shortLeverage: 1,
-      startingCapital: 1000,
-      feeRate: 0.1,
-    };
+  test('should_skip_days_without_a_valid_sma', () => {
+    const result = run([bar(100), bar(100), bar(100)], [NaN, NaN, 50]);
+    expect(result.days.map((d) => d.dayIndex)).toEqual([WARMUP_DAYS + 2]);
+  });
 
-    const result = runBacktest(csvData, smaValues, config);
-
-    expect(result.days.length).toBe(1);
-    expect(result.days[0].dayIndex).toBe(160);
+  test('should_return_the_same_summary_without_day_details', () => {
+    const bars = [bar(100), bar(120), bar(90), bar(130)];
+    const full = run(bars, [50, 50, 200, 50], { longLeverage: 2, feeRate: 0.1 });
+    const summary = run(bars, [50, 50, 200, 50], { longLeverage: 2, feeRate: 0.1 }, null, true);
+    expect(summary).toEqual({ ...full, days: [] });
   });
 });
 
-describe('runBacktest - position logic', () => {
-  test('should_open_long_when_price_above_sma', () => {
-    const csvData = generateCsvData(200, 100);
-    const smaValues = Array(200).fill(90);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-    };
-
-    const result = runBacktest(csvData, smaValues, config);
-
-    expect(result.days[0].action).toBe('OPEN_LONG');
-    expect(result.days[0].position?.type).toBe('LONG');
+describe('runBacktest - signals', () => {
+  test.each([
+    ['above', 50, 'OPEN_LONG', 'LONG', 2],
+    ['below', 150, 'OPEN_SHORT', 'SHORT', 3],
+  ] as const)('should_open_on_price_%s_sma', (_, sma, action, type, leverage) => {
+    const [day] = run([bar(100)], sma, { longLeverage: 2, shortLeverage: 3 }).days;
+    expect(day.action).toBe(action);
+    expect(day.position).toMatchObject({ type, leverage, entryPrice: 100, entryValue: 1000 * leverage });
   });
 
-  test('should_open_short_when_price_below_sma', () => {
-    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => ({
-      high: 22,
-      low: 18,
-      close: 20,
-            date: `${i + 1}/1/2024`,
-    }));
-    const smaValues = Array(200).fill(150);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-    };
-
-    const result = runBacktest(csvData, smaValues, config);
-
-    expect(result.days[0].action).toBe('OPEN_SHORT');
-    expect(result.days[0].position?.type).toBe('SHORT');
+  test('should_stay_flat_when_price_equals_sma', () => {
+    const [day] = run([bar(100)], 100).days;
+    expect(day.action).toBe('HOLD');
+    expect(day.position).toBeNull();
   });
 
-  test('should_hold_when_price_equals_sma', () => {
-    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => ({
-      high: 102,
-      low: 98,
-      close: 100,
-            date: `${i + 1}/1/2024`,
-    }));
-    const smaValues = Array(200).fill(100);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-    };
-
-    const result = runBacktest(csvData, smaValues, config);
-
-    const day160 = result.days.find(d => d.dayIndex === 160);
-    expect(day160?.action).toBe('HOLD');
-    expect(day160?.position).toBe(null);
+  test.each([
+    ['long_to_short', [50, 200], 'TRANSITION_LONG_TO_SHORT', 'SHORT', 3],
+    ['short_to_long', [200, 50], 'TRANSITION_SHORT_TO_LONG', 'LONG', 2],
+  ] as const)('should_flip_%s_when_price_crosses_sma', (_, sma, action, type, leverage) => {
+    const result = run([bar(100), bar(100), bar(100)], [...sma, sma[1]], { longLeverage: 2, shortLeverage: 3 });
+    expect(result.days.map((d) => d.action)).toEqual([result.days[0].action, action, 'HOLD']);
+    expect(result.days[1].position).toMatchObject({ type, leverage });
   });
 
-  test('should_close_long_when_price_crosses_below_sma', () => {
-    const csvData: CsvRow[] = [
-      ...Array(161).fill(null).map((_, i) => ({
-        high: 102,
-        low: 98,
-        close: 100,
-                date: `${i + 1}/1/2024`,
-      })),
-      { high: 82, low: 78, close: 80, date: '162/1/2024' },
-    ];
-    const smaValues = Array(162).fill(90);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-    };
-
-    const result = runBacktest(csvData, smaValues, config);
-
-    expect(result.days[0].action).toBe('OPEN_LONG');
-    expect(result.days.some(d => d.action === 'TRANSITION_LONG_TO_SHORT')).toBe(true);
+  test('should_close_and_realise_pnl_when_price_meets_sma', () => {
+    const result = run([bar(100), bar(110)], [50, 110]);
+    expect(result.days[1]).toMatchObject({ action: 'CLOSE_LONG', position: null });
+    expect(result.days[1].pnl).toBeCloseTo(100, 10);
+    expect(result.days[1].balance).toBeCloseTo(1100, 10);
   });
+});
 
-  test('should_transition_long_to_short', () => {
-    const csvData: CsvRow[] = [
-      ...Array(161).fill(null).map((_, i) => ({
-        high: 102,
-        low: 98,
-        close: 100,
-                date: `${i + 1}/1/2024`,
-      })),
-      { high: 82, low: 78, close: 80, date: '162/1/2024' },
-    ];
-    const smaValues = Array(162).fill(90);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 1.25,
-      shortLeverage: 1.5,
-      startingCapital: 100000,
-      feeRate: 0.01,
-    };
+describe('runBacktest - fees', () => {
+  test('should_charge_open_fee_then_both_legs_of_a_flip_and_nothing_on_hold', () => {
+    // 2x long opened at 100 with a 1% fee, held a day, then flipped to a 1x short at 110.
+    const result = run([bar(100), bar(100), bar(110)], [50, 50, 200], { longLeverage: 2, feeRate: 1 });
+    const [open, hold, flip] = result.days;
 
-    const result = runBacktest(csvData, smaValues, config);
-
-    expect(result.days[0].action).toBe('OPEN_LONG');
-    expect(result.days[1].action).toBe('TRANSITION_LONG_TO_SHORT');
-    expect(result.days[1].position).toBeDefined();
-    expect(result.days[1].position?.type).toBe('SHORT');
-    expect(result.days[1].position?.leverage).toBe(1.5);
+    expect(open.fees).toBe(20); // 1000 × 2 × 1%
+    expect(hold.fees).toBe(0);
+    const balanceAfterClose = 980 + 0.1 * 1960;
+    const closeFee = balanceAfterClose * 2 * 0.01;
+    const openFee = balanceAfterClose * 1 * 0.01;
+    expect(flip.fees).toBeCloseTo(closeFee + openFee, 10);
+    expect(flip.position?.entryValue).toBeCloseTo(balanceAfterClose - closeFee - openFee, 10);
+    expect(result.totalFees).toBeCloseTo(20 + closeFee + openFee, 10);
+    expect(result.totalTrades).toBe(2);
   });
+});
 
-  test('should_transition_short_to_long', () => {
-    const csvData: CsvRow[] = [
-      ...Array(161).fill(null).map((_, i) => ({
-        high: 22,
-        low: 18,
-        close: 20,
-                date: `${i + 1}/1/2024`,
-      })),
-      { high: 32, low: 28, close: 30, date: '162/1/2024' },
-    ];
-    const smaValues = Array(162).fill(25);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 1.5,
-      shortLeverage: 1.25,
-      startingCapital: 100000,
-      feeRate: 0.01,
-    };
-
-    const result = runBacktest(csvData, smaValues, config);
-
-    expect(result.days[0].action).toBe('OPEN_SHORT');
-    expect(result.days[1].action).toBe('TRANSITION_SHORT_TO_LONG');
-    expect(result.days[1].position).toBeDefined();
-    expect(result.days[1].position?.type).toBe('LONG');
-    expect(result.days[1].position?.leverage).toBe(1.5);
-  });
-
-  test('should_hold_position_when_price_stays_on_same_side', () => {
-    const csvData = generateCsvData(200, 100);
-    const smaValues = Array(200).fill(90);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-    };
-
-    const result = runBacktest(csvData, smaValues, config);
-
-    expect(result.days[0].action).toBe('OPEN_LONG');
-    expect(result.days[1].action).toBe('HOLD');
-    expect(result.days[2].action).toBe('HOLD');
+describe('runBacktest - pnl and final balance', () => {
+  test.each([
+    ['long_gain', 50, 2, 110, 1200],
+    ['long_loss', 50, 2, 90, 800],
+    ['short_gain_is_linear', 200, 1, 50, 1500],
+    ['short_loss', 200, 2, 110, 800],
+  ] as const)('should_mark_open_position_to_last_close_%s', (_, sma, leverage, lastClose, expected) => {
+    const result = run([bar(100), bar(lastClose)], sma, { longLeverage: leverage, shortLeverage: leverage });
+    expect(result.finalBalance).toBeCloseTo(expected, 10);
+    expect(result.totalReturn).toBeCloseTo((expected - 1000) / 10, 10);
+    expect(result.days.at(-1)?.portfolioValue).toBeCloseTo(expected, 10);
   });
 });
 
 describe('runBacktest - liquidation', () => {
-  test('should_detect_liquidation_when_balance_drops_to_zero', () => {
-    const csvData: CsvRow[] = [
-      ...Array(161).fill(null).map((_, i) => ({
-        high: 52,
-        low: 48,
-        close: 50,
-                date: `${i + 1}/1/2024`,
-      })),
-      { high: 102, low: 98, close: 100, date: '162/1/2024' },
-    ];
-    const smaValues = Array(162).fill(60);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 3,
-      shortLeverage: 3,
-      startingCapital: 100,
-      feeRate: 5.0,
-    };
+  test.each([
+    ['long_on_the_low', 50, bar(100, 100, 60)],
+    ['short_on_the_high', 200, bar(100, 150, 100)],
+  ] as const)('should_liquidate_%s_even_when_the_close_recovers', (_, sma, wick) => {
+    const result = run([bar(100), wick, bar(100), bar(100)], sma, { longLeverage: 3, shortLeverage: 2 });
 
-    const result = runBacktest(csvData, smaValues, config);
+    expect(result).toMatchObject({ isLiquidated: true, liquidationDay: WARMUP_DAYS + 1, finalBalance: 0, totalReturn: -100 });
+    expect(result.days.at(-1)).toMatchObject({ dayIndex: WARMUP_DAYS + 1, isLiquidated: true, balance: 0, position: null, portfolioValue: 0 });
+  });
 
+  test('should_liquidate_when_fees_exhaust_the_balance', () => {
+    const result = run([bar(100), bar(100)], 50, { longLeverage: 3, feeRate: 50 });
     expect(result.isLiquidated).toBe(true);
-    expect(result.liquidationDay).toBeDefined();
-    expect(result.finalBalance).toBe(0);
+    expect(result.liquidationDay).toBe(WARMUP_DAYS);
   });
 
-  test('should_stop_processing_after_liquidation', () => {
-    const csvData: CsvRow[] = [
-      ...Array(161).fill(null).map((_, i) => ({
-        high: 52,
-        low: 48,
-        close: 50,
-                date: `${i + 1}/1/2024`,
-      })),
-      { high: 102, low: 98, close: 100, date: '162/1/2024' },
-    ];
-    const smaValues = Array(162).fill(60);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 3,
-      shortLeverage: 3,
-      startingCapital: 100,
-      feeRate: 5.0,
-    };
-
-    const result = runBacktest(csvData, smaValues, config);
-
-    const liquidationDay = result.days.find(d => d.isLiquidated);
-    expect(liquidationDay).toBeDefined();
-
-    const daysAfterLiquidation = result.days.filter(
-      d => d.dayIndex > liquidationDay!.dayIndex
-    );
-    expect(daysAfterLiquidation.length).toBe(0);
-  });
-
-  test('should_mark_liquidation_day_correctly', () => {
-    const csvData: CsvRow[] = [
-      ...Array(161).fill(null).map((_, i) => ({
-        high: 52,
-        low: 48,
-        close: 50,
-                date: `${i + 1}/1/2024`,
-      })),
-      { high: 102, low: 98, close: 100, date: '162/1/2024' },
-    ];
-    const smaValues = Array(162).fill(60);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 3,
-      shortLeverage: 3,
-      startingCapital: 100,
-      feeRate: 5.0,
-    };
-
-    const result = runBacktest(csvData, smaValues, config);
-
-    const liquidationDay = result.days.find(d => d.isLiquidated);
-    expect(liquidationDay?.balance).toBe(0);
-    expect(liquidationDay?.position).toBe(null);
-  });
-
-  test('should_not_liquidate_with_sufficient_balance', () => {
-    const csvData = generateCsvData(200, 100);
-    const smaValues = Array(200).fill(90);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 1,
-      shortLeverage: 1,
-      startingCapital: 10000,
-      feeRate: 0.1,
-    };
-
-    const result = runBacktest(csvData, smaValues, config);
-
+  test('should_survive_a_drawdown_that_leaves_equity', () => {
+    const result = run([bar(100), bar(100, 100, 70), bar(100)], 50, { longLeverage: 3 });
     expect(result.isLiquidated).toBe(false);
-    expect(result.liquidationDay).toBeUndefined();
-  });
-});
-
-describe('runBacktest - fee deduction', () => {
-  test('should_deduct_fees_on_position_open', () => {
-    const csvData = generateCsvData(200, 100);
-    const smaValues = Array(200).fill(90);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-    };
-
-    const result = runBacktest(csvData, smaValues, config);
-
-    const firstDay = result.days[0];
-    expect(firstDay.fees).toBeGreaterThan(0);
-    expect(firstDay.balance).toBe(1000 - firstDay.fees);
-  });
-
-  test('should_deduct_double_fees_on_transition', () => {
-    const csvData: CsvRow[] = [
-      ...Array(161).fill(null).map((_, i) => ({
-        high: 102,
-        low: 98,
-        close: 100,
-                date: `${i + 1}/1/2024`,
-      })),
-      { high: 82, low: 78, close: 80, date: '162/1/2024' },
-    ];
-    const smaValues = Array(162).fill(90);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 1.5,
-      shortLeverage: 2,
-      startingCapital: 10000,
-      feeRate: 0.1,
-    };
-
-    const result = runBacktest(csvData, smaValues, config);
-
-    const transitionDay = result.days.find(d => d.action === 'TRANSITION_LONG_TO_SHORT');
-    const openDay = result.days.find(d => d.action === 'OPEN_LONG');
-
-    expect(transitionDay?.fees).toBeGreaterThan(openDay!.fees);
-  });
-
-  test('should_not_deduct_fees_on_hold', () => {
-    const csvData = generateCsvData(200, 100);
-    const smaValues = Array(200).fill(90);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-    };
-
-    const result = runBacktest(csvData, smaValues, config);
-
-    const holdDays = result.days.filter(d => d.action === 'HOLD');
-    expect(holdDays.length).toBeGreaterThan(0);
-    expect(holdDays.every(d => d.fees === 0)).toBe(true);
-  });
-
-  test('should_track_total_fees', () => {
-    const csvData: CsvRow[] = [
-      ...Array(161).fill(null).map((_, i) => ({
-        high: 102,
-        low: 98,
-        close: 100,
-                date: `${i + 1}/1/2024`,
-      })),
-      { high: 22, low: 18, close: 20, date: '162/1/2024' },
-    ];
-    const smaValues = Array(162).fill(90);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-    };
-
-    const result = runBacktest(csvData, smaValues, config);
-
-    const sumOfDayFees = result.days.reduce((sum, day) => sum + day.fees, 0);
-    expect(result.totalFees).toBeCloseTo(sumOfDayFees, 2);
-  });
-});
-
-describe('runBacktest - profit calculation', () => {
-  test('should_calculate_long_profit_correctly', () => {
-    const csvData: CsvRow[] = [
-      ...Array(160).fill(null).map((_, i) => ({
-        high: 102,
-        low: 98,
-        close: 100,
-                date: `${i + 1}/1/2024`,
-      })),
-      { high: 102, low: 98, close: 100, date: '161/1/2024' },
-      { high: 112, low: 108, close: 110, date: '162/1/2024' },
-      { high: 112, low: 108, close: 110, date: '163/1/2024' },
-    ];
-    const smaValues = Array(163).fill(90);
-    smaValues[161] = 90;
-    smaValues[162] = 110;
-
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-    };
-
-    const result = runBacktest(csvData, smaValues, config);
-
-    const closeLongDay = result.days.find(d => d.action === 'CLOSE_LONG');
-    expect(closeLongDay).toBeDefined();
-    expect(closeLongDay!.pnl).toBeGreaterThan(0);
-  });
-
-  test('should_calculate_short_profit_correctly', () => {
-    const csvData: CsvRow[] = [
-      ...Array(160).fill(null).map((_, i) => ({
-        high: 102,
-        low: 98,
-        close: 100,
-                date: `${i + 1}/1/2024`,
-      })),
-      { high: 102, low: 98, close: 100, date: '161/1/2024' },
-      { high: 92, low: 88, close: 90, date: '162/1/2024' },
-      { high: 92, low: 88, close: 90, date: '163/1/2024' },
-    ];
-    const smaValues = Array(163).fill(110);
-    smaValues[161] = 110;
-    smaValues[162] = 90;
-
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-    };
-
-    const result = runBacktest(csvData, smaValues, config);
-
-    const closeShortDay = result.days.find(d => d.action === 'CLOSE_SHORT');
-    expect(closeShortDay).toBeDefined();
-    expect(closeShortDay!.pnl).toBeGreaterThan(0);
-  });
-
-  test('should_calculate_loss_for_long_position', () => {
-    const csvData: CsvRow[] = [
-      ...Array(160).fill(null).map((_, i) => ({
-        high: 102,
-        low: 98,
-        close: 100,
-                date: `${i + 1}/1/2024`,
-      })),
-      { high: 102, low: 98, close: 100, date: '161/1/2024' },
-      { high: 92, low: 88, close: 90, date: '162/1/2024' },
-    ];
-    const smaValues = Array(162).fill(90);
-    smaValues[161] = 95;
-
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-    };
-
-    const result = runBacktest(csvData, smaValues, config);
-
-    const transitionDay = result.days.find(d => d.action === 'TRANSITION_LONG_TO_SHORT');
-    expect(transitionDay).toBeDefined();
-    expect(transitionDay!.pnl).toBeLessThan(0);
-  });
-
-  test('should_add_profit_to_balance', () => {
-    const csvData: CsvRow[] = [
-      ...Array(160).fill(null).map((_, i) => ({
-        high: 102,
-        low: 98,
-        close: 100,
-                date: `${i + 1}/1/2024`,
-      })),
-      { high: 102, low: 98, close: 100, date: '161/1/2024' },
-      { high: 122, low: 118, close: 120, date: '162/1/2024' },
-      { high: 122, low: 118, close: 120, date: '163/1/2024' },
-    ];
-    const smaValues = Array(163).fill(90);
-    smaValues[161] = 90;
-    smaValues[162] = 120;
-
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 1,
-      shortLeverage: 1,
-      startingCapital: 1000,
-      feeRate: 0.01,
-    };
-
-    const result = runBacktest(csvData, smaValues, config);
-
-    const closeLongDay = result.days.find(d => d.action === 'CLOSE_LONG');
-    expect(closeLongDay).toBeDefined();
-    expect(closeLongDay!.balance).toBeGreaterThan(1000);
-  });
-});
-
-describe('runBacktest - final position closure', () => {
-  test('should_close_long_position_at_end', () => {
-    const csvData = generateCsvData(200, 100);
-    const smaValues = Array(200).fill(90);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-    };
-
-    const result = runBacktest(csvData, smaValues, config);
-
-    expect(result.finalBalance).toBeGreaterThan(0);
-  });
-
-  test('should_close_short_position_at_end', () => {
-    const csvData = generateCsvData(200, 100);
-    const smaValues = Array(200).fill(110);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-    };
-
-    const result = runBacktest(csvData, smaValues, config);
-
-    expect(result.finalBalance).toBeGreaterThan(0);
-  });
-
-  test('should_calculate_total_return_percentage', () => {
-    const csvData = generateCsvData(200, 100);
-    const smaValues = Array(200).fill(90);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 1,
-      shortLeverage: 1,
-      startingCapital: 1000,
-      feeRate: 0.01,
-    };
-
-    const result = runBacktest(csvData, smaValues, config);
-
-    const expectedReturn = ((result.finalBalance - 1000) / 1000) * 100;
-    expect(result.totalReturn).toBeCloseTo(expectedReturn, 2);
-  });
-
-  test('should_track_total_trades', () => {
-    const csvData = generateCsvData(200, 100);
-    const smaValues = Array(200).fill(90);
-    smaValues[161] = 110;
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-    };
-
-    const result = runBacktest(csvData, smaValues, config);
-
-    const nonHoldDays = result.days.filter(d => d.action !== 'HOLD');
-    expect(result.totalTrades).toBe(nonHoldDays.length);
-  });
-});
-
-describe('runBacktest - edge cases', () => {
-  test('should_skip_days_with_nan_sma', () => {
-    const csvData = generateCsvData(200);
-    const smaValues = Array(200).fill(NaN);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-    };
-
-    const result = runBacktest(csvData, smaValues, config);
-
-    expect(result.days.length).toBe(0);
     expect(result.finalBalance).toBe(1000);
-  });
-
-  test('should_handle_frequent_transitions', () => {
-    const csvData: CsvRow[] = Array.from({ length: 170 }, (_, i) => ({
-      high: 102,
-      low: 98,
-      close: i % 2 === 0 ? 100 : 50,
-            date: `${i + 1}/1/2024`,
-    }));
-    const smaValues = Array(170).fill(75);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 10000,
-      feeRate: 0.1,
-    };
-
-    const result = runBacktest(csvData, smaValues, config);
-
-    const transitions = result.days.filter(
-      d => d.action === 'TRANSITION_LONG_TO_SHORT' || d.action === 'TRANSITION_SHORT_TO_LONG'
-    );
-    expect(transitions.length).toBeGreaterThan(0);
-    expect(result.totalFees).toBeGreaterThan(0);
-  });
-
-  test('should_handle_all_prices_above_sma', () => {
-    const csvData = generateCsvData(200, 100);
-    const smaValues = Array(200).fill(50);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-    };
-
-    const result = runBacktest(csvData, smaValues, config);
-
-    expect(result.days.every(d => d.action === 'HOLD' || d.action === 'OPEN_LONG')).toBe(true);
-  });
-
-  test('should_handle_all_prices_below_sma', () => {
-    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => ({
-      high: 52,
-      low: 48,
-      close: 50,
-            date: `${i + 1}/1/2024`,
-    }));
-    const smaValues = Array(200).fill(200);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-    };
-
-    const result = runBacktest(csvData, smaValues, config);
-
-    expect(result.days.every(d => d.action === 'HOLD' || d.action === 'OPEN_SHORT')).toBe(true);
   });
 });
 
 describe('runBacktest - atr trailing stop', () => {
-  function generateCsvDataWithVolatility(days: number, startPrice: number = 100): CsvRow[] {
-    return Array.from({ length: days }, (_, i) => ({
-      high: startPrice + i * 0.5 + 5,
-      low: startPrice + i * 0.5 - 5,
-      close: startPrice + i * 0.5,
-            date: `${i + 1}/1/2024`,
-    }));
-  }
-
-  test('should_initialize_trailing_stop_on_position_open', () => {
-    const csvData = generateCsvDataWithVolatility(200);
-    const smaValues = Array(200).fill(90);
-    const atrValues = Array(200).fill(5);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-      atr: {
-        period: 14,
-        multiplier: 2,
-        closePercent: 50,
-      },
-    };
-
-    const result = runBacktest(csvData, smaValues, config, atrValues);
-
-    const firstDay = result.days.find(d => d.action === 'OPEN_LONG');
-    expect(firstDay?.position?.trailingStop).toBeDefined();
-    expect(firstDay?.position?.trailingStop?.triggered).toBe(false);
+  test.each([
+    ['LONG', 50, 'high', 104],
+    ['SHORT', 200, 'low', 96],
+  ] as const)('should_seed_the_%s_stop_from_the_entry_bar_%s', (_, sma, __, extreme) => {
+    const [day] = run([bar(100, 104, 96)], sma, { atr: ATR }, 5).days;
+    expect(day.position?.trailingStop).toEqual({ extremePrice: extreme, triggered: false });
   });
 
-  test('should_trigger_partial_close_for_long_position', () => {
-    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
-      if (i < 165) {
-        return {
-          high: 105,
-          low: 95,
-          close: 100,
-                    date: `${i + 1}/1/2024`,
-        };
-      }
-      return {
-        high: 85,
-        low: 75,
-        close: 80,
-                date: `${i + 1}/1/2024`,
-      };
-    });
-    const smaValues = Array(200).fill(90);
-    const atrValues = Array(200).fill(5);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-      atr: {
-        period: 14,
-        multiplier: 2,
-        closePercent: 50,
-      },
-    };
+  // 2x long from 100, runs to 150, stop at 150 - 2 × 5 = 140 fires on the 130 close.
+  test.each([10, 25, 50, 100] as const)('should_close_%i_percent_and_sideline_the_proceeds', (closePercent) => {
+    const p = closePercent / 100;
+    const result = run([bar(100), bar(150), bar(130)], 50, { longLeverage: 2, atr: { ...ATR, closePercent } }, 5);
+    const trigger = result.days[2];
 
-    const result = runBacktest(csvData, smaValues, config, atrValues);
-
-    const partialCloseDay = result.days.find(d => d.action === 'ATR_PARTIAL_CLOSE');
-    expect(partialCloseDay).toBeDefined();
-    expect(partialCloseDay?.position?.trailingStop?.triggered).toBe(true);
+    expect(trigger.action).toBe('ATR_PARTIAL_CLOSE');
+    expect(trigger.pnl).toBeCloseTo(600 * p, 10);
+    expect(trigger.sidelineValue).toBeCloseTo(1600 * p, 10);
+    expect(trigger.balance).toBeCloseTo(1000 - 1000 * p, 10);
+    expect(trigger.position?.entryValue).toBeCloseTo(2000 * (1 - p), 10);
+    // Closing part of the position moves value into cash without changing equity.
+    expect(trigger.portfolioValue).toBeCloseTo(1600, 10);
+    expect(result.finalBalance).toBeCloseTo(1600, 10);
+    expect(result.atrTriggerCount).toBe(1);
+    expect(result.totalTrades).toBe(2);
   });
 
-  test('should_trigger_partial_close_for_short_position', () => {
-    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
-      if (i < 165) {
-        return {
-          high: 95,
-          low: 85,
-          close: 90,
-                    date: `${i + 1}/1/2024`,
-        };
-      }
-      return {
-        high: 115,
-        low: 105,
-        close: 110,
-                date: `${i + 1}/1/2024`,
-      };
-    });
-    const smaValues = Array(200).fill(100);
-    const atrValues = Array(200).fill(5);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-      atr: {
-        period: 14,
-        multiplier: 2,
-        closePercent: 50,
-      },
-    };
-
-    const result = runBacktest(csvData, smaValues, config, atrValues);
-
-    const partialCloseDay = result.days.find(d => d.action === 'ATR_PARTIAL_CLOSE');
-    expect(partialCloseDay).toBeDefined();
+  test('should_trigger_for_shorts_when_price_rises_off_the_low', () => {
+    const result = run([bar(100), bar(50), bar(70)], 200, { atr: ATR }, 5);
+    expect(result.days[2].action).toBe('ATR_PARTIAL_CLOSE');
+    expect(result.days[2].pnl).toBeCloseTo(150, 10);
+    expect(result.days[2].sidelineValue).toBeCloseTo(650, 10);
+    expect(result.finalBalance).toBeCloseTo(1300, 10);
   });
 
-  test('should_reduce_position_size_after_partial_close', () => {
-    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
-      if (i < 165) {
-        return {
-          high: 105,
-          low: 95,
-          close: 100,
-                    date: `${i + 1}/1/2024`,
-        };
-      }
-      return {
-        high: 85,
-        low: 75,
-        close: 80,
-                date: `${i + 1}/1/2024`,
-      };
-    });
-    const smaValues = Array(200).fill(90);
-    const atrValues = Array(200).fill(5);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-      atr: {
-        period: 14,
-        multiplier: 2,
-        closePercent: 50,
-      },
-    };
-
-    const result = runBacktest(csvData, smaValues, config, atrValues);
-
-    const partialCloseDay = result.days.find(d => d.action === 'ATR_PARTIAL_CLOSE');
-    const openDay = result.days.find(d => d.action === 'OPEN_LONG');
-
-    if (partialCloseDay && openDay) {
-      const originalValue = openDay.position!.entryValue;
-      const newValue = partialCloseDay.position!.entryValue;
-
-      expect(newValue).toBeLessThan(originalValue);
-      expect(newValue).toBe(originalValue * 0.5);
-    }
+  test('should_trigger_only_once_per_position', () => {
+    const result = run([bar(100), bar(150), bar(130), bar(160), bar(120)], 50, { atr: ATR }, 5);
+    expect(result.atrTriggerCount).toBe(1);
   });
 
-  test('should_accumulate_sideline_value', () => {
-    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
-      if (i < 165) {
-        return {
-          high: 105,
-          low: 95,
-          close: 100,
-                    date: `${i + 1}/1/2024`,
-        };
-      }
-      return {
-        high: 85,
-        low: 75,
-        close: 80,
-                date: `${i + 1}/1/2024`,
-      };
-    });
-    const smaValues = Array(200).fill(90);
-    const atrValues = Array(200).fill(5);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-      atr: {
-        period: 14,
-        multiplier: 2,
-        closePercent: 50,
-      },
-    };
-
-    const result = runBacktest(csvData, smaValues, config, atrValues);
-
-    const partialCloseDay = result.days.find(d => d.action === 'ATR_PARTIAL_CLOSE');
-    expect(partialCloseDay?.sidelineValue).toBeGreaterThan(0);
+  test.each([
+    ['atr_is_nan', NaN],
+    ['no_atr_values', null],
+  ] as const)('should_not_trigger_when_%s', (_, atr) => {
+    const result = run([bar(100), bar(150), bar(100)], 50, { atr: ATR }, atr);
+    expect(result.atrTriggerCount).toBe(0);
   });
 
-  test('should_not_trigger_again_after_first_trigger', () => {
-    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
-      if (i < 165) {
-        return {
-          high: 105,
-          low: 95,
-          close: 100,
-                    date: `${i + 1}/1/2024`,
-        };
-      }
-      return {
-        high: 85,
-        low: 75,
-        close: 80,
-                date: `${i + 1}/1/2024`,
-      };
-    });
-    const smaValues = Array(200).fill(90);
-    const atrValues = Array(200).fill(5);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-      atr: {
-        period: 14,
-        multiplier: 2,
-        closePercent: 50,
-      },
-    };
+  test('should_redeploy_sidelined_cash_into_the_next_position', () => {
+    const result = run([bar(100), bar(150), bar(130), bar(130)], [50, 50, 50, 200], { atr: ATR }, 5);
+    const flip = result.days[3];
 
-    const result = runBacktest(csvData, smaValues, config, atrValues);
-
-    const partialCloseDays = result.days.filter(d => d.action === 'ATR_PARTIAL_CLOSE');
-    expect(partialCloseDays.length).toBe(1);
+    expect(flip.action).toBe('TRANSITION_LONG_TO_SHORT');
+    expect(flip.sidelineValue).toBe(0);
+    expect(flip.position?.entryValue).toBeCloseTo(1300, 10);
+    expect(flip.portfolioValue).toBeCloseTo(1300, 10);
   });
 
-  test('should_update_extreme_price_when_price_moves_favorably', () => {
-    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => ({
-      high: 100 + i * 0.5,
-      low: 90 + i * 0.5,
-      close: 95 + i * 0.5,
-            date: `${i + 1}/1/2024`,
-    }));
-    const smaValues = Array(200).fill(90);
-    const atrValues = Array(200).fill(5);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-      atr: {
-        period: 14,
-        multiplier: 2,
-        closePercent: 50,
-      },
-    };
-
-    const result = runBacktest(csvData, smaValues, config, atrValues);
-
-    const openDay = result.days.find(d => d.action === 'OPEN_LONG');
-    const laterDay = result.days[result.days.length - 1];
-
-    if (openDay?.position && laterDay?.position) {
-      const initialExtreme = openDay.position.trailingStop?.extremePrice;
-      const laterExtreme = laterDay.position.trailingStop?.extremePrice;
-
-      if (initialExtreme && laterExtreme) {
-        expect(laterExtreme).toBeGreaterThan(initialExtreme);
-      }
-    }
+  test('should_defer_an_sma_flip_on_the_day_the_stop_fires', () => {
+    const result = run([bar(100), bar(150), bar(130), bar(130)], [50, 50, 200, 200], { atr: ATR }, 5);
+    expect(result.days.slice(2).map((d) => d.action)).toEqual(['ATR_PARTIAL_CLOSE', 'TRANSITION_LONG_TO_SHORT']);
   });
 
-  test('should_combine_sideline_with_balance_on_new_position', () => {
-    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
-      if (i < 165) {
-        return {
-          high: 105,
-          low: 95,
-          close: 100,
-                    date: `${i + 1}/1/2024`,
-        };
-      }
-      if (i < 170) {
-        return {
-          high: 85,
-          low: 75,
-          close: 80,
-                    date: `${i + 1}/1/2024`,
-        };
-      }
-      return {
-        high: 75,
-        low: 65,
-        close: 70,
-                date: `${i + 1}/1/2024`,
-      };
-    });
-    const smaValues = Array(200).fill(90);
-    smaValues[170] = 80;
-    const atrValues = Array(200).fill(5);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-      atr: {
-        period: 14,
-        multiplier: 2,
-        closePercent: 50,
-      },
-    };
-
-    const result = runBacktest(csvData, smaValues, config, atrValues);
-
-    const partialCloseDay = result.days.find(d => d.action === 'ATR_PARTIAL_CLOSE');
-    const transitionDay = result.days.find(d => d.action === 'TRANSITION_LONG_TO_SHORT');
-
-    if (partialCloseDay && transitionDay) {
-      expect(partialCloseDay.sidelineValue).toBeGreaterThan(0);
-    }
-  });
-
-  test('should_increment_trade_count_on_partial_close', () => {
-    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
-      if (i < 165) {
-        return {
-          high: 105,
-          low: 95,
-          close: 100,
-                    date: `${i + 1}/1/2024`,
-        };
-      }
-      return {
-        high: 85,
-        low: 75,
-        close: 80,
-                date: `${i + 1}/1/2024`,
-      };
-    });
-    const smaValues = Array(200).fill(90);
-    const atrValues = Array(200).fill(5);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-      atr: {
-        period: 14,
-        multiplier: 2,
-        closePercent: 50,
-      },
-    };
-
-    const result = runBacktest(csvData, smaValues, config, atrValues);
-
-    expect(result.totalTrades).toBeGreaterThan(0);
-  });
-
-  test('should_not_trigger_when_atr_is_nan', () => {
-    const csvData: CsvRow[] = Array.from({ length: 165 }, (_, i) => ({
-      high: 105,
-      low: 95,
-      close: 100,
-            date: `${i + 1}/1/2024`,
-    }));
-    const smaValues = Array(165).fill(90);
-    const atrValues = Array(165).fill(NaN);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-      atr: {
-        period: 14,
-        multiplier: 2,
-        closePercent: 50,
-      },
-    };
-
-    const result = runBacktest(csvData, smaValues, config, atrValues);
-
-    const partialCloseDays = result.days.filter(d => d.action === 'ATR_PARTIAL_CLOSE');
-    expect(partialCloseDays.length).toBe(0);
-  });
-
-  test('should_handle_10_percent_close', () => {
-    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
-      if (i < 165) {
-        return {
-          high: 105,
-          low: 95,
-          close: 100,
-                    date: `${i + 1}/1/2024`,
-        };
-      }
-      return {
-        high: 85,
-        low: 75,
-        close: 80,
-                date: `${i + 1}/1/2024`,
-      };
-    });
-    const smaValues = Array(200).fill(90);
-    const atrValues = Array(200).fill(5);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-      atr: {
-        period: 14,
-        multiplier: 2,
-        closePercent: 10,
-      },
-    };
-
-    const result = runBacktest(csvData, smaValues, config, atrValues);
-
-    const partialCloseDay = result.days.find(d => d.action === 'ATR_PARTIAL_CLOSE');
-    const openDay = result.days.find(d => d.action === 'OPEN_LONG');
-
-    if (partialCloseDay && openDay) {
-      const originalValue = openDay.position!.entryValue;
-      const newValue = partialCloseDay.position!.entryValue;
-
-      expect(newValue).toBe(originalValue * 0.9);
-    }
-  });
-
-  test('should_handle_25_percent_close', () => {
-    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
-      if (i < 165) {
-        return {
-          high: 105,
-          low: 95,
-          close: 100,
-                    date: `${i + 1}/1/2024`,
-        };
-      }
-      return {
-        high: 85,
-        low: 75,
-        close: 80,
-                date: `${i + 1}/1/2024`,
-      };
-    });
-    const smaValues = Array(200).fill(90);
-    const atrValues = Array(200).fill(5);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-      atr: {
-        period: 14,
-        multiplier: 2,
-        closePercent: 25,
-      },
-    };
-
-    const result = runBacktest(csvData, smaValues, config, atrValues);
-
-    const partialCloseDay = result.days.find(d => d.action === 'ATR_PARTIAL_CLOSE');
-    const openDay = result.days.find(d => d.action === 'OPEN_LONG');
-
-    if (partialCloseDay && openDay) {
-      const originalValue = openDay.position!.entryValue;
-      const newValue = partialCloseDay.position!.entryValue;
-
-      expect(newValue).toBe(originalValue * 0.75);
-    }
-  });
-
-  test('should_handle_100_percent_close', () => {
-    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
-      if (i < 165) {
-        return {
-          high: 105,
-          low: 95,
-          close: 100,
-                    date: `${i + 1}/1/2024`,
-        };
-      }
-      return {
-        high: 85,
-        low: 75,
-        close: 80,
-                date: `${i + 1}/1/2024`,
-      };
-    });
-    const smaValues = Array(200).fill(90);
-    const atrValues = Array(200).fill(5);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-      atr: {
-        period: 14,
-        multiplier: 2,
-        closePercent: 100,
-      },
-    };
-
-    const result = runBacktest(csvData, smaValues, config, atrValues);
-
-    const partialCloseDay = result.days.find(d => d.action === 'ATR_PARTIAL_CLOSE');
-
-    if (partialCloseDay) {
-      expect(partialCloseDay.position!.entryValue).toBe(0);
-    }
-  });
-
-  test('should_work_without_atr_config', () => {
-    const csvData = generateCsvDataWithVolatility(200);
-    const smaValues = Array(200).fill(90);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-    };
-
-    const result = runBacktest(csvData, smaValues, config, null);
-
-    const partialCloseDays = result.days.filter(d => d.action === 'ATR_PARTIAL_CLOSE');
-    expect(partialCloseDays.length).toBe(0);
-  });
-
-  test('should_not_trigger_without_atr_values', () => {
-    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
-      if (i < 165) {
-        return {
-          high: 105,
-          low: 95,
-          close: 100,
-                    date: `${i + 1}/1/2024`,
-        };
-      }
-      return {
-        high: 85,
-        low: 75,
-        close: 80,
-                date: `${i + 1}/1/2024`,
-      };
-    });
-    const smaValues = Array(200).fill(90);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-      atr: {
-        period: 14,
-        multiplier: 2,
-        closePercent: 50,
-      },
-    };
-
-    const result = runBacktest(csvData, smaValues, config, null);
-
-    const partialCloseDays = result.days.filter(d => d.action === 'ATR_PARTIAL_CLOSE');
-    expect(partialCloseDays.length).toBe(0);
-  });
-
-  test('should_record_pnl_and_fees_on_partial_close', () => {
-    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
-      if (i < 165) {
-        return {
-          high: 105,
-          low: 95,
-          close: 100,
-                    date: `${i + 1}/1/2024`,
-        };
-      }
-      return {
-        high: 85,
-        low: 75,
-        close: 80,
-                date: `${i + 1}/1/2024`,
-      };
-    });
-    const smaValues = Array(200).fill(90);
-    const atrValues = Array(200).fill(5);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-      atr: {
-        period: 14,
-        multiplier: 2,
-        closePercent: 50,
-      },
-    };
-
-    const result = runBacktest(csvData, smaValues, config, atrValues);
-
-    const partialCloseDay = result.days.find(d => d.action === 'ATR_PARTIAL_CLOSE');
-
-    expect(partialCloseDay?.pnl).toBeDefined();
-    expect(partialCloseDay?.fees).toBeDefined();
-    expect(partialCloseDay?.fees).toBeGreaterThan(0);
-  });
-
-  test('should_include_sideline_in_final_balance', () => {
-    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
-      if (i < 165) {
-        return {
-          high: 105,
-          low: 95,
-          close: 100,
-                    date: `${i + 1}/1/2024`,
-        };
-      }
-      return {
-        high: 85,
-        low: 75,
-        close: 80,
-                date: `${i + 1}/1/2024`,
-      };
-    });
-    const smaValues = Array(200).fill(90);
-    const atrValues = Array(200).fill(5);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-      atr: {
-        period: 14,
-        multiplier: 2,
-        closePercent: 50,
-      },
-    };
-
-    const result = runBacktest(csvData, smaValues, config, atrValues);
-
-    const partialCloseDay = result.days.find(d => d.action === 'ATR_PARTIAL_CLOSE');
-    if (partialCloseDay) {
-      expect(result.finalBalance).toBeGreaterThan(partialCloseDay.balance);
-    }
-  });
-
-  test('should_use_different_multipliers', () => {
-    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => ({
-      high: 105,
-      low: 95,
-      close: 100,
-            date: `${i + 1}/1/2024`,
-    }));
-    const smaValues = Array(200).fill(90);
-    const atrValues = Array(200).fill(5);
-
-    const multipliers = [2, 2.5, 3, 3.5, 4] as const;
-
-    for (const multiplier of multipliers) {
-      const config: BacktestConfig = {
-        smaPeriod: 20,
-        longLeverage: 2,
-        shortLeverage: 2,
-        startingCapital: 1000,
-        feeRate: 0.1,
-        atr: {
-          period: 14,
-          multiplier,
-          closePercent: 50,
-        },
-      };
-
-      const result = runBacktest(csvData, smaValues, config, atrValues);
-
-      expect(result).toBeDefined();
-      expect(result.config.atr?.multiplier).toBe(multiplier);
-    }
-  });
-
-  test('should_use_different_atr_periods', () => {
-    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => ({
-      high: 105,
-      low: 95,
-      close: 100,
-            date: `${i + 1}/1/2024`,
-    }));
-    const smaValues = Array(200).fill(90);
-
-    const periods = [10, 14, 20] as const;
-
-    for (const period of periods) {
-      const atrValues = Array(200).fill(5);
-      const config: BacktestConfig = {
-        smaPeriod: 20,
-        longLeverage: 2,
-        shortLeverage: 2,
-        startingCapital: 1000,
-        feeRate: 0.1,
-        atr: {
-          period,
-          multiplier: 2,
-          closePercent: 50,
-        },
-      };
-
-      const result = runBacktest(csvData, smaValues, config, atrValues);
-
-      expect(result).toBeDefined();
-      expect(result.config.atr?.period).toBe(period);
-    }
-  });
-
-  test('should_reduce_balance_after_partial_close_to_prevent_double_counting', () => {
-    // #given - setup scenario where ATR triggers then position transitions
-    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
-      if (i < 165) {
-        return {
-          high: 105,
-          low: 95,
-          close: 100,
-                    date: `${i + 1}/1/2024`,
-        };
-      }
-      if (i < 175) {
-        // Price drops to trigger ATR stop
-        return {
-          high: 85,
-          low: 75,
-          close: 80,
-                    date: `${i + 1}/1/2024`,
-        };
-      }
-      // Price drops further to trigger transition to SHORT
-      return {
-        high: 65,
-        low: 55,
-        close: 60,
-                date: `${i + 1}/1/2024`,
-      };
-    });
-    const smaValues = Array(200).fill(90);
-    smaValues.fill(70, 175); // SMA drops to trigger LONG->SHORT transition
-    const atrValues = Array(200).fill(5);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0.1,
-      atr: {
-        period: 14,
-        multiplier: 2,
-        closePercent: 50,
-      },
-    };
-
-    // #when
-    const result = runBacktest(csvData, smaValues, config, atrValues);
-
-    // #then - final balance should not exceed starting capital significantly
-    // (given the losses from the ATR stop and transition)
-    // Before the fix, double-counting would cause balance to inflate unrealistically
-    const partialCloseDay = result.days.find(d => d.action === 'ATR_PARTIAL_CLOSE');
-    const transitionDay = result.days.find(d => d.action === 'TRANSITION_LONG_TO_SHORT');
-
-    expect(partialCloseDay).toBeDefined();
-    expect(transitionDay).toBeDefined();
-
-    // After partial close, balance should be reduced by closedCapital
-    // Balance should reflect only the remaining capital backing the position
-    if (partialCloseDay && transitionDay) {
-      // The sideline value plus remaining balance after transition should not
-      // significantly exceed starting capital (accounting for losses)
-      // This verifies no double-counting occurred
-      expect(result.finalBalance).toBeLessThan(config.startingCapital * 1.5);
-    }
-  });
-
-  test('should_have_continuous_portfolioValue_across_atr_partial_close_and_transition', () => {
-    // #given - price drops trigger ATR partial close, then transitions to SHORT
-    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
-      if (i < 165) {
-        return { high: 102, low: 98, close: 100, date: `${i + 1}/1/2024` };
-      }
-      if (i < 175) {
-        return { high: 92, low: 88, close: 90, date: `${i + 1}/1/2024` };
-      }
-      return { high: 82, low: 78, close: 80, date: `${i + 1}/1/2024` };
-    });
-    const smaValues = Array(200).fill(90);
-    smaValues.fill(85, 175);
-    const atrValues = Array(200).fill(5);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0,
-      atr: { period: 14, multiplier: 2, closePercent: 50 },
-    };
-
-    // #when
-    const result = runBacktest(csvData, smaValues, config, atrValues);
-
-    // #then - portfolioValue should not jump between consecutive same-price days
-    for (let i = 1; i < result.days.length; i++) {
-      const prev = result.days[i - 1];
-      const curr = result.days[i];
-      if (prev.price === curr.price) {
-        const jump = Math.abs(curr.portfolioValue - prev.portfolioValue);
-        const tolerance = curr.fees + prev.fees + 0.01;
-        expect(jump).toBeLessThanOrEqual(tolerance);
-      }
-    }
-  });
-
-  test('should_correctly_track_capital_through_atr_close_and_transition_cycle', () => {
-    // #given - controlled scenario to verify exact capital tracking
-    const csvData: CsvRow[] = Array.from({ length: 200 }, (_, i) => {
-      if (i < 165) {
-        return {
-          high: 102,
-          low: 98,
-          close: 100, // Entry price
-                    date: `${i + 1}/1/2024`,
-        };
-      }
-      if (i < 175) {
-        return {
-          high: 92,
-          low: 88,
-          close: 90, // -10% from entry, triggers ATR
-                    date: `${i + 1}/1/2024`,
-        };
-      }
-      return {
-        high: 82,
-        low: 78,
-        close: 80, // -20% from entry
-                date: `${i + 1}/1/2024`,
-      };
-    });
-    const smaValues = Array(200).fill(90);
-    smaValues.fill(85, 175); // Trigger transition
-    const atrValues = Array(200).fill(5);
-    const config: BacktestConfig = {
-      smaPeriod: 20,
-      longLeverage: 2,
-      shortLeverage: 2,
-      startingCapital: 1000,
-      feeRate: 0, // Zero fees for easier calculation
-      atr: {
-        period: 14,
-        multiplier: 2,
-        closePercent: 50,
-      },
-    };
-
-    // #when
-    const result = runBacktest(csvData, smaValues, config, atrValues);
-
-    // #then
-    const openDay = result.days.find(d => d.action === 'OPEN_LONG');
-    const partialCloseDay = result.days.find(d => d.action === 'ATR_PARTIAL_CLOSE');
-
-    expect(openDay).toBeDefined();
-    expect(partialCloseDay).toBeDefined();
-
-    if (openDay && partialCloseDay) {
-      // After ATR partial close with 50% close:
-      // - Original balance: 1000, entryValue: 2000 (2x leverage)
-      // - closedCapital: 500 (half of 1000)
-      // - At 90 (from 100 entry), loss on closed portion: (90/100 - 1) * 1000 = -100
-      // - sidelineValue: 500 + (-100) = 400
-      // - Remaining balance: 1000 - 500 = 500
-      // This verifies balance was properly reduced
-      expect(partialCloseDay.balance).toBeLessThan(openDay.balance);
-    }
-  });
-});
-
-describe('runBacktest - account model', () => {
-  const warmup = (close: number): CsvRow[] =>
-    Array.from({ length: 160 }, (_, i) => ({ high: close, low: close, close, date: `${i + 1}/1/2024` }));
-  const bar = (close: number, high = close, low = close): CsvRow => ({ high, low, close, date: '1/1/2025' });
-  const baseConfig: BacktestConfig = { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0 };
-
-  test('should_liquidate_on_intraday_move_even_when_no_signal_changes', () => {
-    // 3x long opened at 100; a -40% wick wipes the margin even though the close recovers.
-    const csvData = [...warmup(100), bar(100), bar(100, 100, 60), bar(100)];
-    const result = runBacktest(csvData, Array(csvData.length).fill(50), { ...baseConfig, longLeverage: 3 });
-
-    expect(result.isLiquidated).toBe(true);
-    expect(result.liquidationDay).toBe(161);
-    expect(result.finalBalance).toBe(0);
-  });
-
-  test('should_not_liquidate_after_full_atr_close_when_signal_flips', () => {
-    const csvData = [...warmup(100), bar(100), bar(150), bar(120), bar(40)];
-    const atrValues = Array(csvData.length).fill(5);
-    const result = runBacktest(csvData, Array(csvData.length).fill(90), {
-      ...baseConfig,
-      atr: { period: 10, multiplier: 2, closePercent: 100 },
-    }, atrValues);
-
+  test('should_not_liquidate_after_a_full_close_when_the_signal_flips', () => {
+    const result = run([bar(100), bar(150), bar(120), bar(40)], 90, { atr: { ...ATR, closePercent: 100 } }, 5);
     expect(result.atrTriggerCount).toBe(1);
     expect(result.isLiquidated).toBe(false);
-    // Everything was sidelined at 120 (+20%), then re-deployed short at 40 with no further move.
-    expect(result.finalBalance).toBeCloseTo(1200);
+    expect(result.finalBalance).toBeCloseTo(1200, 10);
   });
 
-  test('should_include_full_leveraged_pnl_of_open_position_in_final_balance', () => {
-    const csvData = [...warmup(100), bar(100), bar(110)];
-    const result = runBacktest(csvData, Array(csvData.length).fill(50), { ...baseConfig, longLeverage: 3 });
+  test('should_charge_the_opening_fee_on_sidelined_capital', () => {
+    const result = run([bar(100), bar(150), bar(120), bar(40)], 90, { feeRate: 1, atr: { ...ATR, closePercent: 100 } }, 5);
+    const sidelined = result.days[2].sidelineValue;
+    const flip = result.days[3];
 
-    expect(result.finalBalance).toBeCloseTo(1300);
-    expect(result.totalReturn).toBeCloseTo(30);
-  });
-
-  test('should_use_linear_pnl_for_shorts', () => {
-    const csvData = [...warmup(100), bar(100), bar(50)];
-    const result = runBacktest(csvData, Array(csvData.length).fill(200), baseConfig);
-
-    expect(result.finalBalance).toBeCloseTo(1500);
-  });
-
-  test('should_charge_opening_fee_on_sidelined_capital_too', () => {
-    const csvData = [...warmup(100), bar(100), bar(150), bar(120), bar(40)];
-    const atrValues = Array(csvData.length).fill(5);
-    const config: BacktestConfig = { ...baseConfig, feeRate: 1, atr: { period: 10, multiplier: 2, closePercent: 100 } };
-    const result = runBacktest(csvData, Array(csvData.length).fill(90), config, atrValues);
-
-    const transition = result.days.find(d => d.action === 'TRANSITION_LONG_TO_SHORT');
-    const sidelined = result.days.find(d => d.action === 'ATR_PARTIAL_CLOSE')!.sidelineValue;
-    // Closing the emptied long costs nothing; the new short is sized on (and charged on) the sidelined cash.
-    expect(transition?.fees).toBeCloseTo(sidelined * 0.01);
-    expect(transition?.position?.entryValue).toBeCloseTo(sidelined * 0.99);
+    expect(flip.fees).toBeCloseTo(sidelined * 0.01, 10);
+    expect(flip.position?.entryValue).toBeCloseTo(sidelined * 0.99, 10);
   });
 });

@@ -36,7 +36,7 @@ GitHub Actions (`cloudflare-pages.yml`):
 |------|-------|---------------|
 | Backtest engine | 10 test files | Optimizer (end-to-end), runner, position manager, SMA/ATR calculators, fee calculator, trailing stops, leverage configs, top-k heap, baseline |
 | Lib utilities | 6 test files | CSV validator, strategy validator, format functions, calculations (position size, profit metrics, validation), chart data, downsampling |
-| Components | 7 test files | Results table, optimization progress, day-by-day table, optimal strategy card, SMA comparison, position-size-calculator, profit-calculator |
+| Components | 6 test files | Results table (incl. SMA comparison and all-configurations sections), optimization progress, day-by-day table, optimal strategy card, position-size-calculator, profit-calculator |
 | Hooks | 1 test file | useOptimization |
 
 ### Testing Stack
@@ -45,6 +45,7 @@ GitHub Actions (`cloudflare-pages.yml`):
 - **DOM:** happy-dom (lightweight, fast)
 - **Component testing:** @testing-library/react + @testing-library/user-event
 - **Pattern:** Tests colocated with source (`foo.ts` → `foo.test.ts`)
+- **Approach:** One test per behaviour or branch boundary; cases that differ only in data use `test.each`. Engine rules are pinned with end-to-end `runBacktest`/`runOptimization` scenarios rather than per-helper variants.
 
 ## Lint Configuration
 

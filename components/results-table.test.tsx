@@ -1,7 +1,8 @@
 import { describe, expect, test, afterEach } from 'bun:test';
-import { render, screen, cleanup, fireEvent } from '@testing-library/react';
+import { render, screen, cleanup, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { ResultsTable } from './results-table';
-import type { BacktestResult, BuyAndHoldBaseline } from '@/lib/backtest/types';
+import type { BacktestResultSummary, BuyAndHoldBaseline } from '@/lib/backtest/types';
 
 afterEach(() => {
   cleanup();
@@ -20,558 +21,314 @@ function createMockBaseline(overrides: Partial<BuyAndHoldBaseline> = {}): BuyAnd
   };
 }
 
-function createMockResult(overrides: Partial<BacktestResult> = {}): BacktestResult {
+function createMockResult(
+  overrides: Partial<Omit<BacktestResultSummary, 'config'>> & { smaPeriod?: number; config?: Partial<BacktestResultSummary['config']> } = {}
+): BacktestResultSummary {
+  const { smaPeriod = 20, config, ...rest } = overrides;
   return {
     config: {
-      smaPeriod: 20,
+      smaPeriod,
       longLeverage: 1,
       shortLeverage: 1,
       startingCapital: 1000,
       feeRate: 0.1,
+      ...config,
     },
-    days: [],
     finalBalance: 1100,
     totalReturn: 10,
     totalFees: 10,
     totalTrades: 5,
+    atrTriggerCount: 0,
     isLiquidated: false,
-    ...overrides,
+    ...rest,
   };
 }
 
-function expandAllConfigurations() {
-  fireEvent.click(screen.getByText('All Configurations'));
+const liquidated = { isLiquidated: true, liquidationDate: '2024-06-10' } as const;
+
+async function expandSection(title: string) {
+  await userEvent.setup().click(screen.getByText(title));
+}
+
+function getTable(firstHeader: string) {
+  const table = screen.getAllByRole('table').find((t) => within(t).queryByText(firstHeader) !== null);
+  return table!;
+}
+
+const getSmaTable = () => getTable('SMA Period');
+const getAllConfigsTable = () => getTable('Long Lev');
+
+function getBodyRows(table: HTMLElement) {
+  return within(table).getAllByRole('row').slice(1);
+}
+
+async function renderSmaTable(results: BacktestResultSummary[], baseline: BuyAndHoldBaseline | null = null) {
+  render(<ResultsTable results={results} baseline={baseline} />);
+  await expandSection('SMA Period Comparison');
+  return getSmaTable();
+}
+
+async function renderAllConfigs(results: BacktestResultSummary[], baseline: BuyAndHoldBaseline | null = null) {
+  render(<ResultsTable results={results} baseline={baseline} />);
+  await expandSection('All Configurations');
+  return getAllConfigsTable();
 }
 
 describe('ResultsTable', () => {
-  describe('empty state', () => {
+  describe('summary', () => {
     test('should_return_null_when_results_empty', () => {
       const { container } = render(<ResultsTable results={[]} baseline={null} />);
       expect(container.firstChild).toBeNull();
     });
-  });
 
-  describe('rendering with data', () => {
-    test('should_render_card_with_results', () => {
-      const results = [createMockResult()];
-      render(<ResultsTable results={results} baseline={null} />);
-      expect(screen.getByText('Backtest Results')).toBeDefined();
+    test('should_render_title_and_configuration_count', () => {
+      render(<ResultsTable results={[createMockResult(), createMockResult({ smaPeriod: 30 })]} baseline={null} assetName="BTC" />);
+      expect(screen.getByText('BTC Backtest Results')).toBeDefined();
+      expect(screen.getByText('2 configurations tested')).toBeDefined();
+      expect(screen.queryByText(/showing top/)).toBeNull();
     });
 
-    test('should_display_configuration_count', () => {
+    test('should_compute_metrics_from_results_excluding_liquidated_from_profitable', () => {
       const results = [
-        createMockResult({ config: { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 } }),
-        createMockResult({ config: { smaPeriod: 30, longLeverage: 2, shortLeverage: 2, startingCapital: 1000, feeRate: 0.1 } }),
-        createMockResult({ config: { smaPeriod: 40, longLeverage: 3, shortLeverage: 3, startingCapital: 1000, feeRate: 0.1 } }),
+        createMockResult({ totalReturn: 50, ...liquidated }),
+        createMockResult({ totalReturn: 10 }),
+        createMockResult({ totalReturn: -5 }),
+        createMockResult({ totalReturn: 20 }),
       ];
-      render(<ResultsTable results={results} baseline={null} />);
-      expect(screen.getByText('3 configurations tested')).toBeDefined();
+      const { container } = render(<ResultsTable results={results} baseline={null} />);
+      const metrics = Array.from(container.querySelectorAll('.text-2xl.font-bold')).map((el) => el.textContent);
+      expect(metrics).toEqual(['4', '2', '1', '25.0%']);
+      for (const label of ['Total Configs', 'Profitable', 'Liquidated', 'Liquidation Rate']) {
+        expect(screen.getByText(label)).toBeDefined();
+      }
     });
 
-    test('should_render_table_headers', () => {
-      const results = [createMockResult()];
+    test.each([
+      { name: 'no', results: [createMockResult(), createMockResult()], rate: '0.0%' },
+      { name: 'all', results: [createMockResult(liquidated), createMockResult(liquidated)], rate: '100.0%' },
+    ])('should_show_$rate_liquidation_rate_when_$name_liquidated', ({ results, rate }) => {
       render(<ResultsTable results={results} baseline={null} />);
-      expandAllConfigurations();
-      expect(screen.getByText('SMA')).toBeDefined();
-      expect(screen.getByText('Long Lev')).toBeDefined();
-      expect(screen.getByText('Short Lev')).toBeDefined();
-      expect(screen.getByText('ATR Config')).toBeDefined();
-      expect(screen.getByText('Final Balance')).toBeDefined();
-      expect(screen.getByText('Return')).toBeDefined();
-      expect(screen.getByText('Trades')).toBeDefined();
-      expect(screen.getByText('Status')).toBeDefined();
-      expect(screen.getByText('Liquidation Date')).toBeDefined();
+      expect(screen.getByText(rate)).toBeDefined();
     });
 
-    test('should_render_result_rows', () => {
-      const results = [
-        createMockResult({
-          config: { smaPeriod: 25, longLeverage: 2, shortLeverage: 1.5, startingCapital: 1000, feeRate: 0.1 },
-          totalTrades: 42,
-        }),
-      ];
-      render(<ResultsTable results={results} baseline={null} />);
-      expandAllConfigurations();
-      expect(screen.getByText('25')).toBeDefined();
-      expect(screen.getByText('2x')).toBeDefined();
-      expect(screen.getByText('1.5x')).toBeDefined();
-      expect(screen.getByText('42')).toBeDefined();
-    });
-  });
-
-  describe('metrics calculations', () => {
-    test('should_use_stats_across_all_tested_configs_when_results_are_truncated', () => {
-      const results = [createMockResult({ totalReturn: 10 })];
+    test('should_use_stats_and_show_truncation_note_when_results_truncated', () => {
       const { container } = render(
-        <ResultsTable results={results} baseline={null} isTruncated stats={{ total: 5000, profitable: 1200, liquidated: 2500 }} />
+        <ResultsTable results={[createMockResult()]} baseline={null} isTruncated stats={{ total: 5000, profitable: 1200, liquidated: 2500 }} />
       );
       const metrics = Array.from(container.querySelectorAll('.text-2xl.font-bold')).map((el) => el.textContent);
       expect(metrics).toEqual(['5000', '1200', '2500', '50.0%']);
+      expect(screen.getByText('5000 configurations tested')).toBeDefined();
+      expect(screen.getByText(/showing top 1000 results/)).toBeDefined();
     });
 
-    test('should_calculate_total_count', () => {
-      const results = [
-        createMockResult(),
-        createMockResult(),
-        createMockResult(),
-      ];
-      const { container } = render(<ResultsTable results={results} baseline={null} />);
-      const totalConfigElement = container.querySelector('.text-2xl.font-bold');
-      expect(totalConfigElement?.textContent).toBe('3');
-    });
-
-    test('should_calculate_profitable_count', () => {
-      const results = [
-        createMockResult({ totalReturn: 10, isLiquidated: false }),
-        createMockResult({ totalReturn: 20, isLiquidated: false }),
-        createMockResult({ totalReturn: -5, isLiquidated: false }),
-      ];
-      const { container } = render(<ResultsTable results={results} baseline={null} />);
-      const profitableElement = container.querySelector('.text-\\[var\\(--profit-green\\)\\].text-2xl.font-bold');
-      expect(profitableElement?.textContent).toBe('2');
-    });
-
-    test('should_calculate_liquidated_count', () => {
-      const results = [
-        createMockResult({ isLiquidated: true, liquidationDate: '2024-06-10' }),
-        createMockResult({ isLiquidated: false }),
-        createMockResult({ isLiquidated: true, liquidationDate: '2024-06-11' }),
-      ];
-      const { container } = render(<ResultsTable results={results} baseline={null} />);
-      const metrics = container.querySelectorAll('.text-2xl.font-bold');
-      const liquidatedElement = metrics[2];
-      expect(liquidatedElement?.textContent).toBe('2');
-    });
-
-    test('should_calculate_liquidation_rate', () => {
-      const results = [
-        createMockResult({ isLiquidated: true, liquidationDate: '2024-06-10' }),
-        createMockResult({ isLiquidated: false }),
-        createMockResult({ isLiquidated: false }),
-        createMockResult({ isLiquidated: false }),
-      ];
-      render(<ResultsTable results={results} baseline={null} />);
-      expect(screen.getByText('25.0%')).toBeDefined();
-    });
-
-    test('should_exclude_liquidated_from_profitable_count', () => {
-      const results = [
-        createMockResult({ totalReturn: 50, isLiquidated: true, liquidationDate: '2024-06-10' }),
-        createMockResult({ totalReturn: 10, isLiquidated: false }),
-      ];
-      const { container } = render(<ResultsTable results={results} baseline={null} />);
-      const profitableElement = container.querySelector('.text-\\[var\\(--profit-green\\)\\].text-2xl.font-bold');
-      expect(profitableElement?.textContent).toBe('1');
-    });
-
-    test('should_handle_zero_liquidation_rate', () => {
-      const results = [
-        createMockResult({ isLiquidated: false }),
-        createMockResult({ isLiquidated: false }),
-      ];
-      render(<ResultsTable results={results} baseline={null} />);
-      expect(screen.getByText('0.0%')).toBeDefined();
-    });
-
-    test('should_handle_100_percent_liquidation_rate', () => {
-      const results = [
-        createMockResult({ isLiquidated: true, liquidationDate: '2024-06-10' }),
-        createMockResult({ isLiquidated: true, liquidationDate: '2024-06-11' }),
-      ];
-      render(<ResultsTable results={results} baseline={null} />);
-      expect(screen.getByText('100.0%')).toBeDefined();
-    });
-  });
-
-  describe('sorting', () => {
-    test('should_sort_liquidated_to_bottom', () => {
-      const results = [
-        createMockResult({ totalReturn: 10, isLiquidated: false, config: { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 } }),
-        createMockResult({ totalReturn: 50, isLiquidated: true, liquidationDate: '2024-06-10', config: { smaPeriod: 30, longLeverage: 2, shortLeverage: 2, startingCapital: 1000, feeRate: 0.1 } }),
-        createMockResult({ totalReturn: 20, isLiquidated: false, config: { smaPeriod: 40, longLeverage: 1.5, shortLeverage: 1.5, startingCapital: 1000, feeRate: 0.1 } }),
-      ];
-      render(<ResultsTable results={results} baseline={null} />);
-      expandAllConfigurations();
-      const rows = screen.getAllByRole('row');
-      const lastRow = rows[rows.length - 1];
-      expect(lastRow.textContent).toContain('LIQUIDATED');
-    });
-
-    test('should_sort_non_liquidated_by_return_descending', () => {
-      const results = [
-        createMockResult({ totalReturn: 10, isLiquidated: false, finalBalance: 1100}),
-        createMockResult({ totalReturn: 50, isLiquidated: false, finalBalance: 1500}),
-        createMockResult({ totalReturn: 30, isLiquidated: false, finalBalance: 1300}),
-      ];
-      render(<ResultsTable results={results} baseline={null} />);
-      expandAllConfigurations();
-      const rows = screen.getAllByRole('row');
-      expect(rows[1].textContent).toContain('+50.00%');
-      expect(rows[2].textContent).toContain('+30.00%');
-      expect(rows[3].textContent).toContain('+10.00%');
-    });
-
-    test('should_maintain_sort_with_mixed_results', () => {
-      const results = [
-        createMockResult({ totalReturn: 10, isLiquidated: false }),
-        createMockResult({ totalReturn: -100, isLiquidated: true, liquidationDate: '2024-06-10' }),
-        createMockResult({ totalReturn: 30, isLiquidated: false }),
-        createMockResult({ totalReturn: -100, isLiquidated: true, liquidationDate: '2024-06-11' }),
-        createMockResult({ totalReturn: 20, isLiquidated: false }),
-      ];
-      render(<ResultsTable results={results} baseline={null} />);
-      expandAllConfigurations();
-      const rows = screen.getAllByRole('row');
-      const activeBadges = screen.getAllByText('Active');
-      const liquidatedBadges = screen.getAllByText('LIQUIDATED');
-      expect(activeBadges.length).toBe(3);
-      expect(liquidatedBadges.length).toBe(2);
-    });
-  });
-
-  describe('formatting functions', () => {
-    test('should_format_currency_correctly', () => {
-      const results = [createMockResult({ finalBalance: 1234.56})];
-      render(<ResultsTable results={results} baseline={null} />);
-      expandAllConfigurations();
-      expect(screen.getByText('$1,234.56')).toBeDefined();
-    });
-
-    test('should_format_large_currency_values', () => {
-      const results = [createMockResult({ finalBalance: 1234567.89})];
-      render(<ResultsTable results={results} baseline={null} />);
-      expandAllConfigurations();
-      expect(screen.getByText('$1,234,567.89')).toBeDefined();
-    });
-
-    test('should_format_zero_currency', () => {
-      const results = [createMockResult({ finalBalance: 0, isLiquidated: true, liquidationDate: '2024-06-10' })];
-      render(<ResultsTable results={results} baseline={null} />);
-      expandAllConfigurations();
-      expect(screen.getByText('$0.00')).toBeDefined();
-    });
-
-    test('should_format_positive_percent_with_plus_sign', () => {
-      const results = [createMockResult({ totalReturn: 15.456 })];
-      render(<ResultsTable results={results} baseline={null} />);
-      expandAllConfigurations();
-      expect(screen.getByText('+15.46%')).toBeDefined();
-    });
-
-    test('should_format_negative_percent_without_plus_sign', () => {
-      const results = [createMockResult({ totalReturn: -12.345 })];
-      render(<ResultsTable results={results} baseline={null} />);
-      expandAllConfigurations();
-      expect(screen.getByText('-12.35%')).toBeDefined();
-    });
-
-    test('should_format_zero_percent', () => {
-      const results = [createMockResult({ totalReturn: 0 })];
-      render(<ResultsTable results={results} baseline={null} />);
-      expandAllConfigurations();
-      expect(screen.getByText('+0.00%')).toBeDefined();
-    });
-
-    test('should_format_atr_config_when_present', () => {
-      const results = [
-        createMockResult({
-          config: {
-            smaPeriod: 20,
-            longLeverage: 1,
-            shortLeverage: 1,
-            startingCapital: 1000,
-            feeRate: 0.1,
-            atr: { period: 14, multiplier: 3, closePercent: 50 }
-          }
-        })
-      ];
-      render(<ResultsTable results={results} baseline={null} />);
-      expandAllConfigurations();
-      expect(screen.getByText('14/3/50%')).toBeDefined();
-    });
-
-    test('should_format_atr_config_with_different_values', () => {
-      const results = [
-        createMockResult({
-          config: {
-            smaPeriod: 20,
-            longLeverage: 1,
-            shortLeverage: 1,
-            startingCapital: 1000,
-            feeRate: 0.1,
-            atr: { period: 20, multiplier: 2.5, closePercent: 25 }
-          }
-        })
-      ];
-      render(<ResultsTable results={results} baseline={null} />);
-      expandAllConfigurations();
-      expect(screen.getByText('20/2.5/25%')).toBeDefined();
-    });
-
-    test('should_show_dash_when_no_atr_config', () => {
-      const results = [createMockResult({ config: { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 } })];
-      render(<ResultsTable results={results} baseline={null} />);
-      expandAllConfigurations();
-      const cells = screen.getAllByText('-');
-      expect(cells.length).toBeGreaterThan(0);
-    });
-  });
-
-  describe('liquidation display', () => {
-    test('should_show_liquidated_badge_when_liquidated', () => {
-      const results = [createMockResult({ isLiquidated: true, liquidationDate: '2024-06-10' })];
-      render(<ResultsTable results={results} baseline={null} />);
-      expandAllConfigurations();
-      expect(screen.getByText('LIQUIDATED')).toBeDefined();
-    });
-
-    test('should_show_active_badge_when_not_liquidated', () => {
-      const results = [createMockResult({ isLiquidated: false })];
-      render(<ResultsTable results={results} baseline={null} />);
-      expandAllConfigurations();
-      expect(screen.getByText('Active')).toBeDefined();
-    });
-
-    test('should_show_liquidation_date_when_liquidated', () => {
-      const results = [createMockResult({ isLiquidated: true, liquidationDate: '2024-06-10' })];
-      render(<ResultsTable results={results} baseline={null} />);
-      expandAllConfigurations();
-      expect(screen.getByText('2024-06-10')).toBeDefined();
-    });
-
-    test('should_show_dash_when_not_liquidated', () => {
-      const results = [createMockResult({ isLiquidated: false })];
-      render(<ResultsTable results={results} baseline={null} />);
-      expandAllConfigurations();
-      const cells = screen.getAllByText('-');
-      expect(cells.length).toBeGreaterThan(0);
-    });
-
-    test('should_show_dash_when_liquidation_date_undefined', () => {
-      const results = [createMockResult({ isLiquidated: true, liquidationDate: undefined })];
-      render(<ResultsTable results={results} baseline={null} />);
-      expandAllConfigurations();
-      const cells = screen.getAllByText('-');
-      expect(cells.length).toBeGreaterThan(0);
-    });
-
-    test('should_apply_destructive_styling_to_liquidated_row', () => {
-      const results = [createMockResult({ isLiquidated: true, liquidationDate: '2024-06-10' })];
-      const { container } = render(<ResultsTable results={results} baseline={null} />);
-      expandAllConfigurations();
-      const row = container.querySelector('.bg-destructive\\/10');
-      expect(row).not.toBeNull();
-    });
-
-    test('should_not_apply_destructive_styling_to_active_row', () => {
-      const results = [createMockResult({ isLiquidated: false })];
-      const { container } = render(<ResultsTable results={results} baseline={null} />);
-      expandAllConfigurations();
-      const rows = container.querySelectorAll('tbody tr');
-      expect(rows[0].className).not.toContain('bg-destructive');
-    });
-  });
-
-  describe('edge cases', () => {
-    test('should_handle_single_result', () => {
-      const results = [createMockResult()];
-      render(<ResultsTable results={results} baseline={null} />);
-      expect(screen.getByText('1 configurations tested')).toBeDefined();
-    });
-
-    test('should_handle_many_results', () => {
-      const results = Array.from({ length: 100 }, (_, i) =>
-        createMockResult({
-          config: { smaPeriod: 20 + i, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 },
-          totalReturn: i
-        })
-      );
-      render(<ResultsTable results={results} baseline={null} />);
-      expect(screen.getByText('100 configurations tested')).toBeDefined();
-    });
-
-    test('should_handle_extreme_negative_returns', () => {
-      const results = [createMockResult({ totalReturn: -99.99, finalBalance: 0.01})];
-      render(<ResultsTable results={results} baseline={null} />);
-      expandAllConfigurations();
-      expect(screen.getByText('-99.99%')).toBeDefined();
-    });
-
-    test('should_handle_extreme_positive_returns', () => {
-      const results = [createMockResult({ totalReturn: 9999.99, finalBalance: 100999.90})];
-      render(<ResultsTable results={results} baseline={null} />);
-      expandAllConfigurations();
-      expect(screen.getByText('+9999.99%')).toBeDefined();
-    });
-
-    test('should_handle_fractional_leverages', () => {
-      const results = [
-        createMockResult({
-          config: { smaPeriod: 20, longLeverage: 1.25, shortLeverage: 1.75, startingCapital: 1000, feeRate: 0.1 }
-        })
-      ];
-      render(<ResultsTable results={results} baseline={null} />);
-      expandAllConfigurations();
-      expect(screen.getByText('1.25x')).toBeDefined();
-      expect(screen.getByText('1.75x')).toBeDefined();
-    });
-
-    test('should_handle_mixed_dates_format', () => {
-      const results = [
-        createMockResult({ isLiquidated: true, liquidationDate: '2024-06-10' }),
-        createMockResult({ isLiquidated: true, liquidationDate: '1/1/2024' }),
-        createMockResult({ isLiquidated: true, liquidationDate: '162/1/2024' }),
-      ];
-      render(<ResultsTable results={results} baseline={null} />);
-      expandAllConfigurations();
-      expect(screen.getByText('2024-06-10')).toBeDefined();
-      expect(screen.getByText('1/1/2024')).toBeDefined();
-      expect(screen.getByText('162/1/2024')).toBeDefined();
-    });
-  });
-
-  describe('metrics grid display', () => {
-    test('should_display_all_four_metric_cards', () => {
-      const results = [createMockResult()];
-      render(<ResultsTable results={results} baseline={null} />);
-      expect(screen.getByText('Total Configs')).toBeDefined();
-      expect(screen.getByText('Profitable')).toBeDefined();
-      expect(screen.getByText('Liquidated')).toBeDefined();
-      expect(screen.getByText('Liquidation Rate')).toBeDefined();
-    });
-
-    test('should_show_zero_profitable_when_all_negative', () => {
-      const results = [
-        createMockResult({ totalReturn: -5, isLiquidated: false }),
-        createMockResult({ totalReturn: -10, isLiquidated: false }),
-      ];
-      const { container } = render(<ResultsTable results={results} baseline={null} />);
-      const profitableElement = container.querySelector('.text-\\[var\\(--profit-green\\)\\].text-2xl.font-bold');
-      expect(profitableElement?.textContent).toBe('0');
-    });
-
-    test('should_show_zero_liquidated_when_none_liquidated', () => {
-      const results = [
-        createMockResult({ isLiquidated: false }),
-        createMockResult({ isLiquidated: false }),
-      ];
-      const { container } = render(<ResultsTable results={results} baseline={null} />);
-      const metrics = container.querySelectorAll('.text-2xl.font-bold');
-      const liquidatedElement = metrics[2];
-      expect(liquidatedElement?.textContent).toBe('0');
-    });
-  });
-
-  describe('baseline display', () => {
-    test('should_not_render_baseline_card_when_null', () => {
-      const results = [createMockResult()];
-      render(<ResultsTable results={results} baseline={null} />);
+    test('should_render_baseline_card_only_when_baseline_provided', () => {
+      const { rerender } = render(<ResultsTable results={[createMockResult()]} baseline={null} />);
       expect(screen.queryByText('Buy & Hold Baseline')).toBeNull();
-    });
 
-    test('should_render_baseline_card_when_provided', () => {
-      const results = [createMockResult()];
-      const baseline = createMockBaseline();
-      render(<ResultsTable results={results} baseline={baseline} />);
+      rerender(<ResultsTable results={[createMockResult()]} baseline={createMockBaseline({ purchasePrice: 150, finalValue: 1500 })} />);
       expect(screen.getByText('Buy & Hold Baseline')).toBeDefined();
-    });
-
-    test('should_display_purchase_price_and_date', () => {
-      const results = [createMockResult()];
-      const baseline = createMockBaseline({ purchasePrice: 150, purchaseDate: '2024-07-15' });
-      render(<ResultsTable results={results} baseline={baseline} />);
       expect(screen.getByText('$150.00')).toBeDefined();
-      expect(screen.getByText('2024-07-15')).toBeDefined();
-    });
-
-    test('should_display_final_price_and_date', () => {
-      const results = [createMockResult()];
-      const baseline = createMockBaseline({ finalPrice: 180, finalDate: '2024-12-20' });
-      render(<ResultsTable results={results} baseline={baseline} />);
-      expect(screen.getByText('$180.00')).toBeDefined();
-      expect(screen.getByText('2024-12-20')).toBeDefined();
-    });
-
-    test('should_display_final_value', () => {
-      const results = [createMockResult()];
-      const baseline = createMockBaseline({ finalValue: 1500 });
-      render(<ResultsTable results={results} baseline={baseline} />);
       expect(screen.getByText('$1,500.00')).toBeDefined();
     });
+  });
 
-    test('should_display_percent_gain_positive', () => {
-      const results = [createMockResult()];
-      const baseline = createMockBaseline({ percentGain: 25.5 });
-      render(<ResultsTable results={results} baseline={baseline} />);
-      expect(screen.getByText('+25.50%')).toBeDefined();
+  describe('optimal strategy selection', () => {
+    test('should_feature_best_non_liquidated_result_ignoring_higher_liquidated_return', () => {
+      const results = [
+        createMockResult({ smaPeriod: 20, totalReturn: 10, finalBalance: 1100 }),
+        createMockResult({ smaPeriod: 30, totalReturn: 90, finalBalance: 1900, ...liquidated }),
+        createMockResult({ smaPeriod: 40, totalReturn: 30, finalBalance: 1300 }),
+      ];
+      render(<ResultsTable results={results} baseline={createMockBaseline()} />);
+      const card = screen.getByText('Optimal Strategy').closest('[data-slot="card"]') as HTMLElement;
+      expect(within(card).getByText('$1,300.00')).toBeDefined();
+      expect(within(card).getByText('+30.00% gain')).toBeDefined();
     });
 
-    test('should_display_percent_gain_negative', () => {
-      const results = [createMockResult()];
-      const baseline = createMockBaseline({ percentGain: -15.25 });
+    test.each([
+      { name: 'all_liquidated', results: [createMockResult(liquidated)], baseline: createMockBaseline() },
+      { name: 'no_baseline', results: [createMockResult()], baseline: null },
+    ])('should_not_render_optimal_strategy_when_$name', ({ results, baseline }) => {
       render(<ResultsTable results={results} baseline={baseline} />);
-      expect(screen.getByText('-15.25%')).toBeDefined();
+      expect(screen.queryByText('Optimal Strategy')).toBeNull();
     });
   });
 
-  describe('vs Hold column', () => {
-    test('should_render_vs_hold_header', () => {
-      const results = [createMockResult()];
-      render(<ResultsTable results={results} baseline={null} />);
-      expandAllConfigurations();
-      expect(screen.getByText('vs Hold')).toBeDefined();
+  describe('SMA period comparison', () => {
+    test('should_show_period_count_and_one_row_per_sma_period', async () => {
+      const results = [
+        createMockResult({ smaPeriod: 20, finalBalance: 1100 }),
+        createMockResult({ smaPeriod: 20, finalBalance: 1200, config: { longLeverage: 2 } }),
+        createMockResult({ smaPeriod: 30, finalBalance: 1300 }),
+      ];
+      const table = await renderSmaTable(results);
+      expect(screen.getByText('(2 periods)')).toBeDefined();
+      expect(getBodyRows(table)).toHaveLength(2);
+      for (const header of ['SMA Period', 'Final Balance', '% Gain', '% vs Hold', 'Status']) {
+        expect(within(table).getByText(header)).toBeDefined();
+      }
     });
 
-    test('should_show_dash_when_no_baseline', () => {
-      const results = [createMockResult({ finalBalance: 1200})];
-      render(<ResultsTable results={results} baseline={null} />);
-      expandAllConfigurations();
-      const cells = screen.getAllByText('-');
-      expect(cells.length).toBeGreaterThan(0);
+    test.each([
+      { name: 'non_liquidated_beats_higher_liquidated', a: { finalBalance: 2000, ...liquidated }, b: { finalBalance: 1100 }, shown: '$1,100.00', hidden: '$2,000.00' },
+      { name: 'higher_balance_wins_when_both_liquidated', a: { finalBalance: 800, ...liquidated }, b: { finalBalance: 900, ...liquidated }, shown: '$900.00', hidden: '$800.00' },
+      { name: 'higher_balance_wins_when_both_non_liquidated', a: { finalBalance: 1300 }, b: { finalBalance: 1700 }, shown: '$1,700.00', hidden: '$1,300.00' },
+    ])('should_keep_best_result_per_period_when_$name', async ({ a, b, shown, hidden }) => {
+      const table = await renderSmaTable([
+        createMockResult({ smaPeriod: 20, ...a }),
+        createMockResult({ smaPeriod: 20, config: { longLeverage: 2 }, ...b }),
+      ]);
+      expect(within(table).getByText(shown)).toBeDefined();
+      expect(within(table).queryByText(hidden)).toBeNull();
     });
 
-    test('should_calculate_vs_hold_correctly', () => {
-      const results = [createMockResult({ finalBalance: 1500})];
-      const baseline = createMockBaseline({ finalValue: 1200 });
-      render(<ResultsTable results={results} baseline={baseline} />);
-      expandAllConfigurations();
-      expect(screen.getByText('+25.00%')).toBeDefined();
+    test('should_sort_by_final_balance_descending_with_liquidated_last_by_default', async () => {
+      const table = await renderSmaTable([
+        createMockResult({ smaPeriod: 20, finalBalance: 1100 }),
+        createMockResult({ smaPeriod: 30, finalBalance: 1500, ...liquidated }),
+        createMockResult({ smaPeriod: 40, finalBalance: 1300 }),
+      ]);
+      const rows = getBodyRows(table);
+      expect(rows[0].textContent).toContain('$1,300.00');
+      expect(rows[1].textContent).toContain('$1,100.00');
+      expect(rows[2].textContent).toContain('LIQUIDATED');
     });
 
-    test('should_show_green_when_vs_hold_above_5_percent', () => {
-      const results = [createMockResult({ finalBalance: 1300})];
-      const baseline = createMockBaseline({ finalValue: 1200 });
-      const { container } = render(<ResultsTable results={results} baseline={baseline} />);
-      expandAllConfigurations();
-      const tableBody = container.querySelector('tbody');
-      const allCells = tableBody?.querySelectorAll('td');
-      const vsHoldCell = allCells?.[6];
-      expect(vsHoldCell?.textContent).toContain('+8.33%');
-      expect(vsHoldCell?.querySelector('.text-\\[var\\(--profit-green\\)\\]')).not.toBeNull();
+    test('should_toggle_sort_direction_when_header_clicked_twice', async () => {
+      const user = userEvent.setup();
+      const table = await renderSmaTable([
+        createMockResult({ smaPeriod: 20, finalBalance: 1100 }),
+        createMockResult({ smaPeriod: 30, finalBalance: 1500 }),
+      ]);
+      await user.click(within(table).getByText('Final Balance').closest('th')!);
+      expect(getBodyRows(table)[0].textContent).toContain('$1,100.00');
+      await user.click(within(table).getByText('Final Balance').closest('th')!);
+      expect(getBodyRows(table)[0].textContent).toContain('$1,500.00');
     });
 
-    test('should_show_red_when_vs_hold_below_minus_5_percent', () => {
-      const results = [createMockResult({ finalBalance: 1100})];
-      const baseline = createMockBaseline({ finalValue: 1200 });
-      const { container } = render(<ResultsTable results={results} baseline={baseline} />);
-      expandAllConfigurations();
-      const tableBody = container.querySelector('tbody');
-      const allCells = tableBody?.querySelectorAll('td');
-      const vsHoldCell = allCells?.[6];
-      expect(vsHoldCell?.textContent).toContain('-8.33%');
-      expect(vsHoldCell?.querySelector('.text-destructive')).not.toBeNull();
+    test('should_sort_by_sma_period_and_percent_gain', async () => {
+      const user = userEvent.setup();
+      const table = await renderSmaTable([
+        createMockResult({ smaPeriod: 40, totalReturn: 30 }),
+        createMockResult({ smaPeriod: 20, totalReturn: 10 }),
+        createMockResult({ smaPeriod: 30, totalReturn: 50 }),
+      ]);
+      await user.click(within(table).getByText('SMA Period').closest('th')!);
+      expect(getBodyRows(table).map((r) => r.textContent?.match(/\d+ days/)?.[0])).toEqual(['40 days', '30 days', '20 days']);
+
+      await user.click(within(table).getByText('% Gain').closest('th')!);
+      expect(getBodyRows(table).map((r) => r.textContent?.match(/[+-][\d.]+%/)?.[0])).toEqual(['+50.00%', '+30.00%', '+10.00%']);
     });
 
-    test('should_show_muted_when_vs_hold_within_5_percent', () => {
-      const results = [createMockResult({ finalBalance: 1200})];
-      const baseline = createMockBaseline({ finalValue: 1200 });
-      const { container } = render(<ResultsTable results={results} baseline={baseline} />);
-      expandAllConfigurations();
-      const tableBody = container.querySelector('tbody');
-      const allCells = tableBody?.querySelectorAll('td');
-      const vsHoldCell = allCells?.[6];
-      expect(vsHoldCell?.textContent).toContain('+0.00%');
-      expect(vsHoldCell?.querySelector('.text-muted-foreground')).not.toBeNull();
+    test('should_sort_by_vs_hold_when_baseline_provided', async () => {
+      const user = userEvent.setup();
+      const table = await renderSmaTable(
+        [
+          createMockResult({ smaPeriod: 20, finalBalance: 1300 }),
+          createMockResult({ smaPeriod: 30, finalBalance: 1500 }),
+          createMockResult({ smaPeriod: 40, finalBalance: 1400 }),
+        ],
+        createMockBaseline({ finalValue: 1200 })
+      );
+      await user.click(within(table).getByText('% vs Hold').closest('th')!);
+      expect(getBodyRows(table).map((r) => r.textContent?.match(/\$[\d,.]+/)?.[0])).toEqual(['$1,500.00', '$1,400.00', '$1,300.00']);
+    });
+
+    test('should_put_liquidated_first_when_sorting_by_status', async () => {
+      const user = userEvent.setup();
+      const table = await renderSmaTable([
+        createMockResult({ smaPeriod: 20 }),
+        createMockResult({ smaPeriod: 30, ...liquidated }),
+      ]);
+      await user.click(within(table).getByText('Status').closest('th')!);
+      expect(getBodyRows(table)[0].textContent).toContain('LIQUIDATED');
+    });
+
+    test('should_show_badge_and_date_for_liquidated_and_dash_for_active_with_no_baseline_vs_hold', async () => {
+      const table = await renderSmaTable([
+        createMockResult({ smaPeriod: 20 }),
+        createMockResult({ smaPeriod: 30, ...liquidated }),
+      ]);
+      const [active, dead] = getBodyRows(table);
+      expect(within(active).getAllByRole('cell')[3].textContent).toBe('-');
+      expect(within(active).getAllByRole('cell')[4].textContent).toBe('-');
+      expect(within(dead).getByText('LIQUIDATED')).toBeDefined();
+      expect(within(dead).getByText('2024-06-10')).toBeDefined();
+      expect(dead.className).toContain('bg-destructive/10');
+    });
+
+    test('should_paginate_at_25_rows_per_page', async () => {
+      const user = userEvent.setup();
+      const results = Array.from({ length: 75 }, (_, i) => createMockResult({ smaPeriod: 20 + i }));
+      const table = await renderSmaTable(results);
+      const card = screen.getByText('SMA Period Comparison').closest('[data-slot="card"]') as HTMLElement;
+
+      expect(getBodyRows(table)).toHaveLength(25);
+      expect(within(card).getByText('1-25 of 75')).toBeDefined();
+
+      await user.click(within(card).getByLabelText('Next page'));
+      expect(within(card).getByText('26-50 of 75')).toBeDefined();
+
+      await user.click(within(card).getByLabelText('Previous page'));
+      expect(within(card).getByText('1-25 of 75')).toBeDefined();
+    });
+
+    test('should_hide_pagination_when_25_or_fewer_periods', async () => {
+      const results = Array.from({ length: 25 }, (_, i) => createMockResult({ smaPeriod: 20 + i }));
+      await renderSmaTable(results);
+      const card = screen.getByText('SMA Period Comparison').closest('[data-slot="card"]') as HTMLElement;
+      expect(within(card).queryByLabelText('Next page')).toBeNull();
+    });
+  });
+
+  describe('all configurations', () => {
+    test('should_render_headers_and_row_fields', async () => {
+      const table = await renderAllConfigs([
+        createMockResult({
+          smaPeriod: 25,
+          totalTrades: 42,
+          config: { longLeverage: 2, shortLeverage: 1.5, atr: { period: 14, multiplier: 3, closePercent: 50 } },
+        }),
+      ]);
+      for (const header of ['SMA', 'Long Lev', 'Short Lev', 'ATR Config', 'Final Balance', 'Return', 'vs Hold', 'Trades', 'Status', 'Liquidation Date']) {
+        expect(within(table).getByText(header)).toBeDefined();
+      }
+      const row = getBodyRows(table)[0];
+      for (const text of ['25', '2x', '1.5x', '14/3/50%', '42', 'Active']) {
+        expect(within(row).getByText(text)).toBeDefined();
+      }
+    });
+
+    test('should_sort_by_return_descending_with_liquidated_last', async () => {
+      const table = await renderAllConfigs([
+        createMockResult({ totalReturn: 10 }),
+        createMockResult({ totalReturn: 90, ...liquidated }),
+        createMockResult({ totalReturn: 50 }),
+        createMockResult({ totalReturn: 30 }),
+      ]);
+      const rows = getBodyRows(table);
+      expect(rows.map((r) => r.textContent?.match(/[+-][\d.]+%/)?.[0])).toEqual(['+50.00%', '+30.00%', '+10.00%', '+90.00%']);
+      expect(rows[3].textContent).toContain('LIQUIDATED');
+    });
+
+    test('should_show_liquidation_date_and_destructive_row_only_for_liquidated', async () => {
+      const table = await renderAllConfigs([createMockResult(), createMockResult(liquidated)]);
+      const [active, dead] = getBodyRows(table);
+      expect(within(active).getByText('Active')).toBeDefined();
+      expect(active.className).not.toContain('bg-destructive');
+      expect(within(dead).getByText('LIQUIDATED')).toBeDefined();
+      expect(within(dead).getByText('2024-06-10')).toBeDefined();
+      expect(dead.className).toContain('bg-destructive/10');
+    });
+
+    test('should_show_vs_hold_only_when_baseline_provided', async () => {
+      const results = [createMockResult({ finalBalance: 1500 })];
+      const withBaseline = await renderAllConfigs(results, createMockBaseline({ finalValue: 1200 }));
+      expect(within(getBodyRows(withBaseline)[0]).getByText('+25.00%')).toBeDefined();
+
+      cleanup();
+      const withoutBaseline = await renderAllConfigs(results);
+      expect(within(getBodyRows(withoutBaseline)[0]).getAllByRole('cell')[6].textContent).toBe('-');
     });
   });
 });

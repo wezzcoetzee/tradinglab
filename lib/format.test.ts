@@ -17,345 +17,143 @@ import {
 } from './format';
 
 describe('formatCurrency', () => {
-  test('should_format_positive_value', () => {
-    expect(formatCurrency(1234.56)).toBe('$1,234.56');
-  });
-
-  test('should_format_zero', () => {
-    expect(formatCurrency(0)).toBe('$0.00');
-  });
-
-  test('should_format_negative_value', () => {
-    expect(formatCurrency(-1234.56)).toBe('-$1,234.56');
-  });
-
-  test('should_format_large_value', () => {
-    expect(formatCurrency(1234567.89)).toBe('$1,234,567.89');
+  test.each([
+    [1234.56, '$1,234.56'],
+    [0, '$0.00'],
+    [-1234.56, '-$1,234.56'],
+    [1234567.89, '$1,234,567.89'],
+  ])('should_format_%p', (value, expected) => {
+    expect(formatCurrency(value)).toBe(expected);
   });
 });
 
 describe('formatPercent', () => {
-  test('should_format_positive_with_plus_sign', () => {
-    expect(formatPercent(15.456)).toBe('+15.46%');
-  });
-
-  test('should_format_negative_without_plus_sign', () => {
-    expect(formatPercent(-12.345)).toBe('-12.35%');
-  });
-
-  test('should_format_zero_with_plus_sign', () => {
-    expect(formatPercent(0)).toBe('+0.00%');
+  test.each([
+    [15.456, '+15.46%'],
+    [-12.345, '-12.35%'],
+    [0, '+0.00%'],
+  ])('should_format_%p', (value, expected) => {
+    expect(formatPercent(value)).toBe(expected);
   });
 });
 
 describe('formatTime', () => {
-  test('should_format_seconds_only', () => {
-    expect(formatTime(5000)).toBe('5s');
-  });
-
-  test('should_format_minutes_and_seconds', () => {
-    expect(formatTime(125000)).toBe('2m 5s');
-  });
-
-  test('should_format_zero', () => {
-    expect(formatTime(0)).toBe('0s');
+  test.each([
+    [0, '0s'],
+    [5000, '5s'],
+    [60000, '1m 0s'],
+    [125000, '2m 5s'],
+  ])('should_format_%pms', (ms, expected) => {
+    expect(formatTime(ms)).toBe(expected);
   });
 });
 
 describe('formatNumber', () => {
-  test('should_format_with_commas', () => {
+  test('should_format_with_commas_and_round_decimals', () => {
     expect(formatNumber(1234)).toBe('1,234');
-  });
-
-  test('should_round_decimals', () => {
     expect(formatNumber(1234.56)).toBe('1,235');
   });
 });
 
 describe('getReturnColorClass', () => {
-  test('should_return_green_for_positive', () => {
-    expect(getReturnColorClass(10)).toBe('text-[var(--profit-green)]');
-  });
-
-  test('should_return_green_for_zero', () => {
-    expect(getReturnColorClass(0)).toBe('text-[var(--profit-green)]');
-  });
-
-  test('should_return_red_for_negative', () => {
-    expect(getReturnColorClass(-10)).toBe('text-destructive');
+  test.each([
+    [10, 'text-[var(--profit-green)]'],
+    [0, 'text-[var(--profit-green)]'],
+    [-10, 'text-destructive'],
+  ])('should_classify_%p', (value, expected) => {
+    expect(getReturnColorClass(value)).toBe(expected);
   });
 });
 
 describe('getVsHoldColorClass', () => {
-  test('should_return_green_when_above_5', () => {
-    expect(getVsHoldColorClass(10)).toBe('text-[var(--profit-green)]');
-  });
-
-  test('should_return_green_at_exactly_5_point_01', () => {
-    expect(getVsHoldColorClass(5.01)).toBe('text-[var(--profit-green)]');
-  });
-
-  test('should_return_yellow_at_exactly_5', () => {
-    expect(getVsHoldColorClass(5)).toBe('text-muted-foreground');
-  });
-
-  test('should_return_yellow_within_range', () => {
-    expect(getVsHoldColorClass(0)).toBe('text-muted-foreground');
-  });
-
-  test('should_return_yellow_at_exactly_minus_5', () => {
-    expect(getVsHoldColorClass(-5)).toBe('text-muted-foreground');
-  });
-
-  test('should_return_red_at_minus_5_point_01', () => {
-    expect(getVsHoldColorClass(-5.01)).toBe('text-destructive');
-  });
-
-  test('should_return_red_when_below_minus_5', () => {
-    expect(getVsHoldColorClass(-10)).toBe('text-destructive');
+  test.each([
+    [5.01, 'text-[var(--profit-green)]'],
+    [5, 'text-muted-foreground'],
+    [0, 'text-muted-foreground'],
+    [-5, 'text-muted-foreground'],
+    [-5.01, 'text-destructive'],
+  ])('should_classify_%p', (value, expected) => {
+    expect(getVsHoldColorClass(value)).toBe(expected);
   });
 });
 
 describe('formatAtrConfig', () => {
-  test('should_format_with_all_values', () => {
-    const atr = { period: 14, multiplier: 3, closePercent: 50 };
-    expect(formatAtrConfig(atr)).toBe('14/3/50%');
+  test('should_format_all_values', () => {
+    expect(formatAtrConfig({ period: 20, multiplier: 2.5, closePercent: 25 })).toBe('20/2.5/25%');
   });
 
-  test('should_format_with_decimal_multiplier', () => {
-    const atr = { period: 20, multiplier: 2.5, closePercent: 25 };
-    expect(formatAtrConfig(atr)).toBe('20/2.5/25%');
-  });
-
-  test('should_return_dash_when_undefined', () => {
+  test('should_return_dash_or_custom_value_when_undefined', () => {
     expect(formatAtrConfig(undefined)).toBe('-');
-  });
-
-  test('should_return_custom_empty_value', () => {
     expect(formatAtrConfig(undefined, 'None')).toBe('None');
   });
 });
 
 describe('calculateVsHold', () => {
-  test('should_calculate_positive_difference', () => {
-    const result = calculateVsHold(1500, 1200);
-    expect(result).toBe(25);
-  });
-
-  test('should_calculate_negative_difference', () => {
-    const result = calculateVsHold(900, 1200);
-    expect(result).toBe(-25);
-  });
-
-  test('should_calculate_zero_difference', () => {
-    const result = calculateVsHold(1200, 1200);
-    expect(result).toBe(0);
-  });
-
-  test('should_handle_decimal_values', () => {
-    const result = calculateVsHold(1300, 1200);
-    expect(result).toBeCloseTo(8.33, 2);
+  test.each([
+    [1500, 1200, 25],
+    [900, 1200, -25],
+    [1200, 1200, 0],
+  ])('should_calculate_%p_vs_%p', (final, baseline, expected) => {
+    expect(calculateVsHold(final, baseline)).toBe(expected);
   });
 });
 
 describe('getVsHoldBackgroundClass', () => {
-  describe('threshold at 50 percent', () => {
-    test('should_return_darkest_green_at_exactly_50', () => {
-      expect(getVsHoldBackgroundClass(50)).toBe('bg-[var(--profit-green)]/10');
-    });
+  const darkGreen = 'bg-[var(--profit-green)]/10';
+  const lightGreen = 'bg-[var(--profit-green)]/5';
+  const neutral = 'bg-muted/50';
+  const lightRed = 'bg-[var(--loss-red)]/5';
+  const darkRed = 'bg-[var(--loss-red)]/10';
 
-    test('should_return_darkest_green_above_50', () => {
-      expect(getVsHoldBackgroundClass(75)).toBe('bg-[var(--profit-green)]/10');
-    });
-
-    test('should_return_darkest_green_at_100', () => {
-      expect(getVsHoldBackgroundClass(100)).toBe('bg-[var(--profit-green)]/10');
-    });
-
-    test('should_return_darkest_green_at_extreme_positive', () => {
-      expect(getVsHoldBackgroundClass(1000)).toBe('bg-[var(--profit-green)]/10');
-    });
-  });
-
-  describe('threshold at 20 percent', () => {
-    test('should_return_light_green_at_exactly_20', () => {
-      expect(getVsHoldBackgroundClass(20)).toBe('bg-[var(--profit-green)]/5');
-    });
-
-    test('should_return_light_green_between_20_and_50', () => {
-      expect(getVsHoldBackgroundClass(35)).toBe('bg-[var(--profit-green)]/5');
-    });
-
-    test('should_return_light_green_at_49_point_99', () => {
-      expect(getVsHoldBackgroundClass(49.99)).toBe('bg-[var(--profit-green)]/5');
-    });
-
-    test('should_not_return_light_green_at_19_point_99', () => {
-      expect(getVsHoldBackgroundClass(19.99)).not.toBe('bg-[var(--profit-green)]/5');
-    });
-  });
-
-  describe('threshold at 0 percent', () => {
-    test('should_return_yellow_at_exactly_0', () => {
-      expect(getVsHoldBackgroundClass(0)).toBe('bg-muted/50');
-    });
-
-    test('should_return_yellow_between_0_and_20', () => {
-      expect(getVsHoldBackgroundClass(10)).toBe('bg-muted/50');
-    });
-
-    test('should_return_yellow_at_19_point_99', () => {
-      expect(getVsHoldBackgroundClass(19.99)).toBe('bg-muted/50');
-    });
-
-    test('should_return_yellow_at_0_point_01', () => {
-      expect(getVsHoldBackgroundClass(0.01)).toBe('bg-muted/50');
-    });
-  });
-
-  describe('threshold at minus 20 percent', () => {
-    test('should_return_orange_at_exactly_minus_20', () => {
-      expect(getVsHoldBackgroundClass(-20)).toBe('bg-[var(--loss-red)]/5');
-    });
-
-    test('should_return_orange_between_minus_20_and_0', () => {
-      expect(getVsHoldBackgroundClass(-10)).toBe('bg-[var(--loss-red)]/5');
-    });
-
-    test('should_return_orange_at_minus_0_point_01', () => {
-      expect(getVsHoldBackgroundClass(-0.01)).toBe('bg-[var(--loss-red)]/5');
-    });
-
-    test('should_return_orange_at_minus_19_point_99', () => {
-      expect(getVsHoldBackgroundClass(-19.99)).toBe('bg-[var(--loss-red)]/5');
-    });
-  });
-
-  describe('threshold below minus 20 percent', () => {
-    test('should_return_red_at_minus_20_point_01', () => {
-      expect(getVsHoldBackgroundClass(-20.01)).toBe('bg-[var(--loss-red)]/10');
-    });
-
-    test('should_return_red_at_minus_50', () => {
-      expect(getVsHoldBackgroundClass(-50)).toBe('bg-[var(--loss-red)]/10');
-    });
-
-    test('should_return_red_at_minus_100', () => {
-      expect(getVsHoldBackgroundClass(-100)).toBe('bg-[var(--loss-red)]/10');
-    });
-
-    test('should_return_red_at_extreme_negative', () => {
-      expect(getVsHoldBackgroundClass(-1000)).toBe('bg-[var(--loss-red)]/10');
-    });
-  });
-
-  describe('boundary value precision', () => {
-    test('should_handle_exactly_50', () => {
-      expect(getVsHoldBackgroundClass(50.0)).toBe('bg-[var(--profit-green)]/10');
-    });
-
-    test('should_handle_exactly_20', () => {
-      expect(getVsHoldBackgroundClass(20.0)).toBe('bg-[var(--profit-green)]/5');
-    });
-
-    test('should_handle_exactly_0', () => {
-      expect(getVsHoldBackgroundClass(0.0)).toBe('bg-muted/50');
-    });
-
-    test('should_handle_exactly_minus_20', () => {
-      expect(getVsHoldBackgroundClass(-20.0)).toBe('bg-[var(--loss-red)]/5');
-    });
-
-    test('should_handle_very_small_positive', () => {
-      expect(getVsHoldBackgroundClass(0.00001)).toBe('bg-muted/50');
-    });
-
-    test('should_handle_very_small_negative', () => {
-      expect(getVsHoldBackgroundClass(-0.00001)).toBe('bg-[var(--loss-red)]/5');
-    });
-  });
-
-  describe('edge cases', () => {
-    test('should_handle_positive_infinity', () => {
-      expect(getVsHoldBackgroundClass(Infinity)).toBe('bg-[var(--profit-green)]/10');
-    });
-
-    test('should_handle_negative_infinity', () => {
-      expect(getVsHoldBackgroundClass(-Infinity)).toBe('bg-[var(--loss-red)]/10');
-    });
-
-    test('should_handle_very_large_positive', () => {
-      expect(getVsHoldBackgroundClass(999999)).toBe('bg-[var(--profit-green)]/10');
-    });
-
-    test('should_handle_very_large_negative', () => {
-      expect(getVsHoldBackgroundClass(-999999)).toBe('bg-[var(--loss-red)]/10');
-    });
+  test.each([
+    [Infinity, darkGreen],
+    [50, darkGreen],
+    [49.99, lightGreen],
+    [20, lightGreen],
+    [19.99, neutral],
+    [0, neutral],
+    [-0.01, lightRed],
+    [-20, lightRed],
+    [-20.01, darkRed],
+    [-Infinity, darkRed],
+  ])('should_classify_%p', (value, expected) => {
+    expect(getVsHoldBackgroundClass(value)).toBe(expected);
   });
 });
 
 describe('formatDateTick', () => {
-  test('should_format_dd_mm_yyyy_to_mm_yy', () => {
-    expect(formatDateTick('15/06/2024')).toBe('06/24');
-  });
-
-  test('should_handle_single_digit_day', () => {
-    expect(formatDateTick('1/12/2023')).toBe('12/23');
-  });
-
-  test('should_handle_january', () => {
-    expect(formatDateTick('01/01/2020')).toBe('01/20');
+  test.each([
+    ['15/06/2024', '06/24'],
+    ['1/12/2023', '12/23'],
+  ])('should_format_%s', (input, expected) => {
+    expect(formatDateTick(input)).toBe(expected);
   });
 });
 
 describe('currencyTickFormatter', () => {
-  test('should_format_millions', () => {
-    expect(currencyTickFormatter(1_500_000)).toBe('$1.5M');
-  });
-
-  test('should_format_exactly_one_million', () => {
-    expect(currencyTickFormatter(1_000_000)).toBe('$1.0M');
-  });
-
-  test('should_format_thousands', () => {
-    expect(currencyTickFormatter(5_000)).toBe('$5K');
-  });
-
-  test('should_format_exactly_one_thousand', () => {
-    expect(currencyTickFormatter(1_000)).toBe('$1K');
-  });
-
-  test('should_format_values_below_thousand', () => {
-    expect(currencyTickFormatter(500)).toBe('$500');
-  });
-
-  test('should_format_zero', () => {
-    expect(currencyTickFormatter(0)).toBe('$0');
-  });
-
-  test('should_format_large_thousands', () => {
-    expect(currencyTickFormatter(250_000)).toBe('$250K');
+  test.each([
+    [1_500_000, '$1.5M'],
+    [1_000_000, '$1.0M'],
+    [999_999, '$1000K'],
+    [1_000, '$1K'],
+    [999, '$999'],
+    [0, '$0'],
+  ])('should_format_%p', (value, expected) => {
+    expect(currencyTickFormatter(value)).toBe(expected);
   });
 });
 
 describe('calculateBuyHoldValue', () => {
-  test('should_calculate_shares_times_current_price', () => {
-    // #given - $1000 / $50 = 20 shares, at $100 = $2000
-    expect(calculateBuyHoldValue(1000, 50, 100)).toBe(2000);
-  });
-
-  test('should_return_starting_capital_when_price_unchanged', () => {
-    expect(calculateBuyHoldValue(1000, 100, 100)).toBe(1000);
+  test.each([
+    [1000, 50, 100, 2000],
+    [1000, 100, 100, 1000],
+    [1000, 100, 50, 500],
+  ])('should_value_%p_bought_at_%p_now_%p', (capital, buy, now, expected) => {
+    expect(calculateBuyHoldValue(capital, buy, now)).toBe(expected);
   });
 
   test('should_handle_fractional_shares', () => {
-    // $1000 / $3 = 333.33... shares, at $6 = $2000
     expect(calculateBuyHoldValue(1000, 3, 6)).toBeCloseTo(2000, 5);
-  });
-
-  test('should_handle_price_decrease', () => {
-    // $1000 / $100 = 10 shares, at $50 = $500
-    expect(calculateBuyHoldValue(1000, 100, 50)).toBe(500);
   });
 });
 
