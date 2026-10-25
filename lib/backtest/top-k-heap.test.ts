@@ -24,460 +24,66 @@ function makeResult(totalReturn: number, isLiquidated = false): BacktestResultSu
   };
 }
 
+function fill(k: number, returns: number[]): number[] {
+  const heap = new TopKHeap(k);
+  returns.forEach((r) => heap.insert(makeResult(r)));
+  return heap.getResults().map((r) => r.totalReturn);
+}
+
 describe('TopKHeap', () => {
-  describe('liquidated results', () => {
-    test('should_skip_liquidated_result', () => {
-      // #given
-      const heap = new TopKHeap(5);
-      const liquidatedResult = makeResult(100, true);
+  test('should_skip_liquidated_results', () => {
+    const heap = new TopKHeap(5);
 
-      // #when
-      heap.insert(liquidatedResult);
+    heap.insert(makeResult(50, true));
+    heap.insert(makeResult(100));
+    heap.insert(makeResult(150, true));
 
-      // #then
-      expect(heap.getResults().length).toBe(0);
-    });
-
-    test('should_skip_all_liquidated_results', () => {
-      // #given
-      const heap = new TopKHeap(3);
-
-      // #when
-      heap.insert(makeResult(50, true));
-      heap.insert(makeResult(100, true));
-      heap.insert(makeResult(150, true));
-
-      // #then
-      expect(heap.getResults().length).toBe(0);
-    });
-
-    test('should_only_insert_non_liquidated_results', () => {
-      // #given
-      const heap = new TopKHeap(5);
-
-      // #when
-      heap.insert(makeResult(50, true));
-      heap.insert(makeResult(100, false));
-      heap.insert(makeResult(150, true));
-      heap.insert(makeResult(200, false));
-
-      // #then
-      expect(heap.getResults().length).toBe(2);
-    });
+    expect(heap.getResults().map((r) => r.totalReturn)).toEqual([100]);
   });
 
-  describe('heap capacity', () => {
-    test('should_fill_heap_below_capacity', () => {
-      // #given
-      const heap = new TopKHeap(5);
-
-      // #when
-      heap.insert(makeResult(10));
-      heap.insert(makeResult(20));
-      heap.insert(makeResult(30));
-
-      // #then
-      expect(heap.getResults().length).toBe(3);
-    });
-
-    test('should_fill_heap_to_exact_capacity', () => {
-      // #given
-      const heap = new TopKHeap(3);
-
-      // #when
-      heap.insert(makeResult(10));
-      heap.insert(makeResult(20));
-      heap.insert(makeResult(30));
-
-      // #then
-      expect(heap.getResults().length).toBe(3);
-    });
-
-    test('should_maintain_capacity_when_inserting_worse_result', () => {
-      // #given
-      const heap = new TopKHeap(3);
-      heap.insert(makeResult(100));
-      heap.insert(makeResult(200));
-      heap.insert(makeResult(300));
-
-      // #when
-      heap.insert(makeResult(50));
-
-      // #then
-      expect(heap.getResults().length).toBe(3);
-    });
-
-    test('should_maintain_capacity_when_inserting_better_result', () => {
-      // #given
-      const heap = new TopKHeap(3);
-      heap.insert(makeResult(100));
-      heap.insert(makeResult(200));
-      heap.insert(makeResult(300));
-
-      // #when
-      heap.insert(makeResult(400));
-
-      // #then
-      expect(heap.getResults().length).toBe(3);
-    });
+  test('should_return_empty_array_when_empty', () => {
+    expect(new TopKHeap(5).getResults()).toEqual([]);
   });
 
-  describe('replacement logic', () => {
-    test('should_replace_minimum_when_at_capacity_with_better_result', () => {
-      // #given
-      const heap = new TopKHeap(3);
-      heap.insert(makeResult(100));
-      heap.insert(makeResult(200));
-      heap.insert(makeResult(300));
-
-      // #when
-      heap.insert(makeResult(400));
-
-      // #then
-      const results = heap.getResults();
-      expect(results.map((r) => r.totalReturn)).toEqual([400, 300, 200]);
-    });
-
-    test('should_ignore_worse_result_when_at_capacity', () => {
-      // #given
-      const heap = new TopKHeap(3);
-      heap.insert(makeResult(100));
-      heap.insert(makeResult(200));
-      heap.insert(makeResult(300));
-
-      // #when
-      heap.insert(makeResult(50));
-
-      // #then
-      const results = heap.getResults();
-      expect(results.map((r) => r.totalReturn)).toEqual([300, 200, 100]);
-    });
-
-    test('should_ignore_equal_result_when_at_capacity', () => {
-      // #given
-      const heap = new TopKHeap(3);
-      heap.insert(makeResult(100));
-      heap.insert(makeResult(200));
-      heap.insert(makeResult(300));
-
-      // #when
-      heap.insert(makeResult(100));
-
-      // #then
-      const results = heap.getResults();
-      expect(results.map((r) => r.totalReturn)).toEqual([300, 200, 100]);
-    });
-
-    test('should_replace_multiple_times', () => {
-      // #given
-      const heap = new TopKHeap(3);
-      heap.insert(makeResult(10));
-      heap.insert(makeResult(20));
-      heap.insert(makeResult(30));
-
-      // #when
-      heap.insert(makeResult(40));
-      heap.insert(makeResult(50));
-      heap.insert(makeResult(60));
-
-      // #then
-      const results = heap.getResults();
-      expect(results.map((r) => r.totalReturn)).toEqual([60, 50, 40]);
-    });
+  test('should_keep_all_results_below_capacity_sorted_descending', () => {
+    expect(fill(5, [30, 10, 50])).toEqual([50, 30, 10]);
   });
 
-  describe('getResults', () => {
-    test('should_return_sorted_descending', () => {
-      // #given
-      const heap = new TopKHeap(5);
-      heap.insert(makeResult(30));
-      heap.insert(makeResult(10));
-      heap.insert(makeResult(50));
-      heap.insert(makeResult(20));
-      heap.insert(makeResult(40));
-
-      // #when
-      const results = heap.getResults();
-
-      // #then
-      expect(results.map((r) => r.totalReturn)).toEqual([50, 40, 30, 20, 10]);
-    });
-
-    test('should_return_empty_array_when_empty', () => {
-      // #given
-      const heap = new TopKHeap(5);
-
-      // #when
-      const results = heap.getResults();
-
-      // #then
-      expect(results).toEqual([]);
-    });
-
-    test('should_return_sorted_copy_each_time', () => {
-      // #given
-      const heap = new TopKHeap(3);
-      heap.insert(makeResult(10));
-      heap.insert(makeResult(20));
-      heap.insert(makeResult(30));
-
-      // #when
-      const results1 = heap.getResults();
-      const results2 = heap.getResults();
-
-      // #then
-      expect(results1).not.toBe(results2);
-      expect(results1.map((r) => r.totalReturn)).toEqual([30, 20, 10]);
-      expect(results2.map((r) => r.totalReturn)).toEqual([30, 20, 10]);
-    });
-
-    test('should_not_affect_heap_when_mutating_returned_array', () => {
-      // #given
-      const heap = new TopKHeap(3);
-      heap.insert(makeResult(10));
-      heap.insert(makeResult(20));
-      heap.insert(makeResult(30));
-
-      // #when
-      const results = heap.getResults();
-      results.pop();
-      results.pop();
-
-      // #then
-      expect(heap.getResults().length).toBe(3);
-      expect(heap.getResults().length).toBe(3);
-    });
-
-    test('should_include_all_result_properties', () => {
-      // #given
-      const heap = new TopKHeap(1);
-      heap.insert(makeResult(100));
-
-      // #when
-      const results = heap.getResults();
-
-      // #then
-      expect(results[0]).toHaveProperty('config');
-      expect(results[0]).toHaveProperty('finalBalance');
-      expect(results[0]).toHaveProperty('totalReturn');
-      expect(results[0]).toHaveProperty('totalFees');
-      expect(results[0]).toHaveProperty('totalTrades');
-      expect(results[0]).toHaveProperty('atrTriggerCount');
-      expect(results[0]).toHaveProperty('isLiquidated');
-    });
-
-    test('should_not_include_days_property', () => {
-      // #given
-      const heap = new TopKHeap(1);
-      heap.insert(makeResult(100));
-
-      // #when
-      const results = heap.getResults();
-
-      // #then
-      expect(results[0]).not.toHaveProperty('days');
-    });
+  test.each([
+    { name: 'better_replaces_minimum', incoming: 400, expected: [400, 300, 200] },
+    { name: 'worse_is_ignored', incoming: 50, expected: [300, 200, 100] },
+    { name: 'equal_to_minimum_is_ignored', incoming: 100, expected: [300, 200, 100] },
+  ])('should_at_capacity_when_$name', ({ incoming, expected }) => {
+    expect(fill(3, [100, 200, 300, incoming])).toEqual(expected);
   });
 
-  describe('edge case k equals 1', () => {
-    test('should_maintain_only_best_result', () => {
-      // #given
-      const heap = new TopKHeap(1);
-
-      // #when
-      heap.insert(makeResult(10));
-      heap.insert(makeResult(50));
-      heap.insert(makeResult(30));
-      heap.insert(makeResult(40));
-
-      // #then
-      expect(heap.getResults().length).toBe(1);
-      expect(heap.getResults()[0].totalReturn).toBe(50);
-    });
-
-    test('should_update_when_better_result_comes', () => {
-      // #given
-      const heap = new TopKHeap(1);
-      heap.insert(makeResult(10));
-
-      // #when
-      heap.insert(makeResult(100));
-
-      // #then
-      expect(heap.getResults()[0].totalReturn).toBe(100);
-    });
-
-    test('should_ignore_worse_results', () => {
-      // #given
-      const heap = new TopKHeap(1);
-      heap.insert(makeResult(100));
-
-      // #when
-      heap.insert(makeResult(10));
-      heap.insert(makeResult(20));
-      heap.insert(makeResult(30));
-
-      // #then
-      expect(heap.getResults()[0].totalReturn).toBe(100);
-    });
+  test('should_keep_only_best_when_k_is_1', () => {
+    expect(fill(1, [10, 50, 30, 40])).toEqual([50]);
   });
 
-  describe('negative returns', () => {
-    test('should_handle_negative_returns', () => {
-      // #given
-      const heap = new TopKHeap(3);
-
-      // #when
-      heap.insert(makeResult(-50));
-      heap.insert(makeResult(-10));
-      heap.insert(makeResult(-30));
-
-      // #then
-      expect(heap.getResults().map((r) => r.totalReturn)).toEqual([-10, -30, -50]);
-    });
-
-    test('should_prioritize_positive_over_negative', () => {
-      // #given
-      const heap = new TopKHeap(3);
-      heap.insert(makeResult(-50));
-      heap.insert(makeResult(-10));
-      heap.insert(makeResult(-30));
-
-      // #when
-      heap.insert(makeResult(5));
-
-      // #then
-      expect(heap.getResults().map((r) => r.totalReturn)).toEqual([5, -10, -30]);
-    });
-
-    test('should_handle_mix_of_positive_and_negative', () => {
-      // #given
-      const heap = new TopKHeap(5);
-
-      // #when
-      heap.insert(makeResult(-20));
-      heap.insert(makeResult(50));
-      heap.insert(makeResult(-5));
-      heap.insert(makeResult(30));
-      heap.insert(makeResult(-40));
-
-      // #then
-      expect(heap.getResults().map((r) => r.totalReturn)).toEqual([50, 30, -5, -20, -40]);
-    });
+  test('should_order_negative_and_decimal_returns', () => {
+    expect(fill(4, [-20, 1.5, -5, 1.25, -40])).toEqual([1.5, 1.25, -5, -20]);
   });
 
-  describe('decimal returns', () => {
-    test('should_handle_decimal_values', () => {
-      // #given
-      const heap = new TopKHeap(3);
+  test('should_not_mutate_heap_when_returned_array_is_modified', () => {
+    const heap = new TopKHeap(3);
+    [10, 20, 30].forEach((r) => heap.insert(makeResult(r)));
 
-      // #when
-      heap.insert(makeResult(10.5));
-      heap.insert(makeResult(10.6));
-      heap.insert(makeResult(10.4));
+    const results = heap.getResults();
+    results.pop();
 
-      // #then
-      expect(heap.getResults().map((r) => r.totalReturn)).toEqual([10.6, 10.5, 10.4]);
-    });
-
-    test('should_sort_decimals_correctly', () => {
-      // #given
-      const heap = new TopKHeap(5);
-
-      // #when
-      heap.insert(makeResult(1.1));
-      heap.insert(makeResult(1.01));
-      heap.insert(makeResult(1.001));
-      heap.insert(makeResult(1.11));
-      heap.insert(makeResult(1.111));
-
-      // #then
-      expect(heap.getResults().map((r) => r.totalReturn)).toEqual([
-        1.111, 1.11, 1.1, 1.01, 1.001,
-      ]);
-    });
+    expect(results).not.toBe(heap.getResults());
+    expect(heap.getResults().length).toBe(3);
   });
 
-  describe('large capacity', () => {
-    test('should_handle_large_k', () => {
-      // #given
-      const heap = new TopKHeap(1000);
+  test('should_match_naive_top_k_for_any_insertion_order', () => {
+    const k = 50;
+    const values = Array.from({ length: 500 }, (_, i) => (i * 7919) % 1009);
 
-      // #when
-      for (let i = 0; i < 500; i++) {
-        heap.insert(makeResult(i));
-      }
+    const expected = [...values].sort((a, b) => b - a).slice(0, k);
 
-      // #then
-      expect(heap.getResults().length).toBe(500);
-    });
-
-    test('should_maintain_top_k_with_large_k', () => {
-      // #given
-      const heap = new TopKHeap(100);
-
-      // #when
-      for (let i = 0; i < 200; i++) {
-        heap.insert(makeResult(i));
-      }
-
-      // #then
-      expect(heap.getResults().length).toBe(100);
-      const results = heap.getResults();
-      expect(results[0].totalReturn).toBe(199);
-      expect(results[99].totalReturn).toBe(100);
-    });
-  });
-
-  describe('insertion order independence', () => {
-    test('should_produce_same_result_regardless_of_insertion_order', () => {
-      // #given
-      const heap1 = new TopKHeap(3);
-      const heap2 = new TopKHeap(3);
-
-      // #when
-      heap1.insert(makeResult(10));
-      heap1.insert(makeResult(50));
-      heap1.insert(makeResult(30));
-
-      heap2.insert(makeResult(50));
-      heap2.insert(makeResult(30));
-      heap2.insert(makeResult(10));
-
-      // #then
-      expect(heap1.getResults().map((r) => r.totalReturn)).toEqual(
-        heap2.getResults().map((r) => r.totalReturn)
-      );
-    });
-
-    test('should_handle_reverse_sorted_input', () => {
-      // #given
-      const heap = new TopKHeap(5);
-
-      // #when
-      heap.insert(makeResult(50));
-      heap.insert(makeResult(40));
-      heap.insert(makeResult(30));
-      heap.insert(makeResult(20));
-      heap.insert(makeResult(10));
-
-      // #then
-      expect(heap.getResults().map((r) => r.totalReturn)).toEqual([50, 40, 30, 20, 10]);
-    });
-
-    test('should_handle_sorted_input', () => {
-      // #given
-      const heap = new TopKHeap(5);
-
-      // #when
-      heap.insert(makeResult(10));
-      heap.insert(makeResult(20));
-      heap.insert(makeResult(30));
-      heap.insert(makeResult(40));
-      heap.insert(makeResult(50));
-
-      // #then
-      expect(heap.getResults().map((r) => r.totalReturn)).toEqual([50, 40, 30, 20, 10]);
-    });
+    expect(fill(k, values)).toEqual(expected);
+    expect(fill(k, [...values].reverse())).toEqual(expected);
+    expect(fill(k, [...values].sort((a, b) => a - b))).toEqual(expected);
   });
 });

@@ -1,567 +1,121 @@
 import { describe, expect, test } from 'bun:test';
 import { validateCsv } from './csv-validator';
-import { MIN_DATA_ROWS, type CsvRow } from './types';
+import { MIN_DATA_ROWS } from './types';
+
+const goodRow = { high: 100, low: 90, close: 95, date: '01/01/2024' };
+
+const rows = (overrides: Record<string, unknown> = {}, count = MIN_DATA_ROWS) =>
+  Array(count).fill({ ...goodRow, ...overrides });
+
+/** Valid rows except row `index`, which gets `overrides`. */
+const rowsWithBadRow = (index: number, overrides: Record<string, unknown>) =>
+  rows().map((row, i) => (i === index ? { ...row, ...overrides } : row));
 
 describe('validateCsv', () => {
   describe('input validation', () => {
-    test('should_reject_empty_array', () => {
-      // #given
-      const input: unknown[] = [];
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
+    test.each<[string, unknown, string]>([
+      ['empty_array', [], 'CSV file is empty or invalid'],
+      ['non_array_input', 'not an array', 'CSV file is empty or invalid'],
+      ['null_input', null, 'CSV file is empty or invalid'],
+      ['first_row_not_an_object', ['string'], 'Invalid CSV structure'],
+      ['first_row_null', [null], 'Invalid CSV structure'],
+    ])('should_reject_%s', (_name, input, error) => {
+      const result = validateCsv(input as unknown[]);
       expect(result.valid).toBe(false);
-      expect(result.error).toBe('CSV file is empty or invalid');
-    });
-
-    test('should_reject_non_array_input', () => {
-      // #given
-      const input = 'not an array' as unknown as unknown[];
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
-      expect(result.valid).toBe(false);
-      expect(result.error).toBe('CSV file is empty or invalid');
-    });
-
-    test('should_reject_null_input', () => {
-      // #given
-      const input = null as unknown as unknown[];
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
-      expect(result.valid).toBe(false);
-      expect(result.error).toBe('CSV file is empty or invalid');
-    });
-
-    test('should_reject_first_row_not_an_object', () => {
-      // #given
-      const input = ['string'] as unknown[];
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
-      expect(result.valid).toBe(false);
-      expect(result.error).toBe('Invalid CSV structure');
-    });
-
-    test('should_reject_first_row_null', () => {
-      // #given
-      const input = [null] as unknown[];
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
-      expect(result.valid).toBe(false);
-      expect(result.error).toBe('Invalid CSV structure');
+      expect(result.error).toBe(error);
     });
   });
 
   describe('header validation', () => {
-    test('should_reject_missing_high_header', () => {
-      // #given
-      const input = [{ low: 100, close: 100, date: '01/01/2024' }];
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
-      expect(result.valid).toBe(false);
-      expect(result.error).toBe('Invalid headers. Expected: high, low, close, date');
-    });
-
-    test('should_reject_missing_low_header', () => {
-      // #given
-      const input = [{ high: 100, close: 100, date: '01/01/2024' }];
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
-      expect(result.valid).toBe(false);
-      expect(result.error).toBe('Invalid headers. Expected: high, low, close, date');
-    });
-
-    test('should_reject_missing_close_header', () => {
-      // #given
-      const input = [{ high: 100, low: 100, date: '01/01/2024' }];
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
-      expect(result.valid).toBe(false);
-      expect(result.error).toBe('Invalid headers. Expected: high, low, close, date');
-    });
-
-    test('should_reject_missing_date_header', () => {
-      // #given
-      const input = [{ high: 100, low: 100, close: 100 }];
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
+    test.each(['high', 'low', 'close', 'date'])('should_reject_missing_%s_header', (header) => {
+      const { [header]: _removed, ...row } = goodRow as Record<string, unknown>;
+      const result = validateCsv([row]);
       expect(result.valid).toBe(false);
       expect(result.error).toBe('Invalid headers. Expected: high, low, close, date');
     });
 
     test('should_accept_case_insensitive_headers', () => {
-      // #given
-      const input = Array(MIN_DATA_ROWS)
-        .fill(null)
-        .map(() => ({
-          High: 100,
-          LOW: 90,
-          Close: 95,
-          Date: '01/01/2024',
-        }));
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
-      expect(result.valid).toBe(true);
+      const input = rows().map(() => ({ High: 100, LOW: 90, Close: 95, Date: '01/01/2024' }));
+      expect(validateCsv(input).valid).toBe(true);
     });
   });
 
   describe('row count validation', () => {
-    test('should_reject_insufficient_rows_with_1_row', () => {
-      // #given
-      const input = [{ high: 100, low: 90, close: 95, date: '01/01/2024' }];
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
+    test.each([1, MIN_DATA_ROWS - 1])('should_reject_%p_rows', (count) => {
+      const result = validateCsv(rows({}, count));
       expect(result.valid).toBe(false);
-      expect(result.error).toBe(`Insufficient data rows. Expected at least ${MIN_DATA_ROWS}, got 1`);
+      expect(result.error).toBe(`Insufficient data rows. Expected at least ${MIN_DATA_ROWS}, got ${count}`);
     });
 
-    test('should_reject_insufficient_rows_with_159_rows', () => {
-      // #given
-      const input = Array(159).fill({
-        high: 100,
-        low: 90,
-        close: 95,
-        date: '01/01/2024',
-      });
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
-      expect(result.valid).toBe(false);
-      expect(result.error).toBe(`Insufficient data rows. Expected at least ${MIN_DATA_ROWS}, got 159`);
-    });
-
-    test('should_accept_exactly_min_rows', () => {
-      // #given
-      const input = Array(MIN_DATA_ROWS).fill({
-        high: 100,
-        low: 90,
-        close: 95,
-        date: '01/01/2024',
-      });
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
+    test.each([MIN_DATA_ROWS, MIN_DATA_ROWS + 40])('should_accept_%p_rows', (count) => {
+      const result = validateCsv(rows({}, count));
       expect(result.valid).toBe(true);
-      expect(result.rowCount).toBe(MIN_DATA_ROWS);
-    });
-
-    test('should_accept_more_than_min_rows', () => {
-      // #given
-      const input = Array(200).fill({
-        high: 100,
-        low: 90,
-        close: 95,
-        date: '01/01/2024',
-      });
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
-      expect(result.valid).toBe(true);
-      expect(result.rowCount).toBe(200);
+      expect(result.rowCount).toBe(count);
     });
   });
 
   describe('row value validation', () => {
-    test('should_reject_missing_high_value', () => {
-      // #given
-      const input = Array(MIN_DATA_ROWS)
-        .fill(null)
-        .map((_, i) => ({
-          high: i === 0 ? undefined : 100,
-          low: 90,
-          close: 95,
-          date: '01/01/2024',
-        }));
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
+    test.each<[string, unknown, number, string]>([
+      ['undefined', undefined, 0, "Missing value for 'high' at row 1"],
+      ['null', null, 5, "Missing value for 'high' at row 6"],
+      ['empty_string', '', 10, "Missing value for 'high' at row 11"],
+    ])('should_reject_%s_value_and_report_row', (_name, value, index, error) => {
+      const result = validateCsv(rowsWithBadRow(index, { high: value }));
       expect(result.valid).toBe(false);
-      expect(result.error).toBe("Missing value for 'high' at row 1");
-    });
-
-    test('should_reject_null_value', () => {
-      // #given
-      const input = Array(MIN_DATA_ROWS)
-        .fill(null)
-        .map((_, i) => ({
-          high: 100,
-          low: i === 5 ? null : 90,
-          close: 95,
-          date: '01/01/2024',
-        }));
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
-      expect(result.valid).toBe(false);
-      expect(result.error).toBe("Missing value for 'low' at row 6");
-    });
-
-    test('should_reject_empty_string_value', () => {
-      // #given
-      const input = Array(MIN_DATA_ROWS)
-        .fill(null)
-        .map((_, i) => ({
-          high: 100,
-          low: 90,
-          close: i === 10 ? '' : 95,
-          date: '01/01/2024',
-        }));
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
-      expect(result.valid).toBe(false);
-      expect(result.error).toBe("Missing value for 'close' at row 11");
+      expect(result.error).toBe(error);
     });
   });
 
   describe('date format validation', () => {
-    test('should_reject_invalid_date_format_yyyy_mm_dd', () => {
-      // #given
-      const input = Array(MIN_DATA_ROWS).fill({
-        high: 100,
-        low: 90,
-        close: 95,
-        date: '2024-01-01',
-      });
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
+    test.each([
+      ['yyyy_mm_dd', '2024-01-01'],
+      ['no_slashes', '01012024'],
+      ['non_string', 12345],
+    ])('should_reject_%s_date', (_name, date) => {
+      const result = validateCsv(rows({ date }));
       expect(result.valid).toBe(false);
-      expect(result.error).toBe(
-        'Invalid date format at row 1. Expected DD/MM/YYYY, got: 2024-01-01'
-      );
+      expect(result.error).toBe(`Invalid date format at row 1. Expected DD/MM/YYYY, got: ${date}`);
     });
 
-    test('should_reject_date_without_slashes', () => {
-      // #given
-      const input = Array(MIN_DATA_ROWS).fill({
-        high: 100,
-        low: 90,
-        close: 95,
-        date: '01012024',
-      });
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
-      expect(result.valid).toBe(false);
-      expect(result.error).toBe(
-        'Invalid date format at row 1. Expected DD/MM/YYYY, got: 01012024'
-      );
-    });
-
-    test('should_reject_non_string_date', () => {
-      // #given
-      const input = Array(MIN_DATA_ROWS).fill({
-        high: 100,
-        low: 90,
-        close: 95,
-        date: 12345,
-      });
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
-      expect(result.valid).toBe(false);
-      expect(result.error).toContain('Invalid date format at row 1');
-    });
-
-    test('should_accept_single_digit_day', () => {
-      // #given
-      const input = Array(MIN_DATA_ROWS).fill({
-        high: 100,
-        low: 90,
-        close: 95,
-        date: '1/01/2024',
-      });
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
-      expect(result.valid).toBe(true);
-    });
-
-    test('should_accept_single_digit_month', () => {
-      // #given
-      const input = Array(MIN_DATA_ROWS).fill({
-        high: 100,
-        low: 90,
-        close: 95,
-        date: '01/1/2024',
-      });
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
-      expect(result.valid).toBe(true);
-    });
-
-    test('should_accept_single_digit_day_and_month', () => {
-      // #given
-      const input = Array(MIN_DATA_ROWS).fill({
-        high: 100,
-        low: 90,
-        close: 95,
-        date: '1/1/2024',
-      });
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
-      expect(result.valid).toBe(true);
+    test.each(['1/01/2024', '01/1/2024', '1/1/2024'])('should_accept_%s', (date) => {
+      expect(validateCsv(rows({ date })).valid).toBe(true);
     });
   });
 
   describe('numeric value validation', () => {
-    test('should_reject_non_numeric_high', () => {
-      // #given
-      const input = Array(MIN_DATA_ROWS).fill({
-        high: 'not a number',
-        low: 90,
-        close: 95,
-        date: '01/01/2024',
-      });
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
-      expect(result.valid).toBe(false);
-      expect(result.error).toBe("Invalid number for 'high' at row 1. Got: not a number");
-    });
-
-    test('should_reject_non_numeric_low', () => {
-      // #given
-      const input = Array(MIN_DATA_ROWS).fill({
-        high: 100,
-        low: 'abc',
-        close: 95,
-        date: '01/01/2024',
-      });
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
+    test('should_reject_non_numeric_value', () => {
+      const result = validateCsv(rows({ low: 'abc' }));
       expect(result.valid).toBe(false);
       expect(result.error).toBe("Invalid number for 'low' at row 1. Got: abc");
     });
 
-    test('should_reject_non_numeric_close', () => {
-      // #given
-      const input = Array(MIN_DATA_ROWS)
-        .fill(null)
-        .map((_, i) => ({
-          high: 100,
-          low: 90,
-          close: i === 0 ? {} : 95,
-          date: '01/01/2024',
-        }));
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
+    test.each([0, -100])('should_reject_non_positive_price_%p', (value) => {
+      const result = validateCsv(rows({ high: value }));
       expect(result.valid).toBe(false);
-      expect(result.error).toContain("Invalid number for 'close' at row 1");
+      expect(result.error).toBe(`Price for 'high' must be positive at row 1. Got: ${value}`);
     });
 
     test('should_accept_string_numbers', () => {
-      // #given
-      const input = Array(MIN_DATA_ROWS).fill({
-        high: '100.5',
-        low: '90.2',
-        close: '95.8',
-        date: '01/01/2024',
-      });
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
-      expect(result.valid).toBe(true);
-    });
-
-    test('should_reject_zero_prices', () => {
-      // #given
-      const input = Array(MIN_DATA_ROWS).fill({
-        high: 0,
-        low: 0,
-        close: 0,
-        date: '01/01/2024',
-      });
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
-      expect(result.valid).toBe(false);
-      expect(result.error).toContain('must be positive');
-    });
-
-    test('should_reject_negative_prices', () => {
-      // #given
-      const input = Array(MIN_DATA_ROWS).fill({
-        high: -100,
-        low: -110,
-        close: -105,
-        date: '01/01/2024',
-      });
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
-      expect(result.valid).toBe(false);
-      expect(result.error).toContain('must be positive');
-    });
-
-    test('should_accept_decimal_values', () => {
-      // #given
-      const input = Array(MIN_DATA_ROWS).fill({
-        high: 100.123456,
-        low: 90.987654,
-        close: 95.5,
-        date: '01/01/2024',
-      });
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
-      expect(result.valid).toBe(true);
+      expect(validateCsv(rows({ high: '100.5', low: '90.2', close: '95.8' })).valid).toBe(true);
     });
   });
 
   describe('successful validation', () => {
-    test('should_return_valid_result_with_data', () => {
-      // #given
-      const input = Array(MIN_DATA_ROWS).fill({
-        high: 100,
-        low: 90,
-        close: 95,
-        date: '01/01/2024',
-      });
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
+    test('should_return_numeric_rows_ignoring_extra_columns', () => {
+      const result = validateCsv(
+        rows({ high: '100.5', low: 90.2, close: 95.8, date: '15/03/2024', volume: 100000 })
+      );
       expect(result.valid).toBe(true);
-      expect(result.data).toBeDefined();
-      expect(result.data?.length).toBe(MIN_DATA_ROWS);
-      expect(result.rowCount).toBe(MIN_DATA_ROWS);
       expect(result.error).toBeUndefined();
-    });
-
-    test('should_return_csv_row_structure', () => {
-      // #given
-      const input = Array(MIN_DATA_ROWS).fill({
-        high: 100.5,
-        low: 90.2,
-        close: 95.8,
-        date: '15/03/2024',
-      });
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
-      expect(result.valid).toBe(true);
-      const row = result.data?.[0] as CsvRow;
-      expect(row.high).toBe(100.5);
-      expect(row.low).toBe(90.2);
-      expect(row.close).toBe(95.8);
-      expect(row.date).toBe('15/03/2024');
-    });
-
-    test('should_handle_extra_columns', () => {
-      // #given
-      const input = Array(MIN_DATA_ROWS).fill({
-        high: 100,
-        low: 90,
-        close: 95,
-        date: '01/01/2024',
-        volume: 100000,
-        extraField: 'ignored',
-      });
-
-      // #when
-      const result = validateCsv(input);
-
-      // #then
-      expect(result.valid).toBe(true);
-      expect(result.data?.length).toBe(MIN_DATA_ROWS);
+      expect(result.rowCount).toBe(MIN_DATA_ROWS);
+      expect(result.data?.[0]).toEqual({ high: 100.5, low: 90.2, close: 95.8, date: '15/03/2024' });
     });
 
     test('should_preserve_different_values_across_rows', () => {
-      // #given
-      const input = Array(MIN_DATA_ROWS)
-        .fill(null)
-        .map((_, i) => ({
-          high: 100 + i,
-          low: 90 + i,
-          close: 95 + i,
-          date: `${(i % 28) + 1}/01/2024`,
-        }));
-
-      // #when
+      const input = rows().map((_, i) => ({ ...goodRow, high: 100 + i }));
       const result = validateCsv(input);
-
-      // #then
-      expect(result.valid).toBe(true);
       expect(result.data?.[0].high).toBe(100);
-      expect(result.data?.[159].high).toBe(259);
+      expect(result.data?.[MIN_DATA_ROWS - 1].high).toBe(100 + MIN_DATA_ROWS - 1);
     });
   });
 });

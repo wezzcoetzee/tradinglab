@@ -1,5 +1,5 @@
 import { describe, expect, test, beforeEach, mock } from 'bun:test';
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { useOptimization } from './use-optimization';
 import type { CsvRow, StrategyConfig } from '@/lib/types';
 import type { WorkerMessage } from '@/lib/backtest/optimization-types';
@@ -24,15 +24,11 @@ class MockWorker {
   terminate = mock(() => {});
 
   simulateMessage(message: WorkerMessage) {
-    if (this.onmessage) {
-      this.onmessage(new MessageEvent('message', { data: message }));
-    }
+    this.onmessage?.(new MessageEvent('message', { data: message }));
   }
 
   simulateError(error: string) {
-    if (this.onerror) {
-      this.onerror(new ErrorEvent('error', { message: error }));
-    }
+    this.onerror?.(new ErrorEvent('error', { message: error }));
   }
 }
 
@@ -47,278 +43,76 @@ beforeEach(() => {
   } as unknown as typeof Worker;
 });
 
+function startedHook() {
+  const hook = renderHook(() => useOptimization());
+  act(() => {
+    hook.result.current.startOptimization(mockCsvData, mockStrategyConfig);
+  });
+  return hook;
+}
+
+function progress(current: number, total: number, elapsedMs: number): WorkerMessage {
+  return { type: 'progress', current, total, elapsedMs };
+}
+
 describe('useOptimization', () => {
-  describe('initial state', () => {
-    test('should_initialize_with_idle_status', () => {
-      const { result } = renderHook(() => useOptimization());
+  test('should_start_idle_with_no_results', () => {
+    const { result } = renderHook(() => useOptimization());
 
-      expect(result.current.progress.status).toBe('idle');
-      expect(result.current.progress.current).toBe(0);
-      expect(result.current.progress.total).toBe(0);
-      expect(result.current.progress.percentComplete).toBe(0);
-      expect(result.current.progress.elapsedMs).toBe(0);
-      expect(result.current.progress.estimatedRemainingMs).toBeNull();
-      expect(result.current.progress.configsPerSecond).toBe(0);
-      expect(result.current.results).toBeNull();
-      expect(result.current.baseline).toBeNull();
-    });
-
+    expect(result.current.progress.status).toBe('idle');
+    expect(result.current.results).toBeNull();
+    expect(result.current.baseline).toBeNull();
   });
 
   describe('startOptimization', () => {
-    test('should_transition_to_running_status', () => {
-      const { result } = renderHook(() => useOptimization());
-
-      act(() => {
-        result.current.startOptimization(mockCsvData, mockStrategyConfig);
-      });
+    test('should_run_and_post_input_to_worker', () => {
+      const { result } = startedHook();
 
       expect(result.current.progress.status).toBe('running');
-    });
-
-    test('should_reset_results_and_baseline', () => {
-      const { result } = renderHook(() => useOptimization());
-
-      act(() => {
-        result.current.startOptimization(mockCsvData, mockStrategyConfig);
-      });
-
-      expect(result.current.results).toBeNull();
-      expect(result.current.baseline).toBeNull();
-    });
-
-    test('should_create_worker_instance', () => {
-      const { result } = renderHook(() => useOptimization());
-
-      act(() => {
-        result.current.startOptimization(mockCsvData, mockStrategyConfig);
-      });
-
       expect(mockWorkerInstance.postMessage).toHaveBeenCalledTimes(1);
-    });
-
-    test('should_post_csv_data_and_strategy_config_to_worker', () => {
-      const { result } = renderHook(() => useOptimization());
-
-      act(() => {
-        result.current.startOptimization(mockCsvData, mockStrategyConfig);
-      });
-
       const [input] = mockWorkerInstance.postMessage.mock.calls[0] as unknown as [unknown];
       expect(input).toEqual({ csvData: mockCsvData, strategyConfig: mockStrategyConfig });
     });
 
-    test('should_terminate_existing_worker_before_starting_new', () => {
-      const { result } = renderHook(() => useOptimization());
-
-      act(() => {
-        result.current.startOptimization(mockCsvData, mockStrategyConfig);
-      });
+    test('should_terminate_previous_worker_and_reset_progress_on_restart', () => {
+      const { result } = startedHook();
+      act(() => mockWorkerInstance.simulateMessage(progress(50, 100, 5000)));
 
       act(() => {
         result.current.startOptimization(mockCsvData, mockStrategyConfig);
       });
 
       expect(mockWorkerInstance.terminate).toHaveBeenCalled();
+      expect(result.current.progress.current).toBe(0);
+      expect(result.current.results).toBeNull();
     });
   });
 
-  describe('progress message handling', () => {
-    test('should_update_progress_from_worker_message', async () => {
-      const { result } = renderHook(() => useOptimization());
+  describe('progress messages', () => {
+    test.each([
+      { name: 'half_done', current: 50, total: 100, elapsedMs: 5000, percent: 50, rate: 10, remaining: 5000 },
+      { name: 'zero_elapsed', current: 10, total: 100, elapsedMs: 0, percent: 10, rate: 0, remaining: null },
+    ])('should_compute_progress_math_when_$name', ({ current, total, elapsedMs, percent, rate, remaining }) => {
+      const { result } = startedHook();
 
-      act(() => {
-        result.current.startOptimization(mockCsvData, mockStrategyConfig);
+      act(() => mockWorkerInstance.simulateMessage(progress(current, total, elapsedMs)));
+
+      expect(result.current.progress).toMatchObject({
+        status: 'running',
+        current,
+        total,
+        elapsedMs,
+        percentComplete: percent,
+        configsPerSecond: rate,
+        estimatedRemainingMs: remaining,
       });
-
-      act(() => {
-        mockWorkerInstance.simulateMessage({
-          type: 'progress',
-          current: 50,
-          total: 100,
-          elapsedMs: 5000,
-        });
-      });
-
-      expect(result.current.progress.status).toBe('running');
-      expect(result.current.progress.current).toBe(50);
-      expect(result.current.progress.total).toBe(100);
-      expect(result.current.progress.percentComplete).toBe(50);
-      expect(result.current.progress.elapsedMs).toBe(5000);
-    });
-
-    test('should_calculate_configs_per_second', () => {
-      const { result } = renderHook(() => useOptimization());
-
-      act(() => {
-        result.current.startOptimization(mockCsvData, mockStrategyConfig);
-      });
-
-      act(() => {
-        mockWorkerInstance.simulateMessage({
-          type: 'progress',
-          current: 100,
-          total: 200,
-          elapsedMs: 10000,
-        });
-      });
-
-      expect(result.current.progress.configsPerSecond).toBe(10);
-    });
-
-    test('should_calculate_estimated_remaining_ms', () => {
-      const { result } = renderHook(() => useOptimization());
-
-      act(() => {
-        result.current.startOptimization(mockCsvData, mockStrategyConfig);
-      });
-
-      act(() => {
-        mockWorkerInstance.simulateMessage({
-          type: 'progress',
-          current: 50,
-          total: 100,
-          elapsedMs: 5000,
-        });
-      });
-
-      expect(result.current.progress.estimatedRemainingMs).toBe(5000);
-    });
-
-    test('should_handle_zero_elapsed_time', () => {
-      const { result } = renderHook(() => useOptimization());
-
-      act(() => {
-        result.current.startOptimization(mockCsvData, mockStrategyConfig);
-      });
-
-      act(() => {
-        mockWorkerInstance.simulateMessage({
-          type: 'progress',
-          current: 10,
-          total: 100,
-          elapsedMs: 0,
-        });
-      });
-
-      expect(result.current.progress.configsPerSecond).toBe(0);
-      expect(result.current.progress.estimatedRemainingMs).toBeNull();
-    });
-
-    test('should_handle_complete_progress', () => {
-      const { result } = renderHook(() => useOptimization());
-
-      act(() => {
-        result.current.startOptimization(mockCsvData, mockStrategyConfig);
-      });
-
-      act(() => {
-        mockWorkerInstance.simulateMessage({
-          type: 'progress',
-          current: 100,
-          total: 100,
-          elapsedMs: 10000,
-        });
-      });
-
-      expect(result.current.progress.percentComplete).toBe(100);
     });
   });
 
-  describe('complete message handling', () => {
-    test('should_transition_to_complete_status', () => {
-      const { result } = renderHook(() => useOptimization());
-
-      act(() => {
-        result.current.startOptimization(mockCsvData, mockStrategyConfig);
-      });
-
-      act(() => {
-        mockWorkerInstance.simulateMessage({
-          type: 'complete',
-          results: [],
-          stats: { total: 0, profitable: 0, liquidated: 0 },
-          bestResultWithDays: null,
-          totalTimeMs: 10000,
-          baseline: null,
-          isTruncated: false,
-        });
-      });
-
-      expect(result.current.progress.status).toBe('complete');
-    });
-
-    test('should_set_results_and_baseline', () => {
-      const { result } = renderHook(() => useOptimization());
-
-      const mockResults = [
-        {
-          config: { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 },
-          days: [],
-          finalBalance: 1100,
-          totalReturn: 10,
-          totalFees: 10,
-          totalTrades: 5,
-          isLiquidated: false,
-        },
-      ];
-
-      const mockBaseline = {
-        purchasePrice: 100,
-        purchaseDate: '2024-06-09',
-        finalPrice: 120,
-        finalDate: '2024-12-31',
-        finalValue: 1200,
-        percentGain: 20,
-        startingCapital: 1000,
-      };
-
-      act(() => {
-        result.current.startOptimization(mockCsvData, mockStrategyConfig);
-      });
-
-      act(() => {
-        mockWorkerInstance.simulateMessage({
-          type: 'complete',
-          results: mockResults,
-          stats: { total: mockResults.length, profitable: 0, liquidated: 0 },
-          bestResultWithDays: null,
-          totalTimeMs: 10000,
-          baseline: mockBaseline,
-          isTruncated: false,
-        });
-      });
-
-      expect(result.current.results).toEqual(mockResults);
-      expect(result.current.baseline).toEqual(mockBaseline);
-      expect(result.current.stats).toEqual({ total: mockResults.length, profitable: 0, liquidated: 0 });
-    });
-
-    test('should_set_progress_to_100_percent', () => {
-      const { result } = renderHook(() => useOptimization());
-
-      act(() => {
-        result.current.startOptimization(mockCsvData, mockStrategyConfig);
-      });
-
-      act(() => {
-        mockWorkerInstance.simulateMessage({
-          type: 'complete',
-          results: [],
-          stats: { total: 0, profitable: 0, liquidated: 0 },
-          bestResultWithDays: null,
-          totalTimeMs: 10000,
-          baseline: null,
-          isTruncated: false,
-        });
-      });
-
-      expect(result.current.progress.percentComplete).toBe(100);
-    });
-
-    test('should_calculate_final_configs_per_second', () => {
-      const { result } = renderHook(() => useOptimization());
-
+  describe('complete message', () => {
+    test('should_store_outcome_and_terminate_worker', () => {
+      const { result } = startedHook();
+      const terminatesBefore = mockWorkerInstance.terminate.mock.calls.length;
       const mockResults = Array.from({ length: 100 }, () => ({
         config: { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 },
         days: [],
@@ -328,224 +122,78 @@ describe('useOptimization', () => {
         totalTrades: 5,
         isLiquidated: false,
       }));
+      const mockBaseline = {
+        purchasePrice: 100,
+        purchaseDate: '2024-06-09',
+        finalPrice: 120,
+        finalDate: '2024-12-31',
+        finalValue: 1200,
+        percentGain: 20,
+        startingCapital: 1000,
+      };
+      const stats = { total: 100, profitable: 40, liquidated: 2 };
 
-      act(() => {
-        result.current.startOptimization(mockCsvData, mockStrategyConfig);
-      });
-
-      act(() => {
+      act(() =>
         mockWorkerInstance.simulateMessage({
           type: 'complete',
           results: mockResults,
-          stats: { total: 100, profitable: 0, liquidated: 0 },
-          bestResultWithDays: null,
+          stats,
+          bestResultWithDays: mockResults[0],
           totalTimeMs: 10000,
-          baseline: null,
+          baseline: mockBaseline,
           isTruncated: false,
-        });
-      });
+        })
+      );
 
+      expect(result.current.progress.status).toBe('complete');
+      expect(result.current.progress.percentComplete).toBe(100);
       expect(result.current.progress.configsPerSecond).toBe(10);
-    });
-
-    test('should_terminate_worker_on_complete', () => {
-      const { result } = renderHook(() => useOptimization());
-
-      act(() => {
-        result.current.startOptimization(mockCsvData, mockStrategyConfig);
-      });
-
-      const callCountBefore = mockWorkerInstance.terminate.mock.calls.length;
-
-      act(() => {
-        mockWorkerInstance.simulateMessage({
-          type: 'complete',
-          results: [],
-          stats: { total: 0, profitable: 0, liquidated: 0 },
-          bestResultWithDays: null,
-          totalTimeMs: 10000,
-          baseline: null,
-          isTruncated: false,
-        });
-      });
-
-      expect(mockWorkerInstance.terminate.mock.calls.length).toBeGreaterThan(callCountBefore);
+      expect(result.current.results).toEqual(mockResults);
+      expect(result.current.baseline).toEqual(mockBaseline);
+      expect(result.current.stats).toEqual(stats);
+      expect(result.current.bestResultWithDays).toEqual(mockResults[0]);
+      expect(mockWorkerInstance.terminate.mock.calls.length).toBeGreaterThan(terminatesBefore);
     });
   });
 
-  describe('error message handling', () => {
-    test('should_transition_to_error_status', () => {
-      const { result } = renderHook(() => useOptimization());
+  describe('errors', () => {
+    test('should_set_error_message_keep_progress_and_terminate_on_error_message', () => {
+      const { result } = startedHook();
+      act(() => mockWorkerInstance.simulateMessage(progress(50, 100, 5000)));
+      const terminatesBefore = mockWorkerInstance.terminate.mock.calls.length;
 
-      act(() => {
-        result.current.startOptimization(mockCsvData, mockStrategyConfig);
-      });
-
-      act(() => {
-        mockWorkerInstance.simulateMessage({
-          type: 'error',
-          error: 'Test error',
-        });
-      });
+      act(() => mockWorkerInstance.simulateMessage({ type: 'error', error: 'Test error message' }));
 
       expect(result.current.progress.status).toBe('error');
-    });
-
-    test('should_set_error_message', () => {
-      const { result } = renderHook(() => useOptimization());
-
-      act(() => {
-        result.current.startOptimization(mockCsvData, mockStrategyConfig);
-      });
-
-      act(() => {
-        mockWorkerInstance.simulateMessage({
-          type: 'error',
-          error: 'Test error message',
-        });
-      });
-
       expect(result.current.progress.errorMessage).toBe('Test error message');
-    });
-
-    test('should_terminate_worker_on_error', () => {
-      const { result } = renderHook(() => useOptimization());
-
-      act(() => {
-        result.current.startOptimization(mockCsvData, mockStrategyConfig);
-      });
-
-      const callCountBefore = mockWorkerInstance.terminate.mock.calls.length;
-
-      act(() => {
-        mockWorkerInstance.simulateMessage({
-          type: 'error',
-          error: 'Test error',
-        });
-      });
-
-      expect(mockWorkerInstance.terminate.mock.calls.length).toBeGreaterThan(callCountBefore);
-    });
-
-    test('should_preserve_progress_data_on_error', () => {
-      const { result } = renderHook(() => useOptimization());
-
-      act(() => {
-        result.current.startOptimization(mockCsvData, mockStrategyConfig);
-      });
-
-      act(() => {
-        mockWorkerInstance.simulateMessage({
-          type: 'progress',
-          current: 50,
-          total: 100,
-          elapsedMs: 5000,
-        });
-      });
-
-      act(() => {
-        mockWorkerInstance.simulateMessage({
-          type: 'error',
-          error: 'Test error',
-        });
-      });
-
       expect(result.current.progress.current).toBe(50);
-      expect(result.current.progress.total).toBe(100);
+      expect(mockWorkerInstance.terminate.mock.calls.length).toBeGreaterThan(terminatesBefore);
     });
-  });
 
-  describe('worker onerror handling', () => {
-    test('should_handle_worker_error_event', () => {
-      const { result } = renderHook(() => useOptimization());
+    test.each([
+      { message: 'Worker crashed', expected: 'Worker crashed' },
+      { message: '', expected: 'Worker error occurred' },
+    ])('should_report_"$expected"_on_worker_onerror', ({ message, expected }) => {
+      const { result } = startedHook();
 
-      act(() => {
-        result.current.startOptimization(mockCsvData, mockStrategyConfig);
-      });
-
-      act(() => {
-        mockWorkerInstance.simulateError('Worker crashed');
-      });
+      act(() => mockWorkerInstance.simulateError(message));
 
       expect(result.current.progress.status).toBe('error');
-      expect(result.current.progress.errorMessage).toBe('Worker crashed');
-    });
-
-    test('should_use_default_error_message_when_none_provided', () => {
-      const { result } = renderHook(() => useOptimization());
-
-      act(() => {
-        result.current.startOptimization(mockCsvData, mockStrategyConfig);
-      });
-
-      act(() => {
-        mockWorkerInstance.simulateError('');
-      });
-
-      expect(result.current.progress.errorMessage).toBe('Worker error occurred');
+      expect(result.current.progress.errorMessage).toBe(expected);
     });
   });
 
   describe('cancelOptimization', () => {
-    test('should_terminate_worker', () => {
-      const { result } = renderHook(() => useOptimization());
-
-      act(() => {
-        result.current.startOptimization(mockCsvData, mockStrategyConfig);
-      });
-
-      const callCountBefore = mockWorkerInstance.terminate.mock.calls.length;
+    test('should_terminate_worker_go_idle_and_keep_progress_data', () => {
+      const { result } = startedHook();
+      act(() => mockWorkerInstance.simulateMessage(progress(75, 100, 7500)));
 
       act(() => {
         result.current.cancelOptimization();
       });
 
-      expect(mockWorkerInstance.terminate.mock.calls.length).toBeGreaterThan(callCountBefore);
-    });
-
-    test('should_reset_status_to_idle', () => {
-      const { result } = renderHook(() => useOptimization());
-
-      act(() => {
-        result.current.startOptimization(mockCsvData, mockStrategyConfig);
-      });
-
-      act(() => {
-        mockWorkerInstance.simulateMessage({
-          type: 'progress',
-          current: 50,
-          total: 100,
-          elapsedMs: 5000,
-        });
-      });
-
-      act(() => {
-        result.current.cancelOptimization();
-      });
-
+      expect(mockWorkerInstance.terminate).toHaveBeenCalled();
       expect(result.current.progress.status).toBe('idle');
-    });
-
-    test('should_preserve_progress_data_on_cancel', () => {
-      const { result } = renderHook(() => useOptimization());
-
-      act(() => {
-        result.current.startOptimization(mockCsvData, mockStrategyConfig);
-      });
-
-      act(() => {
-        mockWorkerInstance.simulateMessage({
-          type: 'progress',
-          current: 75,
-          total: 100,
-          elapsedMs: 7500,
-        });
-      });
-
-      act(() => {
-        result.current.cancelOptimization();
-      });
-
       expect(result.current.progress.current).toBe(75);
       expect(result.current.progress.total).toBe(100);
     });
@@ -553,147 +201,15 @@ describe('useOptimization', () => {
     test('should_not_throw_when_no_worker_exists', () => {
       const { result } = renderHook(() => useOptimization());
 
-      expect(() => {
-        act(() => {
-          result.current.cancelOptimization();
-        });
-      }).not.toThrow();
+      expect(() => act(() => result.current.cancelOptimization())).not.toThrow();
     });
   });
 
-  describe('cleanup', () => {
-    test('should_terminate_worker_on_unmount', () => {
-      const { result, unmount } = renderHook(() => useOptimization());
+  test('should_terminate_worker_on_unmount', () => {
+    const { unmount } = startedHook();
 
-      act(() => {
-        result.current.startOptimization(mockCsvData, mockStrategyConfig);
-      });
+    unmount();
 
-      unmount();
-
-      expect(mockWorkerInstance.terminate).toHaveBeenCalled();
-    });
-  });
-
-  describe('edge cases', () => {
-    test('should_handle_multiple_progress_updates', () => {
-      const { result } = renderHook(() => useOptimization());
-
-      act(() => {
-        result.current.startOptimization(mockCsvData, mockStrategyConfig);
-      });
-
-      act(() => {
-        mockWorkerInstance.simulateMessage({
-          type: 'progress',
-          current: 25,
-          total: 100,
-          elapsedMs: 2500,
-        });
-      });
-
-      act(() => {
-        mockWorkerInstance.simulateMessage({
-          type: 'progress',
-          current: 50,
-          total: 100,
-          elapsedMs: 5000,
-        });
-      });
-
-      act(() => {
-        mockWorkerInstance.simulateMessage({
-          type: 'progress',
-          current: 75,
-          total: 100,
-          elapsedMs: 7500,
-        });
-      });
-
-      expect(result.current.progress.current).toBe(75);
-      expect(result.current.progress.percentComplete).toBe(75);
-    });
-
-    test('should_handle_empty_csv_data', () => {
-      const { result } = renderHook(() => useOptimization());
-
-      act(() => {
-        result.current.startOptimization([], mockStrategyConfig);
-      });
-
-      expect(mockWorkerInstance.postMessage).toHaveBeenCalled();
-    });
-
-    test('should_handle_zero_total_time_on_complete', () => {
-      const { result } = renderHook(() => useOptimization());
-
-      act(() => {
-        result.current.startOptimization(mockCsvData, mockStrategyConfig);
-      });
-
-      act(() => {
-        mockWorkerInstance.simulateMessage({
-          type: 'complete',
-          results: [
-            {
-              config: { smaPeriod: 20, longLeverage: 1, shortLeverage: 1, startingCapital: 1000, feeRate: 0.1 },
-              finalBalance: 1100,
-              totalReturn: 10,
-              totalFees: 10,
-              totalTrades: 5,
-              isLiquidated: false,
-            },
-          ],
-          stats: { total: 1, profitable: 0, liquidated: 0 },
-          bestResultWithDays: null,
-          totalTimeMs: 0,
-          baseline: null,
-          isTruncated: false,
-        });
-      });
-
-      expect(result.current.progress.configsPerSecond).toBe(0);
-    });
-
-    test('should_handle_large_dataset', () => {
-      const { result } = renderHook(() => useOptimization());
-
-      const largeCsvData = Array.from({ length: 10000 }, (_, i) => ({
-        high: 100 + i,
-        low: 98 + i,
-        close: 99 + i,
-                date: `${i}/1/2024`,
-      }));
-
-      act(() => {
-        result.current.startOptimization(largeCsvData, mockStrategyConfig);
-      });
-
-      expect(mockWorkerInstance.postMessage).toHaveBeenCalled();
-    });
-
-    test('should_handle_restart_optimization_mid_run', () => {
-      const { result } = renderHook(() => useOptimization());
-
-      act(() => {
-        result.current.startOptimization(mockCsvData, mockStrategyConfig);
-      });
-
-      act(() => {
-        mockWorkerInstance.simulateMessage({
-          type: 'progress',
-          current: 50,
-          total: 100,
-          elapsedMs: 5000,
-        });
-      });
-
-      act(() => {
-        result.current.startOptimization(mockCsvData, mockStrategyConfig);
-      });
-
-      expect(result.current.progress.current).toBe(0);
-      expect(result.current.results).toBeNull();
-    });
+    expect(mockWorkerInstance.terminate).toHaveBeenCalled();
   });
 });

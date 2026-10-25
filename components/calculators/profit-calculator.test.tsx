@@ -17,251 +17,100 @@ function getInput(name: string) {
   return document.querySelector<HTMLInputElement>(`input[name="${name}"]`)!;
 }
 
-async function submitValidLongTrade() {
+type Fields = Partial<Record<'entry' | 'leverage' | 'stopLoss' | 'positionSize' | 'tp1' | 'tp2' | 'tp3', string>>;
+
+async function fillAndSubmit(fields: Fields, tradeType: 'LONG' | 'SHORT' = 'LONG') {
   const user = userEvent.setup();
   render(<ProfitCalculator />);
 
-  await user.type(getInput('entry'), '100');
-  await user.type(getInput('leverage'), '10');
-  await user.type(getInput('stopLoss'), '90');
-  await user.type(getInput('positionSize'), '500');
-  await user.type(getInput('tp1'), '120');
+  if (tradeType === 'SHORT') {
+    await user.click(document.querySelector<HTMLInputElement>('input[value="SHORT"]')!);
+  }
+  for (const [name, value] of Object.entries(fields)) {
+    if (value !== undefined) await user.type(getInput(name), value);
+  }
   await user.click(screen.getByRole('button', { name: /calculate profit/i }));
-
-  return user;
 }
 
+async function alertMessages() {
+  const alerts = await screen.findAllByRole('alert');
+  return alerts.map((a) => a.textContent ?? '');
+}
+
+const validLong: Fields = { entry: '100', leverage: '10', stopLoss: '90', positionSize: '500', tp1: '120' };
+
 describe('ProfitCalculator', () => {
-  describe('initial render', () => {
-    test('should_render_long_and_short_radio_buttons', () => {
-      render(<ProfitCalculator />);
-      expect(document.querySelector('input[value="LONG"]')).not.toBeNull();
-      expect(document.querySelector('input[value="SHORT"]')).not.toBeNull();
-    });
+  test('should_default_to_long_with_no_results', () => {
+    render(<ProfitCalculator />);
 
-    test('should_default_to_long_trade_type', () => {
-      render(<ProfitCalculator />);
-      const longRadio = document.querySelector<HTMLInputElement>('input[value="LONG"]')!;
-      expect(longRadio.checked).toBe(true);
-    });
+    expect(document.querySelector<HTMLInputElement>('input[value="LONG"]')!.checked).toBe(true);
+    expect(getInput('tp1').getAttribute('aria-required')).toBe('true');
+    expect(screen.queryByText('Total Profit')).toBeNull();
+  });
 
-    test('should_render_entry_price_input', () => {
-      render(<ProfitCalculator />);
-      expect(getInput('entry')).not.toBeNull();
-    });
+  test('should_select_short_radio_when_short_is_clicked', async () => {
+    const user = userEvent.setup();
+    render(<ProfitCalculator />);
+    const shortRadio = document.querySelector<HTMLInputElement>('input[value="SHORT"]')!;
 
-    test('should_render_leverage_input', () => {
-      render(<ProfitCalculator />);
-      expect(getInput('leverage')).not.toBeNull();
-    });
+    await user.click(shortRadio);
 
-    test('should_render_stop_loss_input', () => {
-      render(<ProfitCalculator />);
-      expect(getInput('stopLoss')).not.toBeNull();
-    });
-
-    test('should_render_position_size_input', () => {
-      render(<ProfitCalculator />);
-      expect(getInput('positionSize')).not.toBeNull();
-    });
-
-    test('should_render_tp1_through_tp4_inputs', () => {
-      render(<ProfitCalculator />);
-      expect(getInput('tp1')).not.toBeNull();
-      expect(getInput('tp2')).not.toBeNull();
-      expect(getInput('tp3')).not.toBeNull();
-      expect(getInput('tp4')).not.toBeNull();
-    });
-
-    test('should_mark_tp1_as_aria_required', () => {
-      render(<ProfitCalculator />);
-      expect(getInput('tp1').getAttribute('aria-required')).toBe('true');
-    });
-
-    test('should_render_calculate_button', () => {
-      render(<ProfitCalculator />);
-      expect(screen.getByRole('button', { name: /calculate profit/i })).toBeDefined();
-    });
-
-    test('should_not_show_results_section_on_initial_render', () => {
-      render(<ProfitCalculator />);
-      expect(screen.queryByText('Total Profit')).toBeNull();
-      expect(screen.queryByText('ROI')).toBeNull();
-    });
+    expect(shortRadio.checked).toBe(true);
   });
 
   describe('form validation', () => {
     test('should_show_required_errors_on_empty_submission', async () => {
-      const user = userEvent.setup();
-      render(<ProfitCalculator />);
+      await fillAndSubmit({});
 
-      await user.click(screen.getByRole('button', { name: /calculate profit/i }));
-
-      const alerts = await screen.findAllByRole('alert');
-      expect(alerts.length).toBeGreaterThan(0);
+      expect((await alertMessages()).length).toBeGreaterThan(0);
     });
 
     test('should_require_tp1_when_other_fields_are_filled', async () => {
-      const user = userEvent.setup();
-      render(<ProfitCalculator />);
+      await fillAndSubmit({ ...validLong, tp1: undefined });
 
-      await user.type(getInput('entry'), '100');
-      await user.type(getInput('leverage'), '10');
-      await user.type(getInput('stopLoss'), '90');
-      await user.type(getInput('positionSize'), '500');
-      await user.click(screen.getByRole('button', { name: /calculate profit/i }));
-
-      const alerts = await screen.findAllByRole('alert');
-      const messages = alerts.map((a) => a.textContent);
-      expect(messages.some((m) => m?.includes('Take profit 1 is required'))).toBe(true);
+      expect((await alertMessages()).some((m) => m.includes('Take profit 1 is required'))).toBe(true);
     });
 
-    test('should_show_error_when_leverage_below_minimum', async () => {
-      const user = userEvent.setup();
-      render(<ProfitCalculator />);
+    test.each([
+      { name: 'leverage_below_minimum', leverage: '0', message: 'at least 1x' },
+      { name: 'leverage_above_maximum', leverage: '101', message: 'cannot exceed 100x' },
+    ])('should_show_error_when_$name', async ({ leverage, message }) => {
+      await fillAndSubmit({ leverage });
 
-      await user.type(getInput('leverage'), '0');
-      await user.click(screen.getByRole('button', { name: /calculate profit/i }));
-
-      const alerts = await screen.findAllByRole('alert');
-      const messages = alerts.map((a) => a.textContent);
-      expect(messages.some((m) => m?.includes('at least 1x'))).toBe(true);
+      expect((await alertMessages()).some((m) => m.includes(message))).toBe(true);
     });
 
-    test('should_show_error_when_leverage_exceeds_maximum', async () => {
-      const user = userEvent.setup();
-      render(<ProfitCalculator />);
+    test.each([
+      { name: 'long_tp1_below_entry', tradeType: 'LONG', stopLoss: '90', tp1: '80' },
+      { name: 'short_tp1_above_entry', tradeType: 'SHORT', stopLoss: '110', tp1: '120' },
+    ] as const)('should_show_invalid_price_levels_when_$name', async ({ tradeType, stopLoss, tp1 }) => {
+      await fillAndSubmit({ ...validLong, stopLoss, tp1 }, tradeType);
 
-      await user.type(getInput('leverage'), '101');
-      await user.click(screen.getByRole('button', { name: /calculate profit/i }));
-
-      const alerts = await screen.findAllByRole('alert');
-      const messages = alerts.map((a) => a.textContent);
-      expect(messages.some((m) => m?.includes('cannot exceed 100x'))).toBe(true);
-    });
-
-    test('should_show_error_when_long_tp1_is_below_entry', async () => {
-      const user = userEvent.setup();
-      render(<ProfitCalculator />);
-
-      await user.type(getInput('entry'), '100');
-      await user.type(getInput('leverage'), '10');
-      await user.type(getInput('stopLoss'), '90');
-      await user.type(getInput('positionSize'), '500');
-      await user.type(getInput('tp1'), '80');
-      await user.click(screen.getByRole('button', { name: /calculate profit/i }));
-
-      const alerts = await screen.findAllByRole('alert');
-      const messages = alerts.map((a) => a.textContent);
-      expect(messages.some((m) => m?.includes('Invalid price levels'))).toBe(true);
-    });
-
-    test('should_show_error_when_short_tp1_is_above_entry', async () => {
-      const user = userEvent.setup();
-      render(<ProfitCalculator />);
-
-      await user.click(document.querySelector<HTMLInputElement>('input[value="SHORT"]')!);
-      await user.type(getInput('entry'), '100');
-      await user.type(getInput('leverage'), '10');
-      await user.type(getInput('stopLoss'), '110');
-      await user.type(getInput('positionSize'), '500');
-      await user.type(getInput('tp1'), '120');
-      await user.click(screen.getByRole('button', { name: /calculate profit/i }));
-
-      const alerts = await screen.findAllByRole('alert');
-      const messages = alerts.map((a) => a.textContent);
-      expect(messages.some((m) => m?.includes('Invalid price levels'))).toBe(true);
+      expect((await alertMessages()).some((m) => m.includes('Invalid price levels'))).toBe(true);
     });
   });
 
   describe('successful calculation', () => {
-    test('should_display_results_region_after_valid_long_submission', async () => {
-      await submitValidLongTrade();
-      const region = await screen.findByRole('region', { name: /profit analysis results/i });
-      expect(region).toBeDefined();
+    test('should_display_result_cards_and_single_breakdown_row_for_long', async () => {
+      await fillAndSubmit(validLong);
+
+      await screen.findByRole('region', { name: /profit analysis results/i });
+      for (const label of ['Total Profit', 'Average Profit', 'ROI', 'Maximum Loss', 'Primary R:R', 'Average R:R', 'TP1']) {
+        expect(screen.getByText(label)).toBeDefined();
+      }
+      expect(screen.getAllByRole('listitem').length).toBe(1);
     });
 
-    test('should_display_total_profit_result_card', async () => {
-      await submitValidLongTrade();
-      expect(await screen.findByText('Total Profit')).toBeDefined();
-    });
+    test('should_display_one_breakdown_row_per_take_profit', async () => {
+      await fillAndSubmit({ ...validLong, tp2: '130', tp3: '140' });
 
-    test('should_display_average_profit_result_card', async () => {
-      await submitValidLongTrade();
-      expect(await screen.findByText('Average Profit')).toBeDefined();
-    });
-
-    test('should_display_roi_result_card', async () => {
-      await submitValidLongTrade();
-      expect(await screen.findByText('ROI')).toBeDefined();
-    });
-
-    test('should_display_maximum_loss_result_card', async () => {
-      await submitValidLongTrade();
-      expect(await screen.findByText('Maximum Loss')).toBeDefined();
-    });
-
-    test('should_display_primary_risk_reward_result_card', async () => {
-      await submitValidLongTrade();
-      expect(await screen.findByText('Primary R:R')).toBeDefined();
-    });
-
-    test('should_display_average_risk_reward_result_card', async () => {
-      await submitValidLongTrade();
-      expect(await screen.findByText('Average R:R')).toBeDefined();
-    });
-
-    test('should_display_take_profit_breakdown_list', async () => {
-      await submitValidLongTrade();
-      const list = await screen.findByRole('list', { name: /take profit targets/i });
-      expect(list).toBeDefined();
-    });
-
-    test('should_display_tp1_breakdown_row', async () => {
-      await submitValidLongTrade();
-      expect(await screen.findByText('TP1')).toBeDefined();
-    });
-
-    test('should_display_multiple_breakdown_rows_when_optional_tps_provided', async () => {
-      const user = userEvent.setup();
-      render(<ProfitCalculator />);
-
-      await user.type(getInput('entry'), '100');
-      await user.type(getInput('leverage'), '10');
-      await user.type(getInput('stopLoss'), '90');
-      await user.type(getInput('positionSize'), '500');
-      await user.type(getInput('tp1'), '120');
-      await user.type(getInput('tp2'), '130');
-      await user.type(getInput('tp3'), '140');
-      await user.click(screen.getByRole('button', { name: /calculate profit/i }));
-
-      const items = await screen.findAllByRole('listitem');
-      expect(items.length).toBe(3);
+      expect((await screen.findAllByRole('listitem')).length).toBe(3);
     });
 
     test('should_display_results_for_valid_short_trade', async () => {
-      const user = userEvent.setup();
-      render(<ProfitCalculator />);
-
-      await user.click(document.querySelector<HTMLInputElement>('input[value="SHORT"]')!);
-      await user.type(getInput('entry'), '100');
-      await user.type(getInput('leverage'), '5');
-      await user.type(getInput('stopLoss'), '110');
-      await user.type(getInput('positionSize'), '500');
-      await user.type(getInput('tp1'), '80');
-      await user.click(screen.getByRole('button', { name: /calculate profit/i }));
+      await fillAndSubmit({ entry: '100', leverage: '5', stopLoss: '110', positionSize: '500', tp1: '80' }, 'SHORT');
 
       expect(await screen.findByText('Total Profit')).toBeDefined();
-    });
-
-    test('should_select_short_radio_when_short_is_clicked', async () => {
-      const user = userEvent.setup();
-      render(<ProfitCalculator />);
-
-      const shortRadio = document.querySelector<HTMLInputElement>('input[value="SHORT"]')!;
-      await user.click(shortRadio);
-
-      expect(shortRadio.checked).toBe(true);
     });
   });
 });

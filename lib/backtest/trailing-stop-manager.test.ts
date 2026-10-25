@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import type { CsvRow } from '../types';
-import type { Position, TrailingStopState } from './types';
+import type { Position, PositionType, TrailingStopState } from './types';
 import {
   executePartialClose,
   initTrailingStop,
@@ -8,1065 +8,138 @@ import {
   updateExtremePrice,
 } from './trailing-stop-manager';
 
+const row = (high: number, low: number): CsvRow => ({ date: '2024-01-01', high, low, close: (high + low) / 2 });
+const state = (extremePrice: number, triggered = false): TrailingStopState => ({ extremePrice, triggered });
+
 describe('initTrailingStop', () => {
-  test('should_initialize_long_trailing_stop_with_high', () => {
-    const row: CsvRow = {
-      date: '2024-01-01',
-      high: 105,
-      low: 95,
-      close: 102,
-          };
-
-    const result = initTrailingStop(row, 'LONG');
-
-    expect(result.extremePrice).toBe(105);
-    expect(result.triggered).toBe(false);
-  });
-
-  test('should_initialize_short_trailing_stop_with_low', () => {
-    const row: CsvRow = {
-      date: '2024-01-01',
-      high: 105,
-      low: 95,
-      close: 102,
-          };
-
-    const result = initTrailingStop(row, 'SHORT');
-
-    expect(result.extremePrice).toBe(95);
-    expect(result.triggered).toBe(false);
-  });
-
-  test('should_set_triggered_to_false', () => {
-    const row: CsvRow = {
-      date: '2024-01-01',
-      high: 110,
-      low: 90,
-      close: 105,
-          };
-
-    const longResult = initTrailingStop(row, 'LONG');
-    const shortResult = initTrailingStop(row, 'SHORT');
-
-    expect(longResult.triggered).toBe(false);
-    expect(shortResult.triggered).toBe(false);
-  });
-
-  test('should_handle_equal_high_and_low', () => {
-    const row: CsvRow = {
-      date: '2024-01-01',
-      high: 100,
-      low: 100,
-      close: 100,
-          };
-
-    const longResult = initTrailingStop(row, 'LONG');
-    const shortResult = initTrailingStop(row, 'SHORT');
-
-    expect(longResult.extremePrice).toBe(100);
-    expect(shortResult.extremePrice).toBe(100);
-  });
-
-  test('should_handle_large_range', () => {
-    const row: CsvRow = {
-      date: '2024-01-01',
-      high: 200,
-      low: 50,
-      close: 150,
-          };
-
-    const longResult = initTrailingStop(row, 'LONG');
-    const shortResult = initTrailingStop(row, 'SHORT');
-
-    expect(longResult.extremePrice).toBe(200);
-    expect(shortResult.extremePrice).toBe(50);
-  });
-
-  test('should_handle_fractional_prices', () => {
-    const row: CsvRow = {
-      date: '2024-01-01',
-      high: 105.75,
-      low: 95.25,
-      close: 102.5,
-          };
-
-    const longResult = initTrailingStop(row, 'LONG');
-    const shortResult = initTrailingStop(row, 'SHORT');
-
-    expect(longResult.extremePrice).toBe(105.75);
-    expect(shortResult.extremePrice).toBe(95.25);
+  test.each([
+    { type: 'LONG', expected: 105 },
+    { type: 'SHORT', expected: 95 },
+  ] as const)('should_seed_extreme_from_$expected_for_$type', ({ type, expected }) => {
+    expect(initTrailingStop(row(105, 95), type)).toEqual({ extremePrice: expected, triggered: false });
   });
 });
 
 describe('updateExtremePrice', () => {
-  describe('long positions', () => {
-    test('should_update_extreme_when_new_high_reached', () => {
-      const state: TrailingStopState = {
-        extremePrice: 100,
-        triggered: false,
-      };
-      const row: CsvRow = {
-        date: '2024-01-02',
-        high: 110,
-        low: 95,
-        close: 105,
-              };
+  test.each([
+    { type: 'LONG', extreme: 100, high: 105, low: 95, expected: 105 },
+    { type: 'SHORT', extreme: 100, high: 105, low: 95, expected: 95 },
+  ] as const)('should_move_extreme_to_$expected_for_$type_when_new_extreme_reached', ({ type, extreme, high, low, expected }) => {
+    const initial = state(extreme);
 
-      const result = updateExtremePrice(state, row, 'LONG');
+    const result = updateExtremePrice(initial, row(high, low), type);
 
-      expect(result.extremePrice).toBe(110);
-      expect(result.triggered).toBe(false);
-    });
-
-    test('should_not_update_when_high_is_lower', () => {
-      const state: TrailingStopState = {
-        extremePrice: 100,
-        triggered: false,
-      };
-      const row: CsvRow = {
-        date: '2024-01-02',
-        high: 98,
-        low: 90,
-        close: 95,
-              };
-
-      const result = updateExtremePrice(state, row, 'LONG');
-
-      expect(result.extremePrice).toBe(100);
-      expect(result.triggered).toBe(false);
-    });
-
-    test('should_not_update_when_high_equals_extreme', () => {
-      const state: TrailingStopState = {
-        extremePrice: 100,
-        triggered: false,
-      };
-      const row: CsvRow = {
-        date: '2024-01-02',
-        high: 100,
-        low: 95,
-        close: 99,
-              };
-
-      const result = updateExtremePrice(state, row, 'LONG');
-
-      expect(result.extremePrice).toBe(100);
-      expect(result === state).toBe(true);
-    });
-
-    test('should_not_update_when_already_triggered', () => {
-      const state: TrailingStopState = {
-        extremePrice: 100,
-        triggered: true,
-      };
-      const row: CsvRow = {
-        date: '2024-01-02',
-        high: 120,
-        low: 105,
-        close: 115,
-              };
-
-      const result = updateExtremePrice(state, row, 'LONG');
-
-      expect(result.extremePrice).toBe(100);
-      expect(result.triggered).toBe(true);
-      expect(result === state).toBe(true);
-    });
-
-    test('should_return_new_state_object_when_updated', () => {
-      const state: TrailingStopState = {
-        extremePrice: 100,
-        triggered: false,
-      };
-      const row: CsvRow = {
-        date: '2024-01-02',
-        high: 105,
-        low: 95,
-        close: 102,
-              };
-
-      const result = updateExtremePrice(state, row, 'LONG');
-
-      expect(result !== state).toBe(true);
-      expect(result.extremePrice).toBe(105);
-    });
+    expect(result).toEqual({ extremePrice: expected, triggered: false });
+    expect(result).not.toBe(initial);
   });
 
-  describe('short positions', () => {
-    test('should_update_extreme_when_new_low_reached', () => {
-      const state: TrailingStopState = {
-        extremePrice: 100,
-        triggered: false,
-      };
-      const row: CsvRow = {
-        date: '2024-01-02',
-        high: 105,
-        low: 90,
-        close: 92,
-              };
+  test.each([
+    { name: 'long_high_lower', type: 'LONG', extreme: 100, high: 95, low: 90 },
+    { name: 'long_high_equal', type: 'LONG', extreme: 100, high: 100, low: 90 },
+    { name: 'short_low_higher', type: 'SHORT', extreme: 100, high: 115, low: 105 },
+    { name: 'short_low_equal', type: 'SHORT', extreme: 100, high: 115, low: 100 },
+  ] as const)('should_return_same_state_when_$name', ({ type, extreme, high, low }) => {
+    const initial = state(extreme);
 
-      const result = updateExtremePrice(state, row, 'SHORT');
-
-      expect(result.extremePrice).toBe(90);
-      expect(result.triggered).toBe(false);
-    });
-
-    test('should_not_update_when_low_is_higher', () => {
-      const state: TrailingStopState = {
-        extremePrice: 100,
-        triggered: false,
-      };
-      const row: CsvRow = {
-        date: '2024-01-02',
-        high: 110,
-        low: 102,
-        close: 108,
-              };
-
-      const result = updateExtremePrice(state, row, 'SHORT');
-
-      expect(result.extremePrice).toBe(100);
-      expect(result.triggered).toBe(false);
-    });
-
-    test('should_not_update_when_low_equals_extreme', () => {
-      const state: TrailingStopState = {
-        extremePrice: 100,
-        triggered: false,
-      };
-      const row: CsvRow = {
-        date: '2024-01-02',
-        high: 105,
-        low: 100,
-        close: 103,
-              };
-
-      const result = updateExtremePrice(state, row, 'SHORT');
-
-      expect(result.extremePrice).toBe(100);
-      expect(result === state).toBe(true);
-    });
-
-    test('should_not_update_when_already_triggered', () => {
-      const state: TrailingStopState = {
-        extremePrice: 100,
-        triggered: true,
-      };
-      const row: CsvRow = {
-        date: '2024-01-02',
-        high: 95,
-        low: 85,
-        close: 88,
-              };
-
-      const result = updateExtremePrice(state, row, 'SHORT');
-
-      expect(result.extremePrice).toBe(100);
-      expect(result.triggered).toBe(true);
-      expect(result === state).toBe(true);
-    });
-
-    test('should_return_new_state_object_when_updated', () => {
-      const state: TrailingStopState = {
-        extremePrice: 100,
-        triggered: false,
-      };
-      const row: CsvRow = {
-        date: '2024-01-02',
-        high: 105,
-        low: 95,
-        close: 97,
-              };
-
-      const result = updateExtremePrice(state, row, 'SHORT');
-
-      expect(result !== state).toBe(true);
-      expect(result.extremePrice).toBe(95);
-    });
+    expect(updateExtremePrice(initial, row(high, low), type)).toBe(initial);
   });
 
-  test('should_handle_large_price_movements', () => {
-    const state: TrailingStopState = {
-      extremePrice: 100,
-      triggered: false,
-    };
-    const row: CsvRow = {
-      date: '2024-01-02',
-      high: 250,
-      low: 50,
-      close: 150,
-          };
+  test.each(['LONG', 'SHORT'] as const)('should_return_same_state_when_already_triggered_for_%s', (type) => {
+    const initial = state(100, true);
 
-    const longResult = updateExtremePrice(state, row, 'LONG');
-    const shortResult = updateExtremePrice(state, row, 'SHORT');
-
-    expect(longResult.extremePrice).toBe(250);
-    expect(shortResult.extremePrice).toBe(50);
-  });
-
-  test('should_handle_fractional_values', () => {
-    const state: TrailingStopState = {
-      extremePrice: 100.5,
-      triggered: false,
-    };
-    const row: CsvRow = {
-      date: '2024-01-02',
-      high: 105.75,
-      low: 95.25,
-      close: 102,
-          };
-
-    const longResult = updateExtremePrice(state, row, 'LONG');
-    const shortResult = updateExtremePrice(state, row, 'SHORT');
-
-    expect(longResult.extremePrice).toBe(105.75);
-    expect(shortResult.extremePrice).toBe(95.25);
+    expect(updateExtremePrice(initial, row(120, 80), type)).toBe(initial);
   });
 });
 
 describe('shouldTriggerStop', () => {
-  describe('long positions', () => {
-    test('should_trigger_when_price_below_stop_level', () => {
-      const state: TrailingStopState = {
-        extremePrice: 100,
-        triggered: false,
-      };
-      const price = 89;
-      const atr = 5;
-      const multiplier = 2;
-
-      const result = shouldTriggerStop(state, price, atr, multiplier, 'LONG');
-
-      expect(result).toBe(true);
-    });
-
-    test('should_not_trigger_when_price_above_stop_level', () => {
-      const state: TrailingStopState = {
-        extremePrice: 100,
-        triggered: false,
-      };
-      const price = 91;
-      const atr = 5;
-      const multiplier = 2;
-
-      const result = shouldTriggerStop(state, price, atr, multiplier, 'LONG');
-
-      expect(result).toBe(false);
-    });
-
-    test('should_trigger_when_price_exactly_at_stop_level', () => {
-      const state: TrailingStopState = {
-        extremePrice: 100,
-        triggered: false,
-      };
-      const price = 90;
-      const atr = 5;
-      const multiplier = 2;
-
-      const result = shouldTriggerStop(state, price, atr, multiplier, 'LONG');
-
-      expect(result).toBe(true);
-    });
-
-    test('should_not_trigger_when_already_triggered', () => {
-      const state: TrailingStopState = {
-        extremePrice: 100,
-        triggered: true,
-      };
-      const price = 80;
-      const atr = 5;
-      const multiplier = 2;
-
-      const result = shouldTriggerStop(state, price, atr, multiplier, 'LONG');
-
-      expect(result).toBe(false);
-    });
-
-    test('should_not_trigger_when_atr_is_nan', () => {
-      const state: TrailingStopState = {
-        extremePrice: 100,
-        triggered: false,
-      };
-      const price = 80;
-      const atr = NaN;
-      const multiplier = 2;
-
-      const result = shouldTriggerStop(state, price, atr, multiplier, 'LONG');
-
-      expect(result).toBe(false);
-    });
-
-    test('should_use_multiplier_2', () => {
-      const state: TrailingStopState = {
-        extremePrice: 100,
-        triggered: false,
-      };
-      const price = 90;
-      const atr = 5;
-      const multiplier = 2;
-
-      const result = shouldTriggerStop(state, price, atr, multiplier, 'LONG');
-
-      expect(result).toBe(true);
-    });
-
-    test('should_use_multiplier_2_5', () => {
-      const state: TrailingStopState = {
-        extremePrice: 100,
-        triggered: false,
-      };
-      const price = 87.5;
-      const atr = 5;
-      const multiplier = 2.5;
-
-      const result = shouldTriggerStop(state, price, atr, multiplier, 'LONG');
-
-      expect(result).toBe(true);
-    });
-
-    test('should_use_multiplier_3', () => {
-      const state: TrailingStopState = {
-        extremePrice: 100,
-        triggered: false,
-      };
-      const price = 85;
-      const atr = 5;
-      const multiplier = 3;
-
-      const result = shouldTriggerStop(state, price, atr, multiplier, 'LONG');
-
-      expect(result).toBe(true);
-    });
-
-    test('should_use_multiplier_3_5', () => {
-      const state: TrailingStopState = {
-        extremePrice: 100,
-        triggered: false,
-      };
-      const price = 82.5;
-      const atr = 5;
-      const multiplier = 3.5;
-
-      const result = shouldTriggerStop(state, price, atr, multiplier, 'LONG');
-
-      expect(result).toBe(true);
-    });
-
-    test('should_use_multiplier_4', () => {
-      const state: TrailingStopState = {
-        extremePrice: 100,
-        triggered: false,
-      };
-      const price = 80;
-      const atr = 5;
-      const multiplier = 4;
-
-      const result = shouldTriggerStop(state, price, atr, multiplier, 'LONG');
-
-      expect(result).toBe(true);
-    });
+  // stop distance = atr 5 * multiplier 2 = 10; long stop at 90, short stop at 110
+  test.each([
+    { name: 'below_stop_level', type: 'LONG', price: 85, expected: true },
+    { name: 'exactly_at_stop_level', type: 'LONG', price: 90, expected: true },
+    { name: 'above_stop_level', type: 'LONG', price: 95, expected: false },
+    { name: 'above_stop_level', type: 'SHORT', price: 115, expected: true },
+    { name: 'exactly_at_stop_level', type: 'SHORT', price: 110, expected: true },
+    { name: 'below_stop_level', type: 'SHORT', price: 105, expected: false },
+  ] as const)('should_return_$expected_for_$type_when_price_$name', ({ type, price, expected }) => {
+    expect(shouldTriggerStop(state(100), price, 5, 2, type)).toBe(expected);
   });
 
-  describe('short positions', () => {
-    test('should_trigger_when_price_above_stop_level', () => {
-      const state: TrailingStopState = {
-        extremePrice: 100,
-        triggered: false,
-      };
-      const price = 111;
-      const atr = 5;
-      const multiplier = 2;
-
-      const result = shouldTriggerStop(state, price, atr, multiplier, 'SHORT');
-
-      expect(result).toBe(true);
-    });
-
-    test('should_not_trigger_when_price_below_stop_level', () => {
-      const state: TrailingStopState = {
-        extremePrice: 100,
-        triggered: false,
-      };
-      const price = 109;
-      const atr = 5;
-      const multiplier = 2;
-
-      const result = shouldTriggerStop(state, price, atr, multiplier, 'SHORT');
-
-      expect(result).toBe(false);
-    });
-
-    test('should_trigger_when_price_exactly_at_stop_level', () => {
-      const state: TrailingStopState = {
-        extremePrice: 100,
-        triggered: false,
-      };
-      const price = 110;
-      const atr = 5;
-      const multiplier = 2;
-
-      const result = shouldTriggerStop(state, price, atr, multiplier, 'SHORT');
-
-      expect(result).toBe(true);
-    });
-
-    test('should_not_trigger_when_already_triggered', () => {
-      const state: TrailingStopState = {
-        extremePrice: 100,
-        triggered: true,
-      };
-      const price = 120;
-      const atr = 5;
-      const multiplier = 2;
-
-      const result = shouldTriggerStop(state, price, atr, multiplier, 'SHORT');
-
-      expect(result).toBe(false);
-    });
-
-    test('should_not_trigger_when_atr_is_nan', () => {
-      const state: TrailingStopState = {
-        extremePrice: 100,
-        triggered: false,
-      };
-      const price = 120;
-      const atr = NaN;
-      const multiplier = 2;
-
-      const result = shouldTriggerStop(state, price, atr, multiplier, 'SHORT');
-
-      expect(result).toBe(false);
-    });
-
-    test('should_use_multiplier_2', () => {
-      const state: TrailingStopState = {
-        extremePrice: 100,
-        triggered: false,
-      };
-      const price = 110;
-      const atr = 5;
-      const multiplier = 2;
-
-      const result = shouldTriggerStop(state, price, atr, multiplier, 'SHORT');
-
-      expect(result).toBe(true);
-    });
-
-    test('should_use_multiplier_2_5', () => {
-      const state: TrailingStopState = {
-        extremePrice: 100,
-        triggered: false,
-      };
-      const price = 112.5;
-      const atr = 5;
-      const multiplier = 2.5;
-
-      const result = shouldTriggerStop(state, price, atr, multiplier, 'SHORT');
-
-      expect(result).toBe(true);
-    });
-
-    test('should_use_multiplier_3', () => {
-      const state: TrailingStopState = {
-        extremePrice: 100,
-        triggered: false,
-      };
-      const price = 115;
-      const atr = 5;
-      const multiplier = 3;
-
-      const result = shouldTriggerStop(state, price, atr, multiplier, 'SHORT');
-
-      expect(result).toBe(true);
-    });
-
-    test('should_use_multiplier_3_5', () => {
-      const state: TrailingStopState = {
-        extremePrice: 100,
-        triggered: false,
-      };
-      const price = 117.5;
-      const atr = 5;
-      const multiplier = 3.5;
-
-      const result = shouldTriggerStop(state, price, atr, multiplier, 'SHORT');
-
-      expect(result).toBe(true);
-    });
-
-    test('should_use_multiplier_4', () => {
-      const state: TrailingStopState = {
-        extremePrice: 100,
-        triggered: false,
-      };
-      const price = 120;
-      const atr = 5;
-      const multiplier = 4;
-
-      const result = shouldTriggerStop(state, price, atr, multiplier, 'SHORT');
-
-      expect(result).toBe(true);
-    });
+  test.each(['LONG', 'SHORT'] as const)('should_not_trigger_when_already_triggered_for_%s', (type) => {
+    expect(shouldTriggerStop(state(100, true), type === 'LONG' ? 0 : 1000, 5, 2, type)).toBe(false);
   });
 
-  test('should_handle_small_atr_values', () => {
-    const state: TrailingStopState = {
-      extremePrice: 100,
-      triggered: false,
-    };
-    const price = 99.5;
-    const atr = 0.1;
-    const multiplier = 2;
-
-    const result = shouldTriggerStop(state, price, atr, multiplier, 'LONG');
-
-    expect(result).toBe(true);
+  test.each(['LONG', 'SHORT'] as const)('should_not_trigger_when_atr_is_nan_for_%s', (type) => {
+    expect(shouldTriggerStop(state(100), type === 'LONG' ? 0 : 1000, NaN, 2, type)).toBe(false);
   });
 
-  test('should_handle_large_atr_values', () => {
-    const state: TrailingStopState = {
-      extremePrice: 100,
-      triggered: false,
-    };
-    const price = 70;
-    const atr = 10;
-    const multiplier = 2;
+  test.each([2, 2.5, 3, 3.5, 4])('should_scale_stop_distance_with_multiplier_%d', (multiplier) => {
+    const stopPrice = 100 - 5 * multiplier;
 
-    const result = shouldTriggerStop(state, price, atr, multiplier, 'LONG');
-
-    expect(result).toBe(true);
-  });
-
-  test('should_handle_fractional_values', () => {
-    const state: TrailingStopState = {
-      extremePrice: 100.5,
-      triggered: false,
-    };
-    const price = 90.25;
-    const atr = 5.1;
-    const multiplier = 2;
-
-    const result = shouldTriggerStop(state, price, atr, multiplier, 'LONG');
-
-    expect(result).toBe(true);
+    expect(shouldTriggerStop(state(100), stopPrice, 5, multiplier, 'LONG')).toBe(true);
+    expect(shouldTriggerStop(state(100), stopPrice + 0.01, 5, multiplier, 'LONG')).toBe(false);
+    expect(shouldTriggerStop(state(100), 200 - stopPrice, 5, multiplier, 'SHORT')).toBe(true);
+    expect(shouldTriggerStop(state(100), 200 - stopPrice - 0.01, 5, multiplier, 'SHORT')).toBe(false);
   });
 });
 
 describe('executePartialClose', () => {
-  describe('long positions', () => {
-    test('should_close_10_percent_with_profit', () => {
-      const position: Position = {
-        type: 'LONG',
-        entryPrice: 100,
-        entryValue: 2000,
-        leverage: 2,
-        trailingStop: { extremePrice: 110, triggered: false },
-      };
-      const price = 110;
-      const closePercent = 10;
-      const feeRate = 0.1;
-
-      const result = executePartialClose(position, price, closePercent, feeRate);
-
-      // closedCapital = 200 / 2 = 100, fees = 100 * 2 * 0.1 / 100 = 0.2
-      expect(result.newPosition.entryValue).toBe(1800);
-      expect(result.closedCapital).toBe(100);
-      expect(result.pnl).toBeCloseTo(20, 10);
-      expect(result.fees).toBeCloseTo(0.2, 10);
-      expect(result.sidelineValue).toBeCloseTo(119.8, 10);
-      expect(result.newPosition.trailingStop?.triggered).toBe(true);
-    });
-
-    test('should_close_25_percent_with_profit', () => {
-      const position: Position = {
-        type: 'LONG',
-        entryPrice: 100,
-        entryValue: 2000,
-        leverage: 2,
-      };
-      const price = 110;
-      const closePercent = 25;
-      const feeRate = 0.1;
-
-      const result = executePartialClose(position, price, closePercent, feeRate);
-
-      // closedCapital = 500 / 2 = 250, fees = 250 * 2 * 0.1 / 100 = 0.5
-      expect(result.newPosition.entryValue).toBe(1500);
-      expect(result.closedCapital).toBe(250);
-      expect(result.pnl).toBeCloseTo(50, 10);
-      expect(result.fees).toBeCloseTo(0.5, 10);
-      expect(result.sidelineValue).toBeCloseTo(299.5, 10);
-    });
-
-    test('should_close_50_percent_with_profit', () => {
-      const position: Position = {
-        type: 'LONG',
-        entryPrice: 100,
-        entryValue: 2000,
-        leverage: 2,
-      };
-      const price = 110;
-      const closePercent = 50;
-      const feeRate = 0.1;
-
-      const result = executePartialClose(position, price, closePercent, feeRate);
-
-      // closedCapital = 1000 / 2 = 500, fees = 500 * 2 * 0.1 / 100 = 1
-      expect(result.newPosition.entryValue).toBe(1000);
-      expect(result.closedCapital).toBe(500);
-      expect(result.pnl).toBeCloseTo(100, 10);
-      expect(result.fees).toBeCloseTo(1, 10);
-      expect(result.sidelineValue).toBeCloseTo(599, 10);
-    });
-
-    test('should_close_100_percent_with_profit', () => {
-      const position: Position = {
-        type: 'LONG',
-        entryPrice: 100,
-        entryValue: 2000,
-        leverage: 2,
-      };
-      const price = 110;
-      const closePercent = 100;
-      const feeRate = 0.1;
-
-      const result = executePartialClose(position, price, closePercent, feeRate);
-
-      // closedCapital = 2000 / 2 = 1000, fees = 1000 * 2 * 0.1 / 100 = 2
-      expect(result.newPosition.entryValue).toBe(0);
-      expect(result.closedCapital).toBe(1000);
-      expect(result.pnl).toBeCloseTo(200, 10);
-      expect(result.fees).toBeCloseTo(2, 10);
-      expect(result.sidelineValue).toBeCloseTo(1198, 10);
-    });
-
-    test('should_handle_loss_scenario', () => {
-      const position: Position = {
-        type: 'LONG',
-        entryPrice: 100,
-        entryValue: 2000,
-        leverage: 2,
-      };
-      const price = 95;
-      const closePercent = 50;
-      const feeRate = 0.1;
-
-      const result = executePartialClose(position, price, closePercent, feeRate);
-
-      // closedCapital = 1000 / 2 = 500, fees = 500 * 2 * 0.1 / 100 = 1
-      expect(result.newPosition.entryValue).toBe(1000);
-      expect(result.closedCapital).toBe(500);
-      expect(result.pnl).toBeCloseTo(-50, 10);
-      expect(result.fees).toBeCloseTo(1, 10);
-      expect(result.sidelineValue).toBeCloseTo(449, 10);
-    });
+  const makePosition = (type: PositionType, overrides: Partial<Position> = {}): Position => ({
+    type,
+    entryPrice: 100,
+    entryValue: 2000,
+    leverage: 2,
+    ...overrides,
   });
 
-  describe('short positions', () => {
-    test('should_close_10_percent_with_profit', () => {
-      const position: Position = {
-        type: 'SHORT',
-        entryPrice: 100,
-        entryValue: 2000,
-        leverage: 2,
-        trailingStop: { extremePrice: 90, triggered: false },
-      };
-      const price = 90;
-      const closePercent = 10;
-      const feeRate = 0.1;
+  // fees = closedCapital * leverage(2) * 0.1 / 100
+  test.each([
+    { type: 'LONG', price: 110, percent: 10, remaining: 1800, capital: 100, pnl: 20, fees: 0.2, sideline: 119.8 },
+    { type: 'LONG', price: 110, percent: 25, remaining: 1500, capital: 250, pnl: 50, fees: 0.5, sideline: 299.5 },
+    { type: 'LONG', price: 110, percent: 50, remaining: 1000, capital: 500, pnl: 100, fees: 1, sideline: 599 },
+    { type: 'LONG', price: 110, percent: 100, remaining: 0, capital: 1000, pnl: 200, fees: 2, sideline: 1198 },
+    { type: 'LONG', price: 95, percent: 50, remaining: 1000, capital: 500, pnl: -50, fees: 1, sideline: 449 },
+    { type: 'SHORT', price: 90, percent: 50, remaining: 1000, capital: 500, pnl: 100, fees: 1, sideline: 599 },
+    { type: 'SHORT', price: 90, percent: 100, remaining: 0, capital: 1000, pnl: 200, fees: 2, sideline: 1198 },
+    { type: 'SHORT', price: 105, percent: 50, remaining: 1000, capital: 500, pnl: -50, fees: 1, sideline: 449 },
+  ] as const)(
+    'should_close_$percent_percent_of_$type_at_$price',
+    ({ type, price, percent, remaining, capital, pnl, fees, sideline }) => {
+      const result = executePartialClose(makePosition(type), price, percent, 0.1);
 
-      const result = executePartialClose(position, price, closePercent, feeRate);
+      expect(result.newPosition.entryValue).toBe(remaining);
+      expect(result.closedCapital).toBe(capital);
+      expect(result.pnl).toBeCloseTo(pnl, 10);
+      expect(result.fees).toBeCloseTo(fees, 10);
+      expect(result.sidelineValue).toBeCloseTo(sideline, 10);
+    }
+  );
 
-      // closedCapital = 200 / 2 = 100, fees = 100 * 2 * 0.1 / 100 = 0.2
-      expect(result.newPosition.entryValue).toBe(1800);
-      expect(result.closedCapital).toBe(100);
-      expect(result.pnl).toBeCloseTo(20, 10);
-      expect(result.fees).toBeCloseTo(0.2, 10);
-      expect(result.sidelineValue).toBeCloseTo(119.8, 10);
-      expect(result.newPosition.trailingStop?.triggered).toBe(true);
-    });
+  test('should_keep_position_properties_and_mark_trailing_stop_triggered', () => {
+    const result = executePartialClose(
+      makePosition('LONG', { leverage: 2.5, trailingStop: state(115) }),
+      110,
+      50,
+      0.1
+    );
 
-    test('should_close_25_percent_with_profit', () => {
-      const position: Position = {
-        type: 'SHORT',
-        entryPrice: 100,
-        entryValue: 2000,
-        leverage: 2,
-      };
-      const price = 90;
-      const closePercent = 25;
-      const feeRate = 0.1;
-
-      const result = executePartialClose(position, price, closePercent, feeRate);
-
-      // closedCapital = 500 / 2 = 250, fees = 250 * 2 * 0.1 / 100 = 0.5
-      expect(result.newPosition.entryValue).toBe(1500);
-      expect(result.closedCapital).toBe(250);
-      expect(result.pnl).toBeCloseTo(50, 10);
-      expect(result.fees).toBeCloseTo(0.5, 10);
-      expect(result.sidelineValue).toBeCloseTo(299.5, 10);
-    });
-
-    test('should_close_50_percent_with_profit', () => {
-      const position: Position = {
-        type: 'SHORT',
-        entryPrice: 100,
-        entryValue: 2000,
-        leverage: 2,
-      };
-      const price = 90;
-      const closePercent = 50;
-      const feeRate = 0.1;
-
-      const result = executePartialClose(position, price, closePercent, feeRate);
-
-      // closedCapital = 1000 / 2 = 500, fees = 500 * 2 * 0.1 / 100 = 1
-      expect(result.newPosition.entryValue).toBe(1000);
-      expect(result.closedCapital).toBe(500);
-      expect(result.pnl).toBeCloseTo(100, 10);
-      expect(result.fees).toBeCloseTo(1, 10);
-      expect(result.sidelineValue).toBeCloseTo(599, 10);
-    });
-
-    test('should_close_100_percent_with_profit', () => {
-      const position: Position = {
-        type: 'SHORT',
-        entryPrice: 100,
-        entryValue: 2000,
-        leverage: 2,
-      };
-      const price = 90;
-      const closePercent = 100;
-      const feeRate = 0.1;
-
-      const result = executePartialClose(position, price, closePercent, feeRate);
-
-      // closedCapital = 2000 / 2 = 1000, fees = 1000 * 2 * 0.1 / 100 = 2
-      expect(result.newPosition.entryValue).toBe(0);
-      expect(result.closedCapital).toBe(1000);
-      expect(result.pnl).toBeCloseTo(200, 10);
-      expect(result.fees).toBeCloseTo(2, 10);
-      expect(result.sidelineValue).toBeCloseTo(1198, 10);
-    });
-
-    test('should_handle_loss_scenario', () => {
-      const position: Position = {
-        type: 'SHORT',
-        entryPrice: 100,
-        entryValue: 2000,
-        leverage: 2,
-      };
-      const price = 105;
-      const closePercent = 50;
-      const feeRate = 0.1;
-
-      const result = executePartialClose(position, price, closePercent, feeRate);
-
-      // closedCapital = 1000 / 2 = 500, fees = 500 * 2 * 0.1 / 100 = 1
-      expect(result.newPosition.entryValue).toBe(1000);
-      expect(result.closedCapital).toBe(500);
-      expect(result.pnl).toBeCloseTo(-50, 10);
-      expect(result.fees).toBeCloseTo(1, 10);
-      expect(result.sidelineValue).toBeCloseTo(449, 10);
-    });
-  });
-
-  test('should_preserve_position_properties', () => {
-    const position: Position = {
+    expect(result.newPosition).toMatchObject({
       type: 'LONG',
       entryPrice: 100,
-      entryValue: 2000,
       leverage: 2.5,
-    };
-    const price = 110;
-    const closePercent = 50;
-    const feeRate = 0.1;
-
-    const result = executePartialClose(position, price, closePercent, feeRate);
-
-    expect(result.newPosition.type).toBe('LONG');
-    expect(result.newPosition.entryPrice).toBe(100);
-    expect(result.newPosition.leverage).toBe(2.5);
+      trailingStop: { extremePrice: 115, triggered: true },
+    });
   });
 
-  test('should_set_trailing_stop_triggered', () => {
-    const position: Position = {
-      type: 'LONG',
-      entryPrice: 100,
-      entryValue: 2000,
-      leverage: 2,
-      trailingStop: { extremePrice: 110, triggered: false },
-    };
-    const price = 110;
-    const closePercent = 50;
-    const feeRate = 0.1;
+  test('should_seed_trailing_stop_from_price_when_missing', () => {
+    const result = executePartialClose(makePosition('LONG'), 110, 50, 0.1);
 
-    const result = executePartialClose(position, price, closePercent, feeRate);
-
-    expect(result.newPosition.trailingStop?.triggered).toBe(true);
-    expect(result.newPosition.trailingStop?.extremePrice).toBe(110);
+    expect(result.newPosition.trailingStop).toEqual({ extremePrice: 110, triggered: true });
   });
 
-  test('should_initialize_trailing_stop_if_missing', () => {
-    const position: Position = {
-      type: 'LONG',
-      entryPrice: 100,
-      entryValue: 2000,
-      leverage: 2,
-    };
-    const price = 110;
-    const closePercent = 50;
-    const feeRate = 0.1;
+  test('should_charge_fees_on_notional_value_using_leverage', () => {
+    const result = executePartialClose(makePosition('LONG', { entryValue: 3000, leverage: 3 }), 110, 100, 0.1);
 
-    const result = executePartialClose(position, price, closePercent, feeRate);
-
-    expect(result.newPosition.trailingStop?.triggered).toBe(true);
-    expect(result.newPosition.trailingStop?.extremePrice).toBe(110);
-  });
-
-  test('should_calculate_fees_on_notional_value', () => {
-    const position: Position = {
-      type: 'LONG',
-      entryPrice: 100,
-      entryValue: 3000,
-      leverage: 3,
-    };
-    const price = 110;
-    const closePercent = 100;
-    const feeRate = 0.1;
-
-    const result = executePartialClose(position, price, closePercent, feeRate);
-
-    // closedCapital = 3000 / 3 = 1000
-    // fees = closedCapital * leverage * feeRate / 100 = 1000 * 3 * 0.1 / 100 = 3
-    const closedCapital = 1000;
-    const expectedFees = (closedCapital * 3 * 0.1) / 100;
-    expect(result.closedCapital).toBe(closedCapital);
-    expect(result.fees).toBeCloseTo(expectedFees, 10);
-  });
-
-  test('should_handle_zero_fee_rate', () => {
-    const position: Position = {
-      type: 'LONG',
-      entryPrice: 100,
-      entryValue: 2000,
-      leverage: 2,
-    };
-    const price = 110;
-    const closePercent = 50;
-    const feeRate = 0;
-
-    const result = executePartialClose(position, price, closePercent, feeRate);
-
-    expect(result.fees).toBe(0);
-  });
-
-  test('should_handle_high_leverage', () => {
-    const position: Position = {
-      type: 'LONG',
-      entryPrice: 100,
-      entryValue: 3000,
-      leverage: 3,
-    };
-    const price = 110;
-    const closePercent = 50;
-    const feeRate = 0.1;
-
-    const result = executePartialClose(position, price, closePercent, feeRate);
-
-    expect(result.newPosition.entryValue).toBe(1500);
-    expect(result.pnl).toBeCloseTo(150, 10);
-  });
-
-  test('should_handle_fractional_leverage', () => {
-    const position: Position = {
-      type: 'LONG',
-      entryPrice: 100,
-      entryValue: 1750,
-      leverage: 1.75,
-    };
-    const price = 110;
-    const closePercent = 50;
-    const feeRate = 0.1;
-
-    const result = executePartialClose(position, price, closePercent, feeRate);
-
-    expect(result.newPosition.entryValue).toBe(875);
-    expect(result.pnl).toBeCloseTo(87.5, 10);
-  });
-
-  test('should_calculate_sideline_value_correctly', () => {
-    const position: Position = {
-      type: 'LONG',
-      entryPrice: 100,
-      entryValue: 2000,
-      leverage: 2,
-    };
-    const price = 110;
-    const closePercent = 50;
-    const feeRate = 0.1;
-
-    const result = executePartialClose(position, price, closePercent, feeRate);
-
-    // closedCapital = 1000 / 2 = 500
-    // pnl = (110/100 - 1) * 1000 = 100
-    // fees = 500 * 2 * 0.1 / 100 = 1
-    const closedCapital = 500;
-    const pnl = 100;
-    const fees = 1;
-    const expectedSideline = closedCapital + pnl - fees;
-
-    expect(result.closedCapital).toBe(closedCapital);
-    expect(result.sidelineValue).toBeCloseTo(expectedSideline, 10);
-  });
-
-  test('should_handle_small_close_percent', () => {
-    const position: Position = {
-      type: 'LONG',
-      entryPrice: 100,
-      entryValue: 2000,
-      leverage: 2,
-    };
-    const price = 110;
-    const closePercent = 10;
-    const feeRate = 0.1;
-
-    const result = executePartialClose(position, price, closePercent, feeRate);
-
-    expect(result.newPosition.entryValue).toBe(1800);
-    expect(result.pnl).toBeCloseTo(20, 10);
-  });
-
-  test('should_handle_large_price_movement', () => {
-    const position: Position = {
-      type: 'LONG',
-      entryPrice: 100,
-      entryValue: 2000,
-      leverage: 2,
-    };
-    const price = 150;
-    const closePercent = 50;
-    const feeRate = 0.1;
-
-    const result = executePartialClose(position, price, closePercent, feeRate);
-
-    expect(result.pnl).toBe(500);
-  });
-
-  test('should_handle_fractional_prices', () => {
-    const position: Position = {
-      type: 'LONG',
-      entryPrice: 100.5,
-      entryValue: 2000,
-      leverage: 2,
-    };
-    const price = 110.75;
-    const closePercent = 50;
-    const feeRate = 0.1;
-
-    const result = executePartialClose(position, price, closePercent, feeRate);
-
-    const expectedPnl = ((110.75 / 100.5) - 1) * 1000;
-    expect(result.pnl).toBeCloseTo(expectedPnl, 2);
+    expect(result.closedCapital).toBe(1000);
+    expect(result.fees).toBeCloseTo(3, 10); // 1000 * 3 * 0.1 / 100
   });
 });
