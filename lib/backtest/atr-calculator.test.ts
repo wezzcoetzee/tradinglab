@@ -272,7 +272,6 @@ describe('calculateAllATRs', () => {
   test('should_calculate_atr_for_all_three_periods', () => {
     const csvData: CsvRow[] = Array(30).fill(0).map((_, i) => ({
       date: `2024-01-${i + 1}`,
-      time: 100 + i,
       high: 105 + i,
       low: 95 + i,
       close: 102 + i,
@@ -289,7 +288,6 @@ describe('calculateAllATRs', () => {
   test('should_return_arrays_matching_input_length', () => {
     const csvData: CsvRow[] = Array(50).fill(0).map((_, i) => ({
       date: `2024-01-${i + 1}`,
-      time: 100 + i,
       high: 105 + i,
       low: 95 + i,
       close: 102 + i,
@@ -305,7 +303,6 @@ describe('calculateAllATRs', () => {
   test('should_have_nan_values_until_period_reached', () => {
     const csvData: CsvRow[] = Array(25).fill(0).map((_, i) => ({
       date: `2024-01-${i + 1}`,
-      time: 100 + i,
       high: 105 + i,
       low: 95 + i,
       close: 102 + i,
@@ -336,7 +333,6 @@ describe('calculateAllATRs', () => {
   test('should_handle_minimal_dataset', () => {
     const csvData: CsvRow[] = Array(25).fill(0).map((_, i) => ({
       date: `2024-01-${i + 1}`,
-      time: 100,
       high: 105,
       low: 95,
       close: 102,
@@ -353,7 +349,6 @@ describe('calculateAllATRs', () => {
   test('should_handle_high_volatility_data', () => {
     const csvData: CsvRow[] = Array(30).fill(0).map((_, i) => ({
       date: `2024-01-${i + 1}`,
-      time: 100 + (i % 2 === 0 ? 10 : -10),
       high: 110 + (i % 2 === 0 ? 10 : -10),
       low: 90 + (i % 2 === 0 ? 10 : -10),
       close: 105 + (i % 2 === 0 ? 10 : -10),
@@ -373,7 +368,6 @@ describe('calculateAllATRs', () => {
   test('should_handle_low_volatility_data', () => {
     const csvData: CsvRow[] = Array(30).fill(0).map((_, i) => ({
       date: `2024-01-${i + 1}`,
-      time: 100,
       high: 100.1,
       low: 99.9,
       close: 100,
@@ -393,7 +387,6 @@ describe('calculateAllATRs', () => {
   test('should_handle_single_row', () => {
     const csvData: CsvRow[] = [{
       date: '2024-01-01',
-      time: 100,
       high: 105,
       low: 95,
       close: 102,
@@ -409,9 +402,9 @@ describe('calculateAllATRs', () => {
 
   test('should_use_correct_ohlc_values', () => {
     const csvData: CsvRow[] = [
-      { date: '2024-01-01', time: 100, high: 105, low: 95, close: 102, RSI: 1000 },
-      { date: '2024-01-02', time: 102, high: 108, low: 100, close: 106, RSI: 1000 },
-      { date: '2024-01-03', time: 106, high: 112, low: 104, close: 110, RSI: 1000 },
+      { date: '2024-01-01', high: 105, low: 95, close: 102 },
+      { date: '2024-01-02', high: 108, low: 100, close: 106 },
+      { date: '2024-01-03', high: 112, low: 104, close: 110 },
     ];
 
     const result = calculateAllATRs(csvData);
@@ -428,7 +421,6 @@ describe('calculateAllATRs', () => {
       const variation = Math.sin(i * 0.5) * 20;
       return {
         date: `2024-01-${i + 1}`,
-        time: 100 + variation,
         high: 110 + variation,
         low: 90 + variation,
         close: 105 + variation,
@@ -448,9 +440,9 @@ describe('calculateAllATRs', () => {
 
   test('should_handle_gaps_and_volatility', () => {
     const csvData: CsvRow[] = [
-      { date: '2024-01-01', time: 100, high: 105, low: 95, close: 102, RSI: 1000 },
-      { date: '2024-01-02', time: 120, high: 125, low: 118, close: 122, RSI: 1000 },
-      { date: '2024-01-03', time: 110, high: 115, low: 105, close: 112, RSI: 1000 },
+      { date: '2024-01-01', high: 105, low: 95, close: 102 },
+      { date: '2024-01-02', high: 125, low: 118, close: 122 },
+      { date: '2024-01-03', high: 115, low: 105, close: 112 },
     ];
 
     const result = calculateAllATRs(csvData);

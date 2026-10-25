@@ -97,16 +97,15 @@ export function calculateProfitMetrics(input: ProfitCalculationInput): ProfitCal
   // e.g., 2 TPs = 50% each, 4 TPs = 25% each
   const positionPerTarget = numTargets > 0 ? positionSize / numTargets : 0;
 
-  // Calculate profit at each take profit level with allocated position
-  const profits = validTakeProfits.map(tp => {
+  // Profit at each take profit level with its allocated share of the position (0 if on the wrong side)
+  const targetProfits = validTakeProfits.map(tp => {
     const profitPercentage = tradeType === 'LONG'
       ? (tp - entryPrice) / entryPrice
       : (entryPrice - tp) / entryPrice;
 
-    if (profitPercentage <= 0) return 0;
-
-    return profitPercentage * positionPerTarget;
-  }).filter(profit => profit > 0);
+    return Math.max(profitPercentage, 0) * positionPerTarget;
+  });
+  const profits = targetProfits.filter(profit => profit > 0);
 
   // Calculate metrics
   const totalProfit = profits.reduce((sum, profit) => sum + profit, 0);
@@ -121,8 +120,8 @@ export function calculateProfitMetrics(input: ProfitCalculationInput): ProfitCal
   // Build take profit breakdown with individual profits and R:R
   const takeProfitBreakdown: TakeProfitBreakdown[] = validTakeProfits.map((tp, index) => ({
     price: tp,
-    profit: profits[index] || 0,
-    riskReward: potentialLoss > 0 ? (profits[index] || 0) / potentialLoss : 0
+    profit: targetProfits[index],
+    riskReward: potentialLoss > 0 ? targetProfits[index] / potentialLoss : 0
   }));
 
   return {
@@ -174,11 +173,9 @@ export function validateTradingParameters(
     });
   }
   
-  // Check take profit order
-  const validTPs = takeProfits.filter(tp => tp > 0).sort((a, b) => 
-    tradeType === 'LONG' ? a - b : b - a
-  );
-  
+  // Take profits must be entered in the order price will reach them
+  const validTPs = takeProfits.filter(tp => tp > 0);
+
   for (let i = 0; i < validTPs.length - 1; i++) {
     if (tradeType === 'LONG' && validTPs[i] >= validTPs[i + 1]) {
       errors.push('Take profit levels must be in ascending order for LONG positions');
@@ -195,5 +192,3 @@ export function validateTradingParameters(
     errors
   };
 }
-
-export { formatCurrency, formatPercentage, safeParseFloat } from "./formatters";

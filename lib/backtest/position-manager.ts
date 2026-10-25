@@ -51,12 +51,13 @@ export function calculateLongProfit(
   return (calculatePriceRatio(entryPrice, exitPrice) - 1) * positionValue;
 }
 
+// Linear (USD-margined) perp: a short gains exactly what a long of the same size loses.
 export function calculateShortProfit(
   entryPrice: number,
   exitPrice: number,
   positionValue: number
 ): number {
-  return (1 / calculatePriceRatio(entryPrice, exitPrice) - 1) * positionValue;
+  return (1 - calculatePriceRatio(entryPrice, exitPrice)) * positionValue;
 }
 
 export function calculatePositionProfit(

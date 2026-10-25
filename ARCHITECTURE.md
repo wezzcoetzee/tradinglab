@@ -69,19 +69,19 @@ tradinglab/
 ├── lib/
 │   ├── types.ts                # CsvRow, StrategyConfig, ValidationResult
 │   ├── calculations.ts         # Position size and profit calculation logic
-│   ├── formatters.ts           # Shared number/currency formatters
 │   ├── csv-validator.ts        # OHLC CSV validation
 │   ├── strategy-validator.ts   # Strategy input validation
-│   ├── format.ts               # Currency, percent, time formatters
+│   ├── format.ts               # Currency, percent, time formatters + input parsing
 │   ├── chart-data.ts           # Chart point builder with downsampling
 │   ├── downsample.ts           # LTTB algorithm
 │   ├── utils.ts                # cn() classname utility
 │   └── backtest/
 │       ├── types.ts            # Engine types (Position, DayResult, BacktestConfig, etc.)
 │       ├── optimization-types.ts # Worker message protocol
-│       ├── constants.ts        # SMA/ATR ranges, warmup days
+│       ├── constants.ts        # ATR ranges, warmup days, top-K size
 │       ├── backtest-runner.ts  # Core simulation loop
-│       ├── backtest-engine.ts  # Engine orchestration
+│       ├── optimizer.ts        # Runs every config: indicators, ranking, stats, best replay
+│       ├── ranking.ts          # Result ordering + outcome stats
 │       ├── position-manager.ts # Position state + PnL
 │       ├── sma-calculator.ts   # SMA pre-computation
 │       ├── atr-calculator.ts   # ATR pre-computation
@@ -117,26 +117,24 @@ tradinglab/
                                            ┌─────────────────┐
                                            │ useOptimization  │
                                            │ (main thread)    │
-                                           │                  │
-                                           │ 1. Pre-compute   │
-                                           │    all SMAs      │
-                                           │ 2. Pre-compute   │
-                                           │    all ATRs      │
-                                           │ 3. Generate all  │
-                                           │    configs       │
+                                           │ posts csvData +  │
+                                           │ strategyConfig   │
                                            └────────┬────────┘
                                                     │ postMessage
                                                     ▼
                                            ┌─────────────────┐
                                            │ Web Worker       │
+                                           │ runOptimization()│
                                            │                  │
-                                           │ For each config: │
-                                           │  runBacktest()   │
-                                           │                  │
-                                           │ ATR enabled?     │
+                                           │ 1. SMAs + ATRs   │
+                                           │ 2. All configs   │
+                                           │ 3. runBacktest() │
+                                           │    per config,   │
+                                           │    tally stats   │
+                                           │ 4. ATR enabled?  │
                                            │  → TopKHeap(1000)│
-                                           │ ATR disabled?    │
-                                           │  → Full array    │
+                                           │ 5. Replay best   │
+                                           │    with days     │
                                            └────────┬────────┘
                                                     │ onmessage
                                                     ▼
@@ -175,11 +173,12 @@ The optimizer tests every combination of:
 |----------|-----------|
 | Static export | No server needed. Free Cloudflare Pages hosting. |
 | Web Worker | Prevents UI freeze during 1M+ backtest iterations. |
-| Pre-computed indicators | SMA/ATR calculated once, shared across all configs via transferable data. |
-| Top-K heap | With ATR enabled (~1M results), storing all results OOMs. Heap keeps top 1000 by return. |
+| Pre-computed indicators | SMA/ATR calculated once inside the worker (rolling sums, O(n) per period) and shared across all configs. |
+| Top-K heap | With ATR enabled (~1M results), storing all results OOMs. Heap keeps top 1000 by return; profitable/liquidated stats are still tallied over every config. |
 | LTTB downsampling | Performance charts with 1000+ days need point reduction. Preserves visual shape. |
-| Summary vs Full results | Worker returns `BacktestResultSummary` (no day array). Best result re-run on main thread with full days for chart/table. |
-| 160-day warmup | Largest possible SMA period needs 160 days of data before first valid signal. |
+| Summary vs Full results | Configs run as `BacktestResultSummary` (no day array). The worker replays the best one with full days for chart/table. |
+| 160-day warmup | Trading (and the buy-and-hold purchase) starts on row 161, so CSVs need at least 161 rows. |
+| Account model | Linear (USD-margined) PnL for longs and shorts. Equity = margin + sidelined ATR cash + unrealized PnL; liquidated (cross margin) when equity at the day's worst price (low for longs, high for shorts) hits zero. |
 
 See [docs/design-docs/web-worker-optimization.md](design-docs/web-worker-optimization.md) for details.
 

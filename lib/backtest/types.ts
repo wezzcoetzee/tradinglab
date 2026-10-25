@@ -1,5 +1,3 @@
-import type { CsvRow, StrategyConfig } from '../types';
-
 export type PositionType = 'NONE' | 'LONG' | 'SHORT';
 
 export type PositionAction =
@@ -36,7 +34,7 @@ export interface DayResult {
   pnl: number;
   fees: number;
   isLiquidated: boolean;
-  sidelineValue?: number;
+  sidelineValue: number;
   portfolioValue: number;
 }
 
@@ -59,7 +57,6 @@ export interface BacktestResult {
   config: BacktestConfig;
   days: DayResult[];
   finalBalance: number;
-  finalCollateral: number;
   totalReturn: number;
   totalFees: number;
   totalTrades: number;
@@ -71,11 +68,6 @@ export interface BacktestResult {
 
 export type BacktestResultSummary = Omit<BacktestResult, 'days'>;
 
-export interface BacktestBatchInput {
-  csvData: CsvRow[];
-  strategyConfig: StrategyConfig;
-}
-
 export interface BuyAndHoldBaseline {
   purchasePrice: number;
   purchaseDate: string;
@@ -84,11 +76,4 @@ export interface BuyAndHoldBaseline {
   finalValue: number;
   percentGain: number;
   startingCapital: number;
-}
-
-export interface BacktestBatchResult {
-  results: BacktestResult[];
-  totalConfigurations: number;
-  executionTimeMs: number;
-  buyAndHoldBaseline: BuyAndHoldBaseline | null;
 }

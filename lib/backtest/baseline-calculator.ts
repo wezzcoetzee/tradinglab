@@ -6,11 +6,12 @@ export function calculateBuyAndHoldBaseline(
   csvData: CsvRow[],
   startingCapital: number
 ): BuyAndHoldBaseline | null {
-  if (csvData.length < WARMUP_DAYS) {
+  // Buy on the same close the strategy can first trade on.
+  const purchaseIndex = WARMUP_DAYS;
+  if (csvData.length <= purchaseIndex) {
     return null;
   }
 
-  const purchaseIndex = WARMUP_DAYS - 1;
   const finalIndex = csvData.length - 1;
 
   const purchasePrice = csvData[purchaseIndex].close;

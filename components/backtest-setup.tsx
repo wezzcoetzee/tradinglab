@@ -39,7 +39,7 @@ export function BacktestSetup({ onDataLoaded, onAssetNameChange, actionButton }:
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!file.name.endsWith('.csv')) {
+    if (!/\.csv$/i.test(file.name)) {
       setResult({
         valid: false,
         error: 'Invalid file type. Please upload a .csv file.'
@@ -108,7 +108,7 @@ export function BacktestSetup({ onDataLoaded, onAssetNameChange, actionButton }:
                 </DialogDescription>
               </DialogHeader>
               <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-                <li><strong>date</strong> - Date in YYYY-MM-DD format</li>
+                <li><strong>date</strong> - Date in DD/MM/YYYY format</li>
                 <li><strong>high</strong> - Daily high price</li>
                 <li><strong>low</strong> - Daily low price</li>
                 <li><strong>close</strong> - Daily close price</li>

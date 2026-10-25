@@ -6,16 +6,12 @@ export function extractClosePrices(csvData: CsvRow[]): number[] {
 
 export function calculateSMA(closePrices: number[], period: number): number[] {
   const sma: number[] = [];
+  let windowSum = 0;
 
   for (let i = 0; i < closePrices.length; i++) {
-    if (i < period - 1) {
-      sma.push(NaN);
-    } else {
-      const sum = closePrices
-        .slice(i - period + 1, i + 1)
-        .reduce((a, b) => a + b, 0);
-      sma.push(sum / period);
-    }
+    windowSum += closePrices[i];
+    if (i >= period) windowSum -= closePrices[i - period];
+    sma.push(i < period - 1 ? NaN : windowSum / period);
   }
 
   return sma;

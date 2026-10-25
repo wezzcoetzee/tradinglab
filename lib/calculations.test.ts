@@ -263,6 +263,14 @@ describe('calculatePositionSize', () => {
 });
 
 describe('calculateProfitMetrics', () => {
+  test('should_keep_take_profit_breakdown_aligned_when_a_target_is_on_the_wrong_side', () => {
+    const result = calculateProfitMetrics({
+      tradeType: 'LONG', entryPrice: 100, stopLossPrice: 90, leverage: 1, positionSize: 1000, takeProfits: [90, 120],
+    });
+
+    expect(result.takeProfitBreakdown.map((tp) => [tp.price, tp.profit])).toEqual([[90, 0], [120, 100]]);
+  });
+
   describe('LONG positions', () => {
     test('should_calculate_profit_for_single_take_profit', () => {
       // #given
@@ -733,17 +741,13 @@ describe('validateTradingParameters', () => {
       expect(result.errors).toContain('Take profit 1 must be above entry price for LONG positions');
     });
 
-    test('should_not_reject_out_of_order_take_profits_for_long_due_to_pre_sort', () => {
-      // NOTE: the implementation pre-sorts validTPs before the order check, making
-      // the ordering validation unreachable for any set of distinct values.
-      // This test documents the current (buggy) behavior — [120, 110] passes because
-      // it is sorted to [110, 120] before the ascending check runs.
+    test('should_reject_out_of_order_take_profits_for_long', () => {
       // #when
       const result = validateTradingParameters('LONG', 100, 90, [120, 110]);
 
       // #then
-      expect(result.isValid).toBe(true);
-      expect(result.errors).not.toContain('Take profit levels must be in ascending order for LONG positions');
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Take profit levels must be in ascending order for LONG positions');
     });
 
     test('should_reject_zero_entry_price', () => {
@@ -865,15 +869,13 @@ describe('validateTradingParameters', () => {
       expect(result.errors).toContain('Take profit 1 must be below entry price for SHORT positions');
     });
 
-    test('should_not_reject_out_of_order_take_profits_for_short_due_to_pre_sort', () => {
-      // NOTE: same pre-sort bug as LONG — [80, 90] is sorted to [90, 80] before the
-      // descending check runs, so the error is never produced.
+    test('should_reject_out_of_order_take_profits_for_short', () => {
       // #when
       const result = validateTradingParameters('SHORT', 100, 110, [80, 90]);
 
       // #then
-      expect(result.isValid).toBe(true);
-      expect(result.errors).not.toContain('Take profit levels must be in descending order for SHORT positions');
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Take profit levels must be in descending order for SHORT positions');
     });
 
     test('should_identify_correct_take_profit_index_in_error_message', () => {

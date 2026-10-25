@@ -1,12 +1,11 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { WARMUP_DAYS } from '@/lib/backtest/constants';
 import type { BacktestResult, DayResult, PositionType } from '@/lib/backtest/types';
-import { calculateBuyHoldValue, calculateCollateralValue, formatCurrency } from '@/lib/format';
+import { calculateBuyHoldValue, formatCurrency } from '@/lib/format';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 
 interface DayByDayTableProps {
@@ -24,10 +23,6 @@ const POSITION_BADGE_STYLES: Record<PositionType, string> = {
 const ROW_HEIGHT = 45;
 const CONTAINER_HEIGHT = 600;
 const OVERSCAN = 10;
-
-function filterTradingDays(days: DayResult[]): DayResult[] {
-  return days.filter((day) => day.dayIndex >= WARMUP_DAYS);
-}
 
 function CollapsibleHeader({
   isExpanded,
@@ -69,13 +64,12 @@ function CollapsibleHeader({
 
 function TableHeader() {
   return (
-    <div role="row" aria-rowindex={1} className="grid grid-cols-7 gap-4 px-4 py-2 font-semibold text-sm border-b bg-muted/50 rounded-t-md">
+    <div role="row" aria-rowindex={1} className="grid grid-cols-6 gap-4 px-4 py-2 font-semibold text-sm border-b bg-muted/50 rounded-t-md">
       <div role="columnheader">Date</div>
       <div role="columnheader" className="text-right">Close Price</div>
       <div role="columnheader" className="text-right">SMA Value</div>
       <div role="columnheader" className="text-center">Position</div>
       <div role="columnheader" className="text-right">Portfolio Value</div>
-      <div role="columnheader" className="text-right">Collateral</div>
       <div role="columnheader" className="text-right">Buy-Hold Value</div>
     </div>
   );
@@ -83,18 +77,17 @@ function TableHeader() {
 
 interface TableRowProps {
   day: DayResult;
-  collateralValue: number;
   buyHoldValue: number;
   top: number;
 }
 
-function TableRow({ day, collateralValue, buyHoldValue, top }: TableRowProps) {
+function TableRow({ day, buyHoldValue, top }: TableRowProps) {
   const positionType: PositionType = day.position?.type ?? 'NONE';
 
   return (
     <div
       role="row"
-      className="absolute left-0 w-full grid grid-cols-7 gap-4 px-4 items-center border-b text-sm"
+      className="absolute left-0 w-full grid grid-cols-6 gap-4 px-4 items-center border-b text-sm"
       style={{ top, height: ROW_HEIGHT }}
     >
       <div role="cell" className="font-mono">{day.date}</div>
@@ -106,7 +99,6 @@ function TableRow({ day, collateralValue, buyHoldValue, top }: TableRowProps) {
         </Badge>
       </div>
       <div role="cell" className="text-right font-mono">{formatCurrency(day.portfolioValue)}</div>
-      <div role="cell" className="text-right font-mono">{formatCurrency(collateralValue)}</div>
       <div role="cell" className="text-right font-mono">{formatCurrency(buyHoldValue)}</div>
     </div>
   );
@@ -120,10 +112,7 @@ export function DayByDayTable({
   const [isExpanded, setIsExpanded] = useState(false);
   const parentRef = useRef<HTMLDivElement>(null);
 
-  const tradingDays = useMemo(
-    () => filterTradingDays(result.days),
-    [result.days]
-  );
+  const tradingDays = result.days;
 
   const virtualizer = useVirtualizer({
     count: tradingDays.length,
@@ -165,13 +154,10 @@ export function DayByDayTable({
                   day.price
                 );
 
-                const collateralValue = calculateCollateralValue(day);
-
                 return (
                   <TableRow
                     key={virtualRow.key}
                     day={day}
-                    collateralValue={collateralValue}
                     buyHoldValue={buyHoldValue}
                     top={virtualRow.start}
                   />

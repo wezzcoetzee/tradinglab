@@ -2,7 +2,6 @@ import { describe, expect, test, afterEach } from 'bun:test';
 import { render, screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DayByDayTable } from './day-by-day-table';
-import { WARMUP_DAYS } from '@/lib/backtest/constants';
 import type { BacktestResult, DayResult, PositionType } from '@/lib/backtest/types';
 
 afterEach(() => {
@@ -40,7 +39,6 @@ function createMockResult(overrides: Partial<BacktestResult> = {}): BacktestResu
       createMockDay({ dayIndex: 161, date: '2024-06-02' }),
     ],
     finalBalance: 1100,
-    finalCollateral: 1100,
     totalReturn: 10,
     totalFees: 10,
     totalTrades: 5,
@@ -101,66 +99,6 @@ describe('DayByDayTable', () => {
 
       const chevronDown = container.querySelector('svg');
       expect(chevronDown).not.toBeNull();
-    });
-  });
-
-  describe('warmup filtering', () => {
-    test('should_filter_days_below_warmup_threshold', () => {
-      const result = createMockResult({
-        days: [
-          createMockDay({ dayIndex: 100, date: '2024-05-01' }),
-          createMockDay({ dayIndex: 159, date: '2024-05-31' }),
-          createMockDay({ dayIndex: 160, date: '2024-06-01' }),
-          createMockDay({ dayIndex: 161, date: '2024-06-02' }),
-        ],
-      });
-      render(<DayByDayTable result={result} purchasePrice={100} startingCapital={1000} />);
-
-      expect(screen.getByText('(2 trading days)')).toBeDefined();
-    });
-
-    test('should_show_all_days_when_all_above_warmup', () => {
-      const result = createMockResult({
-        days: [
-          createMockDay({ dayIndex: 160, date: '2024-06-01' }),
-          createMockDay({ dayIndex: 161, date: '2024-06-02' }),
-          createMockDay({ dayIndex: 162, date: '2024-06-03' }),
-        ],
-      });
-      render(<DayByDayTable result={result} purchasePrice={100} startingCapital={1000} />);
-
-      expect(screen.getByText('(3 trading days)')).toBeDefined();
-    });
-
-    test('should_include_days_exactly_at_warmup_threshold', () => {
-      const result = createMockResult({
-        days: [
-          createMockDay({ dayIndex: WARMUP_DAYS - 1, date: '2024-05-31' }),
-          createMockDay({ dayIndex: WARMUP_DAYS, date: '2024-06-01' }),
-        ],
-      });
-      render(<DayByDayTable result={result} purchasePrice={100} startingCapital={1000} />);
-
-      expect(screen.getByText('(1 trading days)')).toBeDefined();
-    });
-
-    test('should_handle_empty_days_array', () => {
-      const result = createMockResult({ days: [] });
-      render(<DayByDayTable result={result} purchasePrice={100} startingCapital={1000} />);
-
-      expect(screen.getByText('(0 trading days)')).toBeDefined();
-    });
-
-    test('should_handle_all_days_below_warmup', () => {
-      const result = createMockResult({
-        days: [
-          createMockDay({ dayIndex: 100 }),
-          createMockDay({ dayIndex: 150 }),
-        ],
-      });
-      render(<DayByDayTable result={result} purchasePrice={100} startingCapital={1000} />);
-
-      expect(screen.getByText('(0 trading days)')).toBeDefined();
     });
   });
 
@@ -425,36 +363,9 @@ describe('DayByDayTable', () => {
       expect(screen.getByText('(1 trading days)')).toBeDefined();
     });
 
-    test('should_update_count_after_filtering', () => {
-      const result = createMockResult({
-        days: [
-          createMockDay({ dayIndex: 50 }),
-          createMockDay({ dayIndex: 100 }),
-          createMockDay({ dayIndex: 159 }),
-          createMockDay({ dayIndex: 160 }),
-          createMockDay({ dayIndex: 161 }),
-          createMockDay({ dayIndex: 162 }),
-        ],
-      });
-      render(<DayByDayTable result={result} purchasePrice={100} startingCapital={1000} />);
-
-      expect(screen.getByText('(3 trading days)')).toBeDefined();
-    });
   });
 
   describe('memoization', () => {
-    test('should_memoize_filtered_days', () => {
-      const days = Array.from({ length: 200 }, (_, i) =>
-        createMockDay({ dayIndex: i, date: `2024-${String(i + 1).padStart(2, '0')}-01` })
-      );
-      const result = createMockResult({ days });
-      const { rerender } = render(<DayByDayTable result={result} purchasePrice={100} startingCapital={1000} />);
-
-      rerender(<DayByDayTable result={result} purchasePrice={100} startingCapital={1000} />);
-
-      expect(screen.getByText(`(${200 - WARMUP_DAYS} trading days)`)).toBeDefined();
-    });
-
     test('should_recalculate_when_days_change', () => {
       const result1 = createMockResult({
         days: [createMockDay({ dayIndex: 160 }), createMockDay({ dayIndex: 161 })],

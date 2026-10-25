@@ -2,6 +2,7 @@ import type { CsvRow } from '../types';
 import type { Position, PositionType, TrailingStopState } from './types';
 
 import { PERCENTAGE_DIVISOR } from './constants';
+import { calculateTradeFee } from './fee-calculator';
 import { calculateLongProfit, calculateShortProfit } from './position-manager';
 
 export function initTrailingStop(row: CsvRow, positionType: PositionType): TrailingStopState {
@@ -72,7 +73,7 @@ export function executePartialClose(
       : calculateShortProfit(position.entryPrice, price, closingValue);
 
   const closedCapital = closingValue / position.leverage;
-  const fees = (closedCapital * position.leverage * feeRate) / PERCENTAGE_DIVISOR;
+  const fees = calculateTradeFee(closedCapital, position.leverage, feeRate);
   const sidelineValue = closedCapital + pnl - fees;
 
   const newPosition: Position = {

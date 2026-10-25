@@ -15,8 +15,6 @@ function getStatusText(status: OptimizationProgress['status']): string {
   switch (status) {
     case 'idle':
       return 'Ready';
-    case 'preparing':
-      return 'Preparing...';
     case 'running':
       return 'Running';
     case 'complete':
@@ -30,7 +28,6 @@ function getStatusColor(status: OptimizationProgress['status']): string {
   switch (status) {
     case 'idle':
       return 'text-muted-foreground';
-    case 'preparing':
     case 'running':
       return 'text-primary';
     case 'complete':
@@ -42,7 +39,7 @@ function getStatusColor(status: OptimizationProgress['status']): string {
 
 export function OptimizationProgressCard({ progress, onCancel }: OptimizationProgressProps) {
   const showProgress = progress.status === 'running' || progress.status === 'complete';
-  const showCancel = progress.status === 'preparing' || progress.status === 'running';
+  const showCancel = progress.status === 'running';
 
   return (
     <Card>

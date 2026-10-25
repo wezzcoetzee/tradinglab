@@ -8,7 +8,8 @@ Exhaustive SMA crossover strategy backtester. Tests every combination of SMA per
 
 ### CSV Data
 - Required columns: `high`, `low`, `close`, `date`
-- Minimum rows: 160 (warmup period for largest SMA)
+- Minimum rows: 161 (160 warmup days plus the first trading day)
+- Prices must be positive; headers are case-insensitive
 - Parsed with PapaParse, validated by `csv-validator.ts`
 - Example CSVs provided: BTC, ETH, SOL (daily OHLC)
 
@@ -55,12 +56,12 @@ Validated by `strategy-validator.ts` with real-time error feedback.
 - Multipliers: 2, 2.5, 3, 3.5, 4
 - Close percentages: 10%, 25%, 50%, 100%
 
-When enabled, each position gets a trailing stop at `entry ± ATR × multiplier`. The stop tracks the extreme price (highest for long, lowest for short). When triggered, the close percentage of the position is liquidated. 100% means full position close.
+When enabled, each position gets a trailing stop at `entry ± ATR × multiplier`. The stop tracks the extreme price (highest for long, lowest for short). When triggered, the close percentage of the position is closed and the cash is sidelined until the next SMA signal, when it is re-deployed. 100% means full position close.
 
 ## Output
 
 ### Per Configuration
-- Final balance and collateral value
+- Final balance (equity including unrealized PnL of any open position)
 - Total return percentage
 - Total fees paid
 - Total trades executed
@@ -69,7 +70,7 @@ When enabled, each position gets a trailing stop at `entry ± ATR × multiplier`
 
 ### Aggregated Views
 - **Optimal strategy:** Best non-liquidated config by total return
-- **Buy-and-hold baseline:** What holding from day 160 to end would have returned
+- **Buy-and-hold baseline:** What buying on day 161 (the strategy's first trading day) and holding to the end would have returned
 - **Metrics:** Total configs, profitable count, liquidated count, liquidation rate
 - **Performance chart:** Strategy equity curve vs buy-and-hold (LTTB downsampled)
 - **Day-by-day table:** Full trade log for best config

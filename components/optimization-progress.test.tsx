@@ -54,38 +54,6 @@ describe('OptimizationProgressCard', () => {
     });
   });
 
-  describe('preparing state', () => {
-    test('should_render_preparing_status', () => {
-      const progress = createMockProgress({ status: 'preparing' });
-      render(<OptimizationProgressCard progress={progress} onCancel={mock(() => {})} />);
-
-      expect(screen.getByText('Preparing...')).toBeDefined();
-    });
-
-    test('should_show_cancel_button_when_preparing', () => {
-      const progress = createMockProgress({ status: 'preparing' });
-      render(<OptimizationProgressCard progress={progress} onCancel={mock(() => {})} />);
-
-      expect(screen.getByText('Cancel')).toBeDefined();
-    });
-
-    test('should_not_show_progress_bar_when_preparing', () => {
-      const progress = createMockProgress({ status: 'preparing' });
-      const { container } = render(<OptimizationProgressCard progress={progress} onCancel={mock(() => {})} />);
-
-      const progressBar = container.querySelector('.bg-primary');
-      expect(progressBar).toBeNull();
-    });
-
-    test('should_apply_blue_color', () => {
-      const progress = createMockProgress({ status: 'preparing' });
-      const { container } = render(<OptimizationProgressCard progress={progress} onCancel={mock(() => {})} />);
-
-      const statusElement = container.querySelector('.text-primary');
-      expect(statusElement?.textContent).toBe('Preparing...');
-    });
-  });
-
   describe('running state', () => {
     test('should_render_running_status', () => {
       const progress = createMockProgress({
@@ -338,18 +306,6 @@ describe('OptimizationProgressCard', () => {
   });
 
   describe('cancel button', () => {
-    test('should_call_onCancel_when_clicked_during_preparing', async () => {
-      const onCancel = mock(() => {});
-      const progress = createMockProgress({ status: 'preparing' });
-
-      render(<OptimizationProgressCard progress={progress} onCancel={onCancel} />);
-
-      const cancelButton = screen.getByText('Cancel');
-      await userEvent.click(cancelButton);
-
-      expect(onCancel).toHaveBeenCalledTimes(1);
-    });
-
     test('should_call_onCancel_when_clicked_during_running', async () => {
       const onCancel = mock(() => {});
       const progress = createMockProgress({
@@ -616,31 +572,6 @@ describe('OptimizationProgressCard', () => {
   });
 
   describe('state transitions', () => {
-    test('should_update_from_idle_to_preparing', () => {
-      const progress1 = createMockProgress({ status: 'idle' });
-      const { rerender } = render(<OptimizationProgressCard progress={progress1} onCancel={mock(() => {})} />);
-
-      const progress2 = createMockProgress({ status: 'preparing' });
-      rerender(<OptimizationProgressCard progress={progress2} onCancel={mock(() => {})} />);
-
-      expect(screen.getByText('Preparing...')).toBeDefined();
-    });
-
-    test('should_update_from_preparing_to_running', () => {
-      const progress1 = createMockProgress({ status: 'preparing' });
-      const { rerender } = render(<OptimizationProgressCard progress={progress1} onCancel={mock(() => {})} />);
-
-      const progress2 = createMockProgress({
-        status: 'running',
-        current: 10,
-        total: 100,
-      });
-      rerender(<OptimizationProgressCard progress={progress2} onCancel={mock(() => {})} />);
-
-      expect(screen.getByText('Running')).toBeDefined();
-      expect(screen.getByText('10 / 100')).toBeDefined();
-    });
-
     test('should_update_from_running_to_complete', () => {
       const progress1 = createMockProgress({
         status: 'running',

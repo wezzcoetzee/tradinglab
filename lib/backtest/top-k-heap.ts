@@ -1,5 +1,7 @@
 import type { BacktestResultSummary } from './types';
 
+import { compareResults } from './ranking';
+
 export class TopKHeap {
   private heap: BacktestResultSummary[] = [];
   private readonly k: number;
@@ -21,11 +23,7 @@ export class TopKHeap {
   }
 
   getResults(): BacktestResultSummary[] {
-    return [...this.heap].sort((a, b) => b.totalReturn - a.totalReturn);
-  }
-
-  get size(): number {
-    return this.heap.length;
+    return [...this.heap].sort(compareResults);
   }
 
   private bubbleUp(index: number): void {

@@ -100,15 +100,15 @@ Each day one of the following actions is taken:
 | OPEN_SHORT                  | No position → enter short at current price                    |
 | CLOSE_LONG                  | Price dropped below SMA → exit long position                  |
 | CLOSE_SHORT                 | Price rose above SMA → exit short position                    |
-| TRANSITION_LONG_TO_SHORT    | Direct flip from long to short (fee applied once)             |
-| TRANSITION_SHORT_TO_LONG    | Direct flip from short to long (fee applied once)             |
+| TRANSITION_LONG_TO_SHORT    | Direct flip from long to short (close + open fees)            |
+| TRANSITION_SHORT_TO_LONG    | Direct flip from short to long (close + open fees)            |
 | HOLD                        | Signal unchanged, no action taken                             |
 | ATR_PARTIAL_CLOSE           | ATR trailing stop triggered — partial close executed          |
 
 ### Leverage and PnL
-- Leveraged PnL = (price change % × leverage) × position value
-- Liquidation occurs if leveraged loss exceeds 100% of position collateral
-- On liquidation, the position is closed at zero value
+- Linear (USD-margined) PnL: price change % × position notional (margin × leverage), for longs and shorts alike
+- Liquidation is checked daily at the worst intraday price (low for longs, high for shorts): if equity (margin + sidelined ATR cash + unrealized PnL) reaches zero, the account is liquidated
+- On liquidation, the run ends at zero value
 
 ### ATR Trailing Stop Logic
 When ATR is enabled:
@@ -154,8 +154,7 @@ Each backtest result includes:
 | Metric           | Description                                                    |
 |------------------|----------------------------------------------------------------|
 | totalReturn      | Percentage gain/loss vs starting capital                       |
-| finalBalance     | Final portfolio value (collateral in open position)            |
-| finalCollateral  | Value of collateral held in the final position                 |
+| finalBalance     | Final equity, including unrealized PnL of any open position    |
 | totalFees        | Total fees paid across all trades                              |
 | totalTrades      | Number of position opens/closes/transitions                    |
 | atrTriggerCount  | Number of times ATR trailing stop fired (if ATR enabled)       |
@@ -240,8 +239,8 @@ tradinglab/
 │   └── footer.tsx          # Site footer with copyright
 ├── lib/
 │   ├── backtest/
-│   │   ├── backtest-engine.ts    # Core simulation loop
-│   │   ├── backtest-runner.ts    # Runs a single backtest config
+│   │   ├── optimizer.ts          # Runs every config, ranks results, replays the best
+│   │   ├── backtest-runner.ts    # Core simulation loop for a single config
 │   │   ├── optimization.worker.ts # Web Worker entry point
 │   │   ├── sma-calculator.ts     # SMA pre-computation
 │   │   ├── atr-calculator.ts     # ATR pre-computation
@@ -290,7 +289,7 @@ tradinglab/
 ## Usage Guide
 
 ### Step 1: Prepare CSV Data
-Ensure your CSV has the required columns: `high`, `low`, `close`, `date` (DD/MM/YYYY format). Minimum 160 rows of data required.
+Ensure your CSV has the required columns: `high`, `low`, `close`, `date` (DD/MM/YYYY format). Minimum 161 rows of data required (160 warmup days plus the first trading day), with positive prices.
 
 Sample files are provided: download BTC.csv, ETH.csv, or SOL.csv from the site to use as a template.
 

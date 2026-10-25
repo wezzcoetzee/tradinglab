@@ -49,14 +49,13 @@ No external state library. React `useState` + `useCallback` in `Backtester`, wit
 
 Central hook managing Web Worker lifecycle:
 
-1. **Pre-computes** SMA and ATR arrays on main thread
-2. **Generates** all `BacktestConfig` combinations
-3. **Spawns** Web Worker, sends `WorkerInput` via `postMessage`
-4. **Receives** progress updates (every 100 configs) and final results
-5. **Re-runs** best config on main thread with full day details for chart/table
-6. **Cleans up** worker on cancel, error, or unmount
+1. **Spawns** Web Worker, sends `WorkerInput` (`csvData` + `strategyConfig`) via `postMessage`
+2. **Receives** progress updates (every 100 configs) and the final `OptimizationOutcome`
+3. **Cleans up** worker on cancel, error, or unmount
 
-Returns: `progress`, `results`, `baseline`, `bestResultWithDays`, `isTruncated`, `totalConfigsTested`, `startOptimization`, `cancelOptimization`
+All heavy work (indicators, config generation, backtests, replaying the best config with full days) runs in the worker via `runOptimization()`.
+
+Returns: `progress`, `results`, `baseline`, `bestResultWithDays`, `isTruncated`, `stats`, `startOptimization`, `cancelOptimization`
 
 ## Conventions
 
@@ -98,7 +97,7 @@ Returns: `progress`, `results`, `baseline`, `bestResultWithDays`, `isTruncated`,
 }
 ```
 
-**Installed primitives:** Alert, Badge, Button, Card, Chart, Checkbox, Dialog, DropdownMenu, Form, Input, Label, Pagination, RadioGroup, Select, Skeleton, Switch, Table
+**Installed primitives:** Alert, Badge, Button, Card, Chart, Dialog, DropdownMenu, Form, Input, Label, RadioGroup, Skeleton, Switch, Table
 
 ## Key Patterns
 

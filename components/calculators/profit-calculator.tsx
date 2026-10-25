@@ -20,11 +20,9 @@ import { ResultCard } from "@/components/calculators/result-card";
 import {
   calculateProfitMetrics,
   validateTradingParameters,
-  formatCurrency,
-  formatPercentage,
-  safeParseFloat,
   type ProfitCalculationResult,
 } from "@/lib/calculations";
+import { formatCurrency, formatPercentage, safeParseFloat } from "@/lib/format";
 
 const defaultFormValues = {
   tradeType: "LONG" as const,
@@ -44,47 +42,47 @@ const profitCalculatorSchema = z
     entry: z
       .string()
       .min(1, "Entry price is required")
-      .refine((val) => !isNaN(safeParseFloat(val)), "Must be a valid number")
+      .refine((val) => Number.isFinite(parseFloat(val)), "Must be a valid number")
       .refine((val) => safeParseFloat(val) > 0, "Entry price must be greater than 0")
       .refine((val) => safeParseFloat(val) < 1000000, "Entry price too large"),
     leverage: z
       .string()
       .min(1, "Leverage is required")
-      .refine((val) => !isNaN(safeParseFloat(val)), "Must be a valid number")
+      .refine((val) => Number.isFinite(parseFloat(val)), "Must be a valid number")
       .refine((val) => safeParseFloat(val) >= 1, "Leverage must be at least 1x")
       .refine((val) => safeParseFloat(val) <= 100, "Leverage cannot exceed 100x"),
     stopLoss: z
       .string()
       .min(1, "Stop loss is required")
-      .refine((val) => !isNaN(safeParseFloat(val)), "Must be a valid number")
+      .refine((val) => Number.isFinite(parseFloat(val)), "Must be a valid number")
       .refine((val) => safeParseFloat(val) > 0, "Stop loss must be greater than 0")
       .refine((val) => safeParseFloat(val) < 1000000, "Stop loss price too large"),
     positionSize: z
       .string()
       .min(1, "Position size is required")
-      .refine((val) => !isNaN(safeParseFloat(val)), "Must be a valid number")
+      .refine((val) => Number.isFinite(parseFloat(val)), "Must be a valid number")
       .refine((val) => safeParseFloat(val) > 0, "Position size must be greater than 0")
       .refine((val) => safeParseFloat(val) < 10000000, "Position size too large"),
     tp1: z
       .string()
       .min(1, "Take profit 1 is required")
-      .refine((val) => !isNaN(safeParseFloat(val)), "Must be a valid number")
+      .refine((val) => Number.isFinite(parseFloat(val)), "Must be a valid number")
       .refine((val) => safeParseFloat(val) > 0, "Take profit 1 must be greater than 0")
       .refine((val) => safeParseFloat(val) < 1000000, "Take profit 1 price too large"),
     tp2: z
       .string()
       .optional()
-      .refine((val) => !val || !isNaN(safeParseFloat(val)), "Must be a valid number")
+      .refine((val) => !val || Number.isFinite(parseFloat(val)), "Must be a valid number")
       .refine((val) => !val || safeParseFloat(val) > 0, "Must be greater than 0"),
     tp3: z
       .string()
       .optional()
-      .refine((val) => !val || !isNaN(safeParseFloat(val)), "Must be a valid number")
+      .refine((val) => !val || Number.isFinite(parseFloat(val)), "Must be a valid number")
       .refine((val) => !val || safeParseFloat(val) > 0, "Must be greater than 0"),
     tp4: z
       .string()
       .optional()
-      .refine((val) => !val || !isNaN(safeParseFloat(val)), "Must be a valid number")
+      .refine((val) => !val || Number.isFinite(parseFloat(val)), "Must be a valid number")
       .refine((val) => !val || safeParseFloat(val) > 0, "Must be greater than 0"),
   })
   .refine(

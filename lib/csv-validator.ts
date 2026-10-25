@@ -33,7 +33,9 @@ export function validateCsv(parsedData: unknown[]): ValidationResult {
   const validatedRows: CsvRow[] = [];
 
   for (let i = 0; i < parsedData.length; i++) {
-    const row = parsedData[i] as Record<string, unknown>;
+    const row = Object.fromEntries(
+      Object.entries(parsedData[i] as Record<string, unknown>).map(([key, value]) => [key.toLowerCase(), value])
+    );
     const rowNum = i + 1;
 
     for (const header of REQUIRED_HEADERS) {
@@ -55,17 +57,22 @@ export function validateCsv(parsedData: unknown[]): ValidationResult {
         }
       } else {
         const numValue = Number(value);
-        if (isNaN(numValue)) {
+        if (!Number.isFinite(numValue)) {
           return {
             valid: false,
             error: `Invalid number for '${header}' at row ${rowNum}. Got: ${value}`
+          };
+        }
+        if (numValue <= 0) {
+          return {
+            valid: false,
+            error: `Price for '${header}' must be positive at row ${rowNum}. Got: ${value}`
           };
         }
       }
     }
 
     validatedRows.push({
-      time: Number(row.time),
       high: Number(row.high),
       low: Number(row.low),
       close: Number(row.close),

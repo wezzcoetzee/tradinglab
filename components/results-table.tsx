@@ -9,6 +9,8 @@ import { DayByDayTable } from '@/components/day-by-day-table';
 import { PerformanceChart } from '@/components/performance-chart';
 import { SmaComparisonTable } from '@/components/sma-comparison-table';
 import { AllConfigurationsTable } from '@/components/all-configurations-table';
+import { TOP_K_RESULTS } from '@/lib/backtest/constants';
+import { compareResults, summarizeResults, type OptimizationStats } from '@/lib/backtest/ranking';
 import type { BacktestResult, BacktestResultSummary, BuyAndHoldBaseline } from '@/lib/backtest/types';
 
 interface ResultsTableProps {
@@ -16,25 +18,20 @@ interface ResultsTableProps {
   baseline: BuyAndHoldBaseline | null;
   bestResultWithDays?: BacktestResult | null;
   isTruncated?: boolean;
-  totalConfigsTested?: number;
+  /** Totals across every config tested; falls back to counting `results` when omitted. */
+  stats?: OptimizationStats;
   assetName?: string | null;
 }
 
-export function ResultsTable({ results, baseline, bestResultWithDays, isTruncated, totalConfigsTested, assetName }: ResultsTableProps) {
+export function ResultsTable({ results, baseline, bestResultWithDays, isTruncated, stats, assetName }: ResultsTableProps) {
   const metrics: Metrics = useMemo(() => {
-    const total = totalConfigsTested || results.length;
-    const liquidated = results.filter(r => r.isLiquidated).length;
-    const profitable = results.filter(r => r.totalReturn > 0 && !r.isLiquidated).length;
+    const { total, profitable, liquidated } = stats ?? summarizeResults(results);
     const liquidationRate = total > 0 ? (liquidated / total) * 100 : 0;
     return { total, profitable, liquidated, liquidationRate };
-  }, [results, totalConfigsTested]);
+  }, [results, stats]);
 
   const bestResult = useMemo(() => {
-    const sorted = [...results].sort((a, b) => {
-      if (a.isLiquidated !== b.isLiquidated) return a.isLiquidated ? 1 : -1;
-      return b.totalReturn - a.totalReturn;
-    });
-    return sorted[0] ?? null;
+    return [...results].sort(compareResults)[0] ?? null;
   }, [results]);
 
   if (results.length === 0) {
@@ -49,7 +46,7 @@ export function ResultsTable({ results, baseline, bestResultWithDays, isTruncate
           {metrics.total} configurations tested
           {isTruncated && (
             <span className="text-amber-600 dark:text-amber-400">
-              {' '}(showing top 1000 results)
+              {' '}(showing top {TOP_K_RESULTS} results)
             </span>
           )}
         </CardDescription>

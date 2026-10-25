@@ -12,48 +12,54 @@ Offload the backtest loop to a Web Worker (`lib/backtest/optimization.worker.ts`
 
 ### Main Thread (`hooks/use-optimization.ts`)
 
-1. Pre-computes SMA values for all periods in the configured range
-2. Pre-computes ATR values for periods 10/14/20 (if ATR enabled)
-3. Generates all `BacktestConfig` combinations via `generateBacktestConfigs()`
-4. Serializes pre-computed data as `WorkerInput` and sends via `postMessage`
-5. Listens for `progress`, `complete`, and `error` messages
-6. On completion, re-runs the best config with full day details (for chart/table rendering)
+1. Sends `WorkerInput` (`csvData` + `strategyConfig`) via `postMessage`
+2. Listens for `progress`, `complete`, and `error` messages
+3. Stores the `OptimizationOutcome` from `complete` in state
 
-### Worker Thread (`lib/backtest/optimization.worker.ts`)
+The main thread does no backtest work, so the UI stays responsive from the moment the user clicks Run.
 
-1. Receives `WorkerInput` with CSV data, pre-computed SMAs/ATRs, and config list
-2. Reconstructs `Map` objects from serialized entries (Maps aren't transferable)
-3. Iterates through all configs, calling `runBacktest()` for each
-4. Posts `progress` message every 100 configs with current count and elapsed time
+### Worker Thread (`lib/backtest/optimization.worker.ts` → `runOptimization()` in `optimizer.ts`)
+
+1. Computes SMA values for all periods in the range and ATR values for 10/14/20 (if enabled), using rolling sums
+2. Generates all `BacktestConfig` combinations via `generateBacktestConfigs()`
+3. Calls `runBacktest()` for each config in summary mode, tallying profitable/liquidated stats over every config
+4. Posts `progress` every 100 configs with current count and elapsed time
 5. Collects results:
-   - **ATR disabled:** Full array of `BacktestResultSummary`
-   - **ATR enabled:** `TopKHeap(1000)` — min-heap keeping only top 1000 by total return
-6. Calculates buy-and-hold baseline via `calculateBuyAndHoldBaseline()`
-7. Posts `complete` message with sorted results, baseline, and timing
+   - **ATR disabled:** Full array of `BacktestResultSummary`, sorted by `compareResults`
+   - **ATR enabled:** `TopKHeap(1000)` — min-heap keeping only the top 1000 survivors by total return
+6. Replays the best surviving config with full day details (for chart/table)
+7. Calculates the buy-and-hold baseline and posts `complete`
 
 ### Message Protocol (`lib/backtest/optimization-types.ts`)
 
 ```typescript
 type WorkerMessage =
   | { type: 'progress'; current: number; total: number; elapsedMs: number }
-  | { type: 'complete'; results: BacktestResultSummary[]; baseline: BuyAndHoldBaseline | null;
-      totalConfigs: number; totalTimeMs: number; isTruncated: boolean }
+  | ({ type: 'complete'; totalTimeMs: number } & OptimizationOutcome)
   | { type: 'error'; error: string }
+
+interface OptimizationOutcome {
+  results: BacktestResultSummary[];
+  bestResultWithDays: BacktestResult | null;
+  baseline: BuyAndHoldBaseline | null;
+  stats: { total: number; profitable: number; liquidated: number };
+  isTruncated: boolean;
+}
 ```
 
-## Why Pre-Compute on Main Thread
+## Why Compute Indicators Once in the Worker
 
-SMA and ATR values are shared across configs. Computing them once on the main thread and transferring to the worker avoids redundant calculation. For 199 SMA periods × 1000 data points, this saves ~199,000 redundant SMA computations per backtest run.
+SMA and ATR values are shared across configs, so they are computed once per run and looked up per config. Doing it in the worker (rather than on the main thread and cloning across) keeps the UI free and avoids structured-cloning up to ~1M config objects.
 
 ## Why Top-K Heap
 
 With ATR enabled, ~1M results × ~200 bytes each ≈ 200MB. Browser tabs typically have 1-4GB memory limits. The `TopKHeap` maintains only the top 1000 results using a min-heap, keeping memory constant at ~200KB regardless of config count.
 
-The heap uses `totalReturn` as the sort key. Results where `isLiquidated === true` are filtered out before insertion.
+The heap uses `totalReturn` as the sort key. Results where `isLiquidated === true` are filtered out before insertion, which is why the outcome carries separate `stats` counted over every config.
 
-## Why Re-Run Best on Main Thread
+## Why Replay the Best Config
 
-The worker returns `BacktestResultSummary` (no day-by-day array) to minimize message transfer size. For the performance chart and day-by-day table, we need the full `BacktestResult` with `days[]`. Re-running a single config takes <1ms — negligible cost for the data needed.
+Configs run in summary mode (no day-by-day array) to keep memory and message size small. The chart and day-by-day table need the full `BacktestResult` with `days[]`, so the worker replays the single best config with days before posting `complete`. One extra run is negligible.
 
 ## Cancellation
 

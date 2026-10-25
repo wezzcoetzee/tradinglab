@@ -4,30 +4,31 @@ import { useState, useEffect, useRef } from "react";
 
 export function useAnimatedNumber(value: number, duration = 500): number {
   const [displayValue, setDisplayValue] = useState(value);
-  const previousValue = useRef(value);
+  // Tracks what is on screen so a mid-animation change eases on from there instead of jumping back.
+  const displayedRef = useRef(value);
 
   useEffect(() => {
-    if (previousValue.current === value) return;
+    const startValue = displayedRef.current;
+    if (startValue === value) return;
 
-    const startValue = previousValue.current;
     const startTime = performance.now();
+    let frameId: number;
 
     const animate = (currentTime: number) => {
-      const elapsed = currentTime - startTime;
-      const progress = Math.min(elapsed / duration, 1);
+      const progress = Math.min((currentTime - startTime) / duration, 1);
       const easeOut = 1 - Math.pow(1 - progress, 3);
       const current = startValue + (value - startValue) * easeOut;
 
+      displayedRef.current = current;
       setDisplayValue(current);
 
       if (progress < 1) {
-        requestAnimationFrame(animate);
-      } else {
-        previousValue.current = value;
+        frameId = requestAnimationFrame(animate);
       }
     };
 
-    requestAnimationFrame(animate);
+    frameId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frameId);
   }, [value, duration]);
 
   return displayValue;

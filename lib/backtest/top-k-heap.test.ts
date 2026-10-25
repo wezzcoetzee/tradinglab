@@ -14,7 +14,6 @@ function makeResult(totalReturn: number, isLiquidated = false): BacktestResultSu
   return {
     config,
     finalBalance: 1000 * (1 + totalReturn / 100),
-    finalCollateral: 1000 * (1 + totalReturn / 100),
     totalReturn,
     totalFees: 10,
     totalTrades: 5,
@@ -36,7 +35,7 @@ describe('TopKHeap', () => {
       heap.insert(liquidatedResult);
 
       // #then
-      expect(heap.size).toBe(0);
+      expect(heap.getResults().length).toBe(0);
     });
 
     test('should_skip_all_liquidated_results', () => {
@@ -49,7 +48,7 @@ describe('TopKHeap', () => {
       heap.insert(makeResult(150, true));
 
       // #then
-      expect(heap.size).toBe(0);
+      expect(heap.getResults().length).toBe(0);
     });
 
     test('should_only_insert_non_liquidated_results', () => {
@@ -63,7 +62,7 @@ describe('TopKHeap', () => {
       heap.insert(makeResult(200, false));
 
       // #then
-      expect(heap.size).toBe(2);
+      expect(heap.getResults().length).toBe(2);
     });
   });
 
@@ -78,7 +77,7 @@ describe('TopKHeap', () => {
       heap.insert(makeResult(30));
 
       // #then
-      expect(heap.size).toBe(3);
+      expect(heap.getResults().length).toBe(3);
     });
 
     test('should_fill_heap_to_exact_capacity', () => {
@@ -91,7 +90,7 @@ describe('TopKHeap', () => {
       heap.insert(makeResult(30));
 
       // #then
-      expect(heap.size).toBe(3);
+      expect(heap.getResults().length).toBe(3);
     });
 
     test('should_maintain_capacity_when_inserting_worse_result', () => {
@@ -105,7 +104,7 @@ describe('TopKHeap', () => {
       heap.insert(makeResult(50));
 
       // #then
-      expect(heap.size).toBe(3);
+      expect(heap.getResults().length).toBe(3);
     });
 
     test('should_maintain_capacity_when_inserting_better_result', () => {
@@ -119,48 +118,7 @@ describe('TopKHeap', () => {
       heap.insert(makeResult(400));
 
       // #then
-      expect(heap.size).toBe(3);
-    });
-  });
-
-  describe('size property', () => {
-    test('should_return_zero_for_empty_heap', () => {
-      // #given
-      const heap = new TopKHeap(5);
-
-      // #when
-      const size = heap.size;
-
-      // #then
-      expect(size).toBe(0);
-    });
-
-    test('should_reflect_current_count', () => {
-      // #given
-      const heap = new TopKHeap(10);
-
-      // #when
-      heap.insert(makeResult(10));
-      heap.insert(makeResult(20));
-      heap.insert(makeResult(30));
-
-      // #then
-      expect(heap.size).toBe(3);
-    });
-
-    test('should_not_exceed_k', () => {
-      // #given
-      const heap = new TopKHeap(3);
-
-      // #when
-      heap.insert(makeResult(10));
-      heap.insert(makeResult(20));
-      heap.insert(makeResult(30));
-      heap.insert(makeResult(40));
-      heap.insert(makeResult(50));
-
-      // #then
-      expect(heap.size).toBe(3);
+      expect(heap.getResults().length).toBe(3);
     });
   });
 
@@ -286,7 +244,7 @@ describe('TopKHeap', () => {
       results.pop();
 
       // #then
-      expect(heap.size).toBe(3);
+      expect(heap.getResults().length).toBe(3);
       expect(heap.getResults().length).toBe(3);
     });
 
@@ -301,7 +259,6 @@ describe('TopKHeap', () => {
       // #then
       expect(results[0]).toHaveProperty('config');
       expect(results[0]).toHaveProperty('finalBalance');
-      expect(results[0]).toHaveProperty('finalCollateral');
       expect(results[0]).toHaveProperty('totalReturn');
       expect(results[0]).toHaveProperty('totalFees');
       expect(results[0]).toHaveProperty('totalTrades');
@@ -334,7 +291,7 @@ describe('TopKHeap', () => {
       heap.insert(makeResult(40));
 
       // #then
-      expect(heap.size).toBe(1);
+      expect(heap.getResults().length).toBe(1);
       expect(heap.getResults()[0].totalReturn).toBe(50);
     });
 
@@ -452,7 +409,7 @@ describe('TopKHeap', () => {
       }
 
       // #then
-      expect(heap.size).toBe(500);
+      expect(heap.getResults().length).toBe(500);
     });
 
     test('should_maintain_top_k_with_large_k', () => {
@@ -465,7 +422,7 @@ describe('TopKHeap', () => {
       }
 
       // #then
-      expect(heap.size).toBe(100);
+      expect(heap.getResults().length).toBe(100);
       const results = heap.getResults();
       expect(results[0].totalReturn).toBe(199);
       expect(results[99].totalReturn).toBe(100);

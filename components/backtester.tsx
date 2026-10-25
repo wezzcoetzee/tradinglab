@@ -15,7 +15,7 @@ export function Backtester() {
   const [assetName, setAssetName] = useState<string | null>(null);
   const [strategyConfig, setStrategyConfig] = useState<StrategyConfig | null>(null);
 
-  const { progress, results, baseline, bestResultWithDays, isTruncated, totalConfigsTested, startOptimization, cancelOptimization } = useOptimization();
+  const { progress, results, baseline, bestResultWithDays, isTruncated, stats, startOptimization, cancelOptimization } = useOptimization();
 
   const handleDataLoaded = useCallback((data: CsvRow[]) => {
     setCsvData(data);
@@ -31,7 +31,7 @@ export function Backtester() {
     }
   };
 
-  const isRunning = progress.status === 'preparing' || progress.status === 'running';
+  const isRunning = progress.status === 'running';
   const canRunOptimization = csvData !== null && strategyConfig !== null && !isRunning;
   const showProgress = progress.status !== 'idle';
 
@@ -57,7 +57,7 @@ export function Backtester() {
         <OptimizationProgressCard progress={progress} onCancel={cancelOptimization} />
       )}
 
-      <ResultsTable results={results ?? []} baseline={baseline} bestResultWithDays={bestResultWithDays} isTruncated={isTruncated} totalConfigsTested={totalConfigsTested} assetName={assetName} />
+      <ResultsTable results={results ?? []} baseline={baseline} bestResultWithDays={bestResultWithDays} isTruncated={isTruncated} stats={stats} assetName={assetName} />
     </>
   );
 }

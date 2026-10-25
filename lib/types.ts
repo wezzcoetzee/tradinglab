@@ -1,5 +1,6 @@
+import { WARMUP_DAYS } from './backtest/constants';
+
 export interface CsvRow {
-  time: number;
   high: number;
   low: number;
   close: number;
@@ -27,10 +28,9 @@ export interface StrategyConfigValidation {
   data?: StrategyConfig;
 }
 
-import { WARMUP_DAYS } from './backtest/constants';
-
 export const REQUIRED_HEADERS = ['high', 'low', 'close', 'date'] as const;
-export const MIN_DATA_ROWS = WARMUP_DAYS;
+// The backtest starts trading on the first row after the warmup window.
+export const MIN_DATA_ROWS = WARMUP_DAYS + 1;
 
 export const DEFAULT_STRATEGY_CONFIG: StrategyConfig = {
   startingCapital: 1000,
