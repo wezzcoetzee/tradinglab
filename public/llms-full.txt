@@ -100,8 +100,8 @@ Each day one of the following actions is taken:
 | OPEN_SHORT                  | No position → enter short at current price                    |
 | CLOSE_LONG                  | Price dropped below SMA → exit long position                  |
 | CLOSE_SHORT                 | Price rose above SMA → exit short position                    |
-| TRANSITION_LONG_TO_SHORT    | Direct flip from long to short (fee applied once)             |
-| TRANSITION_SHORT_TO_LONG    | Direct flip from short to long (fee applied once)             |
+| TRANSITION_LONG_TO_SHORT    | Direct flip from long to short (close + open fees)            |
+| TRANSITION_SHORT_TO_LONG    | Direct flip from short to long (close + open fees)            |
 | HOLD                        | Signal unchanged, no action taken                             |
 | ATR_PARTIAL_CLOSE           | ATR trailing stop triggered — partial close executed          |
 

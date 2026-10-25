@@ -34,7 +34,7 @@ GitHub Actions (`cloudflare-pages.yml`):
 
 | Area | Files | What's Tested |
 |------|-------|---------------|
-| Backtest engine | 10 test files | Runner, position manager, SMA/ATR calculators, fee calculator, trailing stops, leverage configs, top-k heap, baseline |
+| Backtest engine | 10 test files | Optimizer (end-to-end), runner, position manager, SMA/ATR calculators, fee calculator, trailing stops, leverage configs, top-k heap, baseline |
 | Lib utilities | 6 test files | CSV validator, strategy validator, format functions, calculations (position size, profit metrics, validation), chart data, downsampling |
 | Components | 7 test files | Results table, optimization progress, day-by-day table, optimal strategy card, SMA comparison, position-size-calculator, profit-calculator |
 | Hooks | 1 test file | useOptimization |
