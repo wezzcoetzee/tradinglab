@@ -51,6 +51,16 @@ GitHub Actions (`cloudflare-pages.yml`):
 
 ESLint 9 with `eslint-config-next`. No custom rules beyond Next.js defaults.
 
+## Dependency Security
+
+Dependabot security alerts are disabled for this repo (it only bumps GitHub Actions), so run `bun audit` before dependency changes. `bun audit fix` upgrades vulnerable transitive packages within their allowed ranges.
+
+`package.json` overrides:
+
+| Override | Why | Remove when |
+|----------|-----|-------------|
+| `valibot: ^1.4.2` | `@nktkas/hyperliquid@0.32` pins `valibot@1.3.1` (GHSA-5qjj-4xww-7phc) | `@nktkas/hyperliquid` is upgraded to 0.33+, which depends on `valibot@^1.4.2` |
+
 ## Dimensions to Improve
 
 | Dimension | Current | Target |
